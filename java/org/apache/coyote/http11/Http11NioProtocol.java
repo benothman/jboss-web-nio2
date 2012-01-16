@@ -83,7 +83,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 		endpoint.setName(getName());
 		endpoint.setHandler(cHandler);
-
 		try {
 			endpoint.init();
 		} catch (Exception ex) {

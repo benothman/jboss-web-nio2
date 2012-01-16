@@ -443,7 +443,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				}
 
 				if (nBytes > 0) {
-					bbuf.limit(nBytes);
+					bbuf.flip();
 					bbuf.get(buf, pos, nBytes);
 					lastValid = pos + nBytes;
 				}

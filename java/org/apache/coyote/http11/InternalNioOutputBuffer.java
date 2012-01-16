@@ -27,6 +27,7 @@ import java.nio.channels.CompletionHandler;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
+import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -106,6 +107,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		try {
 			return this.channel.write(buffer).get();
 		} catch (Exception e) {
+			e.printStackTrace();
 			return -1;
 		}
 	}
@@ -193,7 +195,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
 	 */
 	protected void flushBuffer() throws IOException {
-
+		log.info("---------> flush the buffer");
 		int res = 0;
 
 		// If there are still leftover bytes here, this means the user did a
@@ -202,60 +204,49 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// - If the call is synchronous, make regular blocking writes to flush
 		// the data
 		if (leftover.getLength() > 0) {
-			leftover.flushBuffer();
+			log.info("------> flush : step 1");
+			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
+				log.info("------> flush : step 1.1.1");
+                // Send leftover bytes
+                //res = Socket.send(socket, leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
+				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
+				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
+				bb.flip();
+				res = blockingWrite(bb);
+				log.info("------> flush : step 1.1.2");
+                leftover.recycle();
+                // Send current buffer
+                if (res > 0 && bbuf.position() > 0) {
+                	res = blockingWrite(bbuf);
+                }
+                bbuf.clear();
+            } else {
+            	log.info("------> flush : step 1.2");
+                throw new IOException(sm.getString("oob.backlog"));
+            }
 		}
-
+		log.info("------> flush : step 2");
 		if (bbuf.position() > 0) {
+			log.info("------> flush : step 2.1");
+			bbuf.flip();
 			if (nonBlocking) {
+				log.info("------> flush : step 2.1.1");
 				// Perform non blocking writes until all data is written, or the
 				// result of the write is 0
-				final int end = bbuf.position();
-				bbuf.flip();
-				Integer written = new Integer(0);
-				this.channel.write(bbuf, written, new CompletionHandler<Integer, Integer>() {
-
-					@Override
-					public void completed(Integer nBytes, Integer accu) {
-						if (nBytes < 0) {
-							// The channel was closed
-							try {
-								channel.close();
-							} catch (IOException e) {
-								// NOTHING
-							}
-							return;
-						}
-						// update the buffer position
-						bbuf.position(accu + nBytes);
-						if (bbuf.position() >= end) {
-							// All bytes are written
-							response.setLastWrite(bbuf.position());
-							bbuf.clear();
-							return;
-						}
-
-						// write remaining bytes
-						channel.write(bbuf, bbuf.position(), this);
-					}
-
-					@Override
-					public void failed(Throwable exc, Integer written) {
-						// NOTHING
-						exc = new IOException(sm.getString("oob.failedwrite"), exc);
-					}
-				});
+				nonBlockingWrite(bbuf);
 			} else {
+				log.info("------> flush : step 2.1.2");
 				try {
-					bbuf.flip();
 					res = this.channel.write(bbuf).get();
 					response.setLastWrite(res);
 					bbuf.clear();
 				} catch (Exception e) {
 					// NOTHING
 					log.error(e.getMessage(), e);
+					e.printStackTrace();
 				}
 			}
-
+			log.info("------> flush : step 2.2");
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
