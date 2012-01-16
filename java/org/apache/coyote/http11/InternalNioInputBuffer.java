@@ -472,6 +472,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			return this.channel.read(bb).get();
 		} catch (Exception e) {
 			// NOP
+			log.warn("An error occurs when trying a blocking read");
 			log.error(e.getMessage(), e);
 		}
 		return 0;
