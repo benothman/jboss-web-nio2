@@ -1,0 +1,346 @@
+/**
+ * JBoss, Home of Professional Open Source. Copyright 2012, Red Hat, Inc., and
+ * individual contributors as indicated by the @author tags. See the
+ * copyright.txt file in the distribution for a full listing of individual
+ * contributors.
+ * 
+ * This is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free
+ * Software Foundation; either version 2.1 of the License, or (at your option)
+ * any later version.
+ * 
+ * This software is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this software; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA, or see the FSF
+ * site: http://www.fsf.org.
+ */
+package org.apache.coyote.http11;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.CompletionHandler;
+
+import org.apache.coyote.ActionCode;
+import org.apache.coyote.Response;
+import org.apache.tomcat.util.buf.ByteChunk;
+import org.apache.tomcat.util.net.NioChannel;
+import org.apache.tomcat.util.net.NioEndpoint;
+
+/**
+ * {@code InternalNioOutputBuffer}
+ * 
+ * Created on Dec 16, 2011 at 9:15:05 AM
+ * 
+ * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
+ */
+public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
+
+	/**
+	 * Underlying channel.
+	 */
+	protected NioChannel channel;
+
+	/**
+	 * NIO endpoint.
+	 */
+	protected NioEndpoint endpoint = null;
+
+	/**
+	 * Create a new instance of {@code InternalNioOutputBuffer}
+	 * 
+	 * @param response
+	 * @param headerBufferSize
+	 * @param endpoint
+	 */
+	public InternalNioOutputBuffer(Response response, int headerBufferSize, NioEndpoint endpoint) {
+		super(response, headerBufferSize);
+		this.endpoint = endpoint;
+	}
+
+	/**
+	 * Set the underlying socket.
+	 * 
+	 * @param channel
+	 */
+	public void setChannel(NioChannel channel) {
+		this.channel = channel;
+	}
+
+	/**
+	 * Get the underlying socket input stream.
+	 * 
+	 * @return the channel
+	 */
+	public NioChannel geChannel() {
+		return channel;
+	}
+
+	/**
+	 * Recycle the output buffer. This should be called when closing the
+	 * connection.
+	 */
+	public void recycle() {
+		super.recycle();
+		channel = null;
+	}
+
+	private void close() {
+		try {
+			this.channel.close();
+		} catch (IOException e) {
+			// NOTHING
+		}
+	}
+
+	/**
+	 * 
+	 * @param buffer
+	 * @return
+	 */
+	private int blockingWrite(ByteBuffer buffer) {
+		try {
+			return this.channel.write(buffer).get();
+		} catch (Exception e) {
+			return -1;
+		}
+	}
+
+	/**
+	 * PErform a non-blocking write
+	 * 
+	 * @param buffer
+	 */
+	private void nonBlockingWrite(final ByteBuffer buffer) {
+		this.channel.write(buffer, null, new CompletionHandler<Integer, Void>() {
+
+			@Override
+			public void completed(Integer nBytes, Void attachment) {
+				if (nBytes < 0) {
+					close();
+					return;
+				}
+
+				if (buffer.position() < buffer.limit()) {
+					channel.write(buffer, null, this);
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, Void attachment) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+	}
+
+	/**
+	 * Send an acknowledgment.
+	 * 
+	 * @throws Exception
+	 */
+	public void sendAck() throws Exception {
+
+		if (!committed) {
+			this.bbuf.clear();
+			this.bbuf.put(Constants.ACK_BYTES).flip();
+			if (this.nonBlocking) {
+				this.nonBlockingWrite(bbuf);
+			} else {
+				if (this.blockingWrite(bbuf) < 0) {
+					throw new IOException(sm.getString("oob.failedwrite"));
+				}
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.coyote.http11.AbstractInternalOutputBuffer#doWrite(org.apache
+	 * .tomcat.util.buf.ByteChunk, org.apache.coyote.Response)
+	 */
+	public int doWrite(ByteChunk chunk, Response res) throws IOException {
+
+		if (!committed) {
+			// Send the connector a request for commit. The connector should
+			// then validate the headers, send them (using sendHeaders) and
+			// set the filters accordingly.
+			response.action(ActionCode.ACTION_COMMIT, null);
+		}
+
+		// If non blocking (event) and there are leftover bytes,
+		// and lastWrite was 0 -> error
+		if (leftover.getLength() > 0 && !(Http11AprProcessor.containerThread.get() == Boolean.TRUE)) {
+			throw new IOException(sm.getString("oob.backlog"));
+		}
+
+		if (lastActiveFilter == -1) {
+			return outputBuffer.doWrite(chunk, res);
+		} else {
+			return activeFilters[lastActiveFilter].doWrite(chunk, res);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
+	 */
+	protected void flushBuffer() throws IOException {
+
+		int res = 0;
+
+		// If there are still leftover bytes here, this means the user did a
+		// direct flush:
+		// - If the call is asynchronous, throw an exception
+		// - If the call is synchronous, make regular blocking writes to flush
+		// the data
+		if (leftover.getLength() > 0) {
+			leftover.flushBuffer();
+		}
+
+		if (bbuf.position() > 0) {
+			if (nonBlocking) {
+				// Perform non blocking writes until all data is written, or the
+				// result of the write is 0
+				final int end = bbuf.position();
+				bbuf.flip();
+				Integer written = new Integer(0);
+				this.channel.write(bbuf, written, new CompletionHandler<Integer, Integer>() {
+
+					@Override
+					public void completed(Integer nBytes, Integer accu) {
+						if (nBytes < 0) {
+							// The channel was closed
+							try {
+								channel.close();
+							} catch (IOException e) {
+								// NOTHING
+							}
+							return;
+						}
+						// update the buffer position
+						bbuf.position(accu + nBytes);
+						if (bbuf.position() >= end) {
+							// All bytes are written
+							response.setLastWrite(bbuf.position());
+							bbuf.clear();
+							return;
+						}
+
+						// write remaining bytes
+						channel.write(bbuf, bbuf.position(), this);
+					}
+
+					@Override
+					public void failed(Throwable exc, Integer written) {
+						// NOTHING
+						exc = new IOException(sm.getString("oob.failedwrite"), exc);
+					}
+				});
+			} else {
+				try {
+					bbuf.flip();
+					res = this.channel.write(bbuf).get();
+					response.setLastWrite(res);
+					bbuf.clear();
+				} catch (Exception e) {
+					// NOTHING
+					log.error(e.getMessage(), e);
+				}
+			}
+
+			if (res < 0) {
+				throw new IOException(sm.getString("oob.failedwrite"));
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.coyote.http11.AbstractInternalOutputBuffer#flushLeftover()
+	 */
+	@Override
+	public boolean flushLeftover() throws IOException {
+		int len = leftover.getLength();
+		int start = leftover.getStart();
+		byte[] b = leftover.getBuffer();
+
+		while (len > 0) {
+			int thisTime = len;
+			if (bbuf.position() == bbuf.capacity()) {
+				int pos = 0;
+				int end = bbuf.position();
+				int res = 0;
+				while (pos < end) {
+					// res = Socket.sendibb(socket, pos, end - pos);
+					// TODO update code to use channels
+					if (res > 0) {
+						pos += res;
+					} else {
+						break;
+					}
+				}
+				if (res < 0) {
+					throw new IOException(sm.getString("oob.failedwrite"));
+				}
+				response.setLastWrite(res);
+				if (pos < end) {
+					// Could not write all leftover data: put back to write
+					// poller
+					leftover.setOffset(start);
+					bbuf.position(pos);
+					return false;
+				} else {
+					bbuf.clear();
+				}
+			}
+			if (thisTime > bbuf.capacity() - bbuf.position()) {
+				thisTime = bbuf.capacity() - bbuf.position();
+			}
+			bbuf.put(b, start, thisTime);
+			len = len - thisTime;
+			start = start + thisTime;
+		}
+
+		int pos = 0;
+		int end = bbuf.position();
+		if (pos < end) {
+			int res = 0;
+			while (pos < end) {
+				// res = Socket.sendibb(socket, pos, end - pos);
+				// TODO update code to use channels
+				if (res > 0) {
+					pos += res;
+				} else {
+					break;
+				}
+			}
+			if (res < 0) {
+				throw new IOException(sm.getString("oob.failedwrite"));
+			}
+			response.setLastWrite(res);
+		}
+		if (pos < end) {
+			leftover.allocate(end - pos, -1);
+			bbuf.position(pos);
+			bbuf.limit(end);
+			bbuf.get(leftover.getBuffer(), 0, end - pos);
+			leftover.setEnd(end - pos);
+			bbuf.clear();
+			return false;
+		}
+		bbuf.clear();
+		leftover.recycle();
+
+		return true;
+	}
+}
