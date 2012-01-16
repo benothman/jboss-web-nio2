@@ -274,6 +274,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 *             error during an I/O operation
 	 */
 	public SocketState process(NioChannel channel) throws IOException {
+		log.info("------> Starting processing the channel");
 		RequestInfo rp = request.getRequestProcessor();
 		rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
@@ -286,10 +287,11 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		int keepAliveLeft = maxKeepAliveRequests;
 		int soTimeout = endpoint.getSoTimeout();
 		boolean keptAlive = false;
-		boolean openSocket = false;
+		boolean openChannel = false;
 
+		int count = 0;
 		while (!error && keepAlive && !event) {
-
+			log.info("------> counter : " + (count++));
 			// Parsing the request header
 			try {
 
@@ -301,7 +303,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// (long keepalive), so that the processor should be
 					// recycled
 					// and the method should return true
-					openSocket = true;
+					openChannel = true;
 					break;
 				}
 				request.setStartTime(System.currentTimeMillis());
@@ -330,8 +332,8 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				if (log.isDebugEnabled()) {
 					log.debug(sm.getString("http11processor.request.prepare"), t);
 				}
-				// 400 - Internal Server Error
-				response.setStatus(400);
+				// 500 - Internal Server Error
+				response.setStatus(500);
 				error = true;
 			}
 
@@ -353,12 +355,14 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 								|| statusDropsConnection(response.getStatus());
 					}
 				} catch (InterruptedIOException e) {
+					e.printStackTrace();
 					error = true;
 				} catch (Throwable t) {
 					log.error(sm.getString("http11processor.request.process"), t);
 					// 500 - Internal Server Error
 					response.setStatus(500);
 					error = true;
+					t.printStackTrace();
 				}
 			}
 
@@ -385,7 +389,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				pipelined = inputBuffer.nextRequest();
 				outputBuffer.nextRequest();
 			}
-			
+
 			rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
 		}
 
@@ -403,7 +407,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			}
 		} else {
 			recycle();
-			return (openSocket) ? SocketState.OPEN : SocketState.CLOSED;
+			return (openChannel) ? SocketState.OPEN : SocketState.CLOSED;
 		}
 
 	}

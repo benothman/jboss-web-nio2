@@ -439,7 +439,7 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 * @throws IOException
 	 */
 	public void parseHeaders() throws IOException {
-
+		log.info("-----------> Parsing headers");
 		while (parseHeader()) {
 		}
 
@@ -455,12 +455,10 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 * @throws IOException
 	 */
 	public boolean parseHeader() throws IOException {
-
+		log.info("----------------> Parsing header");
 		// Check for blank line
-
 		byte chr = 0;
 		while (true) {
-
 			// Read new bytes if needed
 			if (pos >= lastValid) {
 				if (!fill())
@@ -486,12 +484,10 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 
 		// Reading the header name
 		// Header name is always US-ASCII
-
 		boolean colon = false;
 		MessageBytes headerValue = null;
 
 		while (!colon) {
-
 			// Read new bytes if needed
 			if (pos >= lastValid) {
 				if (!fill()) {

@@ -431,6 +431,7 @@ public abstract class AbstractEndpoint {
 	 *            the executor to set
 	 */
 	public void setExecutor(Executor executor) {
+		System.out.println("Executor -> " + executor.getClass().getName());
 		this.executor = executor;
 	}
 

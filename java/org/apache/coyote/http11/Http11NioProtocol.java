@@ -823,6 +823,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		 */
 		@Override
 		public SocketState process(NioChannel channel) {
+			log.info(getClass() +" -> process request");
 			Http11NioProcessor processor = recycledProcessors.poll();
 			try {
 				if (processor == null) {
@@ -851,10 +852,12 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				return state;
 
 			} catch (java.net.SocketException e) {
+				e.printStackTrace();
 				// SocketExceptions are normal
 				Http11NioProtocol.log.debug(
 						sm.getString("http11protocol.proto.socketexception.debug"), e);
 			} catch (java.io.IOException e) {
+				e.printStackTrace();
 				// IOExceptions are normal
 				Http11NioProtocol.log.debug(sm.getString("http11protocol.proto.ioexception.debug"),
 						e);
@@ -863,6 +866,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 			// rare-but-nonfatal exceptions, catch them here, and log as
 			// above.
 			catch (Throwable e) {
+				e.printStackTrace();
 				// any other exception or error is odd. Here we log it
 				// with "ERROR" level, so it will show up even on
 				// less-than-verbose logs.
@@ -912,6 +916,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						Registry.getRegistry(null, null).registerComponent(rp, rpName, null);
 						rp.setRpName(rpName);
 					} catch (Exception e) {
+						e.printStackTrace();
 						log.warn("Error registering request");
 					}
 				}
@@ -934,6 +939,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						Registry.getRegistry(null, null).unregisterComponent(rpName);
 						rp.setRpName(null);
 					} catch (Exception e) {
+						e.printStackTrace();
 						log.warn("Error unregistering request", e);
 					}
 				}

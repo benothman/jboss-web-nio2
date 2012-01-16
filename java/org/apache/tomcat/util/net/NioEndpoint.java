@@ -197,21 +197,19 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		this.channelList = new ChannelList(getMaxThreads());
-
+		ExecutorService executorService;
 		// Create the thread factory
 		DefaultThreadFactory threadFactory = new DefaultThreadFactory(threadPriority);
-		// Create the executor service
-		ExecutorService executorService = Executors.newFixedThreadPool(getMaxThreads(),
-				threadFactory);
-		setExecutor(executorService);
-
+		if (this.executor != null) {
+			executorService = (ExecutorService) this.executor;
+		} else {
+			// Create the executor service
+			executorService = Executors.newFixedThreadPool(getMaxThreads(), threadFactory);
+			// initialize the endpoint executor
+			setExecutor(executorService);
+		}
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
-
-		
-		
-		// initialize the endpoint executor
-		this.executor = executorService;
 
 		if (this.serverSocketChannelFactory == null) {
 			this.serverSocketChannelFactory = NioServerSocketChannelFactory
@@ -275,6 +273,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				acceptorThread.start();
 			}
 		}
+		logger.info("--------- NioEndpoint Started successfully ---------");
 	}
 
 	/*
@@ -585,13 +584,17 @@ public class NioEndpoint extends AbstractEndpoint {
 
 					// Hand this channel off to an appropriate processor
 					if (!processChannel(channel)) {
+						logger.info("Fail processing the channel");
 						// Close channel right away
 						try {
 							channel.close();
 						} catch (IOException e) {
+							logger.error(e.getMessage(), e);
+							e.printStackTrace();
 						}
 					}
 				} catch (Exception x) {
+					x.printStackTrace();
 					if (running) {
 						logger.error(sm.getString("endpoint.accept.fail"), x);
 					}
