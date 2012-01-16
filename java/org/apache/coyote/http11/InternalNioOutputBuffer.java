@@ -237,8 +237,14 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			} else {
 				log.info("------> flush : step 2.1.2");
 				try {
-					res = this.channel.write(bbuf).get();
-					response.setLastWrite(res);
+					
+					int counter = 0;
+					while( counter < bbuf.limit()) {
+						res = this.channel.write(bbuf).get();
+						response.setLastWrite(res);
+						counter += res;
+						System.out.println("-----> res = " + res +",  still to write : " + (bbuf.limit() - counter));
+					}
 					bbuf.clear();
 				} catch (Exception e) {
 					// NOTHING
