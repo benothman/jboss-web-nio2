@@ -387,6 +387,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			} else {
 				log.info("Read blocking - 1");
 				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
+				log.info("------> Number of bytes read : " + nRead);
 				if (nRead > 0) {
 					bbuf.limit(nRead);
 					bbuf.get(buf, pos, nRead);

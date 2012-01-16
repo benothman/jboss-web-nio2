@@ -483,6 +483,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * Process given channel.
 	 */
 	protected boolean processChannel(NioChannel channel) {
+		logger.info("--------> NioEndpoint : Processing channel");
 		try {
 			if (executor == null) {
 				Worker worker = getWorkerThread();
@@ -593,6 +594,7 @@ public class NioEndpoint extends AbstractEndpoint {
 							e.printStackTrace();
 						}
 					}
+					logger.info("Success processing the channel");
 				} catch (Exception x) {
 					x.printStackTrace();
 					if (running) {
@@ -1348,6 +1350,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				this.channel.close();
 			} catch (IOException e) {
 				// NOP
+				logger.error("Error when closing the channel : " + e.getMessage(), e);
+				e.printStackTrace();
 			}
 		}
 	}

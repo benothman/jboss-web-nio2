@@ -913,24 +913,32 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			request.scheme().setString("https");
 		}
 		MessageBytes protocolMB = request.protocol();
+		
+		
+		log.info("------> Protocol Message bytes -> " + protocolMB);
+		
 		if (protocolMB.equals(Constants.HTTP_11)) {
 			http11 = true;
 			protocolMB.setString(Constants.HTTP_11);
+			log.info("----> prepareRequest() - 1");
 		} else if (protocolMB.equals(Constants.HTTP_10)) {
 			http11 = false;
 			keepAlive = false;
 			protocolMB.setString(Constants.HTTP_10);
+			log.info("----> prepareRequest() - 2");
 		} else if (protocolMB.equals("")) {
 			// HTTP/0.9
 			http09 = true;
 			http11 = false;
 			keepAlive = false;
+			log.info("----> prepareRequest() - 3");
 		} else {
 			// Unsupported protocol
 			http11 = false;
 			error = true;
 			// Send 505; Unsupported HTTP version
 			response.setStatus(505);
+			log.info("----> prepareRequest() - 4");
 		}
 
 		MessageBytes methodMB = request.method();
