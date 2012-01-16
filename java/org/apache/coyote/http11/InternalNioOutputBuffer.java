@@ -228,6 +228,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		log.info("------> flush : step 2");
 		if (bbuf.position() > 0) {
 			log.info("------> flush : step 2.1");
+			bbuf.put(Constants.CRLF_BYTES);
 			bbuf.flip();
 			if (nonBlocking) {
 				log.info("------> flush : step 2.1.1");
