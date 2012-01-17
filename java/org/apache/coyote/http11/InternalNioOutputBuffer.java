@@ -230,11 +230,20 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		if (bbuf.position() > 0) {
 			log.info("------> flush : step 2.1");
 			bbuf.flip();
-			
-			byte [] b = new byte[bbuf.limit()];
+
+			// -------------------------------------
+			byte[] b = new byte[bbuf.limit()];
 			bbuf.get(b);
 			bbuf.flip();
-			System.out.println("---> Flush : content of the buffer -> " + new String(b));
+			String s = new String(b);
+			System.out.println("---> Flush : content of the buffer -> " + s);
+
+			if (s.substring(s.length() - 2).equals(Constants.CRLF)) {
+				System.out.println("-----> Buffer contains CRLF");
+			}
+
+			// -------------------------------------
+
 			if (nonBlocking) {
 				log.info("------> flush : step 2.1.1");
 				// Perform non blocking writes until all data is written, or the
@@ -277,24 +286,22 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		int start = leftover.getStart();
 		byte[] b = leftover.getBuffer();
 
-		
-		
 		bbuf.clear();
 		bbuf.put(b, leftover.getOffset(), leftover.getLength());
 		bbuf.flip();
-		
-		if(nonBlocking) {
+
+		if (nonBlocking) {
 			nonBlockingWrite(bbuf);
 		} else {
 			int res = 0;
-			while((res = blockingWrite(bbuf)) > 0) {
+			while ((res = blockingWrite(bbuf)) > 0) {
 				// Wait until all bytes are written, or the channel was closed
 			}
-			
+
 			if (res < 0) { // The channel was closed
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
-			
+
 			response.setLastWrite(res);
 			if (bbuf.position() < bbuf.limit()) {
 				// Could not write all leftover data: put back to write
@@ -306,84 +313,43 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				return true;
 			}
 		}
-		
+
 		return true;
-		
-		
-		
-		
-		
+
 		// -------------------
 		/*
-		while (len > 0) {
-			int thisTime = len;
-			if (bbuf.position() == bbuf.capacity()) {
-				int res = 0;
-				bbuf.flip();
-				if (nonBlocking) {
-					nonBlockingWrite(bbuf);
-				} else {
-					while((res = blockingWrite(bbuf)) > 0) {
-						// Wait until all bytes are written, or the channel was closed
-					}
-				}
-
-				if (res < 0) { // The channel was closed
-					throw new IOException(sm.getString("oob.failedwrite"));
-				}
-				
-				response.setLastWrite(res);
-
-				if (bbuf.position() < bbuf.limit()) {
-					// Could not write all leftover data: put back to write
-					leftover.setOffset(start);
-					return false;
-				} else {
-					bbuf.clear();
-				}
-			}
-			if (thisTime > bbuf.capacity() - bbuf.position()) {
-				thisTime = bbuf.capacity() - bbuf.position();
-			}
-			
-			
-			
-			bbuf.put(b, start, thisTime);
-			len = len - thisTime;
-			start = start + thisTime;
-		}
-
-		int pos = 0;
-		int end = bbuf.position();
-		if (pos < end) {
-			int res = 0;
-			while (pos < end) {
-				// res = Socket.sendibb(socket, pos, end - pos);
-				// TODO update code to use channels
-				if (res > 0) {
-					pos += res;
-				} else {
-					break;
-				}
-			}
-			if (res < 0) {
-				throw new IOException(sm.getString("oob.failedwrite"));
-			}
-			response.setLastWrite(res);
-		}
-		if (pos < end) {
-			leftover.allocate(end - pos, -1);
-			bbuf.position(pos);
-			bbuf.limit(end);
-			bbuf.get(leftover.getBuffer(), 0, end - pos);
-			leftover.setEnd(end - pos);
-			bbuf.clear();
-			return false;
-		}
-		bbuf.clear();
-		leftover.recycle();
-
-		return true;
-		*/
+		 * while (len > 0) { int thisTime = len; if (bbuf.position() ==
+		 * bbuf.capacity()) { int res = 0; bbuf.flip(); if (nonBlocking) {
+		 * nonBlockingWrite(bbuf); } else { while((res = blockingWrite(bbuf)) >
+		 * 0) { // Wait until all bytes are written, or the channel was closed }
+		 * }
+		 * 
+		 * if (res < 0) { // The channel was closed throw new
+		 * IOException(sm.getString("oob.failedwrite")); }
+		 * 
+		 * response.setLastWrite(res);
+		 * 
+		 * if (bbuf.position() < bbuf.limit()) { // Could not write all leftover
+		 * data: put back to write leftover.setOffset(start); return false; }
+		 * else { bbuf.clear(); } } if (thisTime > bbuf.capacity() -
+		 * bbuf.position()) { thisTime = bbuf.capacity() - bbuf.position(); }
+		 * 
+		 * 
+		 * 
+		 * bbuf.put(b, start, thisTime); len = len - thisTime; start = start +
+		 * thisTime; }
+		 * 
+		 * int pos = 0; int end = bbuf.position(); if (pos < end) { int res = 0;
+		 * while (pos < end) { // res = Socket.sendibb(socket, pos, end - pos);
+		 * // TODO update code to use channels if (res > 0) { pos += res; } else
+		 * { break; } } if (res < 0) { throw new
+		 * IOException(sm.getString("oob.failedwrite")); }
+		 * response.setLastWrite(res); } if (pos < end) { leftover.allocate(end
+		 * - pos, -1); bbuf.position(pos); bbuf.limit(end);
+		 * bbuf.get(leftover.getBuffer(), 0, end - pos); leftover.setEnd(end -
+		 * pos); bbuf.clear(); return false; } bbuf.clear(); leftover.recycle();
+		 * 
+		 * return true;
+		 */
 	}
 }
