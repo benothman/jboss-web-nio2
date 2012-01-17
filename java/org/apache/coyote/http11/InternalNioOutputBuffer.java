@@ -271,7 +271,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					if (bbuf.remaining() == 0) {
 						bbuf.put(Constants.CRLF_BYTES);
 						bbuf.flip();
-						blockingWrite(bbuf);
+						int x = blockingWrite(bbuf);
+						bbuf.clear();
+						System.out.println("***** x = " + x + " *****");
 					}
 				} catch (Exception e) {
 					// NOTHING
