@@ -300,6 +300,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	@Override
 	public boolean flushLeftover() throws IOException {
+		
+		System.out.println("################ flushLeftover ###############");
+		
 		int len = leftover.getLength();
 		int start = leftover.getStart();
 		byte[] b = leftover.getBuffer();

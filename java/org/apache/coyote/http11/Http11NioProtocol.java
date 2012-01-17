@@ -56,7 +56,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	 * Create a new instance of {@code Http11NioProtocol}
 	 */
 	public Http11NioProtocol() {
-		logger.info("---------- Create a new instance of " + getClass().getName() + " ----------");
 		setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);
 		setSoTimeout(Constants.DEFAULT_CONNECTION_TIMEOUT);
 		setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
@@ -819,7 +818,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		 */
 		@Override
 		public SocketState process(NioChannel channel) {
-			log.info(getClass() +" -> process request");
 			Http11NioProcessor processor = recycledProcessors.poll();
 			try {
 				if (processor == null) {
