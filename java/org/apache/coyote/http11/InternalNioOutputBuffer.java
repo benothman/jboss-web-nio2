@@ -240,6 +240,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			if (s.substring(s.length() - 2).equals(Constants.CRLF)) {
 				System.out.println("-----> Buffer contains CRLF");
+			} else {
+				System.out.println("-----> Buffer does not contain CRLF");
 			}
 
 			// -------------------------------------
