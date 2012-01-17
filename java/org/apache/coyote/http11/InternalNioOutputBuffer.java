@@ -229,8 +229,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		log.info("------> flush : step 2");
 		if (bbuf.position() > 0) {
 			log.info("------> flush : step 2.1");
-			//bbuf.put(Constants.CRLF_BYTES);
 			bbuf.flip();
+			
+			byte [] b = new byte[bbuf.limit()];
+			bbuf.get(b);
+			System.out.println("---> Flush : content of the buffer -> " + new String(b));
 			if (nonBlocking) {
 				log.info("------> flush : step 2.1.1");
 				// Perform non blocking writes until all data is written, or the

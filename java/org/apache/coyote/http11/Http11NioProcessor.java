@@ -497,7 +497,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	private void flush() {
 		try {
 			outputBuffer.flush();
-			outputBuffer.flushLeftover();
+			//outputBuffer.flushLeftover();
 		} catch (IOException e) {
 			// Set error flag
 			error = true;
