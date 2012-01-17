@@ -89,6 +89,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		channel = null;
 	}
 
+	/**
+	 * Close the channel
+	 */
 	private void close() {
 		try {
 			this.channel.close();
@@ -133,8 +136,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			@Override
 			public void failed(Throwable exc, Void attachment) {
-				// TODO Auto-generated method stub
-
+				
 			}
 		});
 	}
@@ -194,7 +196,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
 	 */
 	protected void flushBuffer() throws IOException {
-		log.info("---------> flush the buffer");
+		System.out.println("----> " + getClass().getName() + "#flushBuffer() <----");
 		int res = 0;
 
 		// If there are still leftover bytes here, this means the user did a
@@ -204,9 +206,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// the data
 		if (leftover.getLength() > 0) {
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
+				System.out.println("----- Sending leftover bytes -----");
 				// Send leftover bytes
-				// res = Socket.send(socket, leftover.getBuffer(),
-				// leftover.getOffset(), leftover.getEnd());
 				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
 				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
 				bb.flip();
@@ -230,21 +231,15 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// result of the write is 0
 				nonBlockingWrite(bbuf);
 			} else {
-				try {
-					int counter = 0;
-					while (counter < bbuf.limit()) {
-						res = blockingWrite(bbuf);
-						counter += res;
-						response.setLastWrite(res);
-						System.out.println("-----> res = " + res + ",  still to write : "
-								+ bbuf.remaining());
-					}					
-					bbuf.clear();
-				} catch (Exception e) {
-					// NOTHING
-					log.error(e.getMessage(), e);
-					e.printStackTrace();
+				int counter = 0;
+				while (counter < bbuf.limit()) {
+					res = blockingWrite(bbuf);
+					counter += res;
+					response.setLastWrite(res);
+					System.out.println("-----> res = " + res + ",  still to write : "
+							+ bbuf.remaining());
 				}
+				bbuf.clear();
 			}
 			log.info("------> flush : step 2.2");
 			if (res < 0) {
@@ -261,9 +256,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	@Override
 	public boolean flushLeftover() throws IOException {
-		
+
 		System.out.println("################ flushLeftover ###############");
-		
+
 		int len = leftover.getLength();
 		int start = leftover.getStart();
 		byte[] b = leftover.getBuffer();

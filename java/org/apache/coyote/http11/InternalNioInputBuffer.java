@@ -373,6 +373,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		int nRead = 0;
 
 		if (parsingHeader) {
+			System.out.println("----> Parse header");
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
@@ -381,8 +382,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf);
 			} else {
+				System.out.println("-----> Start blocking read (timeout = "
+						+ endpoint.getSoTimeout() + ")");
 				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
-				log.info("------> Number of bytes read : " + nRead);
+				System.out.println("-----> End blocking read --> Number of bytes read : " + nRead);
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
@@ -391,6 +394,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 
 		} else {
+			System.out.println("----> Not parsing header");
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
 				// allocate a
@@ -407,7 +411,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf);
 			} else {
+
+				System.out.println("-----> Start blocking read (timeout = "
+						+ endpoint.getSoTimeout() + ")");
 				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
+				System.out.println("-----> End blocking read --> Number of bytes read : " + nRead);
+
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
