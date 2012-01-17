@@ -233,6 +233,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			
 			byte [] b = new byte[bbuf.limit()];
 			bbuf.get(b);
+			bbuf.flip();
 			System.out.println("---> Flush : content of the buffer -> " + new String(b));
 			if (nonBlocking) {
 				log.info("------> flush : step 2.1.1");
