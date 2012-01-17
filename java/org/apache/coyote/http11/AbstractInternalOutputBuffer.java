@@ -130,14 +130,13 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 		this.response = response;
 		this.headers = response.getMimeHeaders();
 		buf = new byte[headerBufferSize];
-		if (headerBufferSize < (8 * 1024)) {
+		if (headerBufferSize < Constants.MIN_BUFFER_SIZE) {
 			bbuf = ByteBuffer.allocateDirect(6 * 1500);
 		} else {
 			bbuf = ByteBuffer.allocateDirect((headerBufferSize / 1500 + 1) * 1500);
 		}
 
 		outputBuffer = new OutputBufferImpl();
-
 		filterLibrary = new OutputFilter[0];
 		activeFilters = new OutputFilter[0];
 		lastActiveFilter = -1;
@@ -231,7 +230,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *             an undelying I/O error occured
 	 */
 	public void flush() throws IOException {
-		System.out.println("----> " + getClass().getName() + "#flush() <----");
+		System.out.println("----> " + getClass().getName() + "#flush()");
 		if (!committed) {
 
 			// Send the connector a request for commit. The connector should

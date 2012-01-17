@@ -369,7 +369,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#fill()
 	 */
 	protected boolean fill() throws IOException {
-		log.info("Start fill");
 		int nRead = 0;
 
 		if (parsingHeader) {
@@ -388,7 +387,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					lastValid = pos + nRead;
 				}
 			}
-
 		} else {
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
@@ -420,6 +418,17 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	}
 
 	/**
+	 * Close the channel
+	 */
+	private void close() {
+		try {
+			channel.close();
+		} catch (IOException e) {
+			// NOTHING
+		}
+	}
+
+	/**
 	 * 
 	 * @param bb
 	 */
@@ -428,11 +437,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			@Override
 			public void completed(Integer nBytes, Void attachment) {
 				if (nBytes < 0) {
-					try {
-						channel.close();
-					} catch (IOException e) {
-						// NOTHING
-					}
+					close();
 				}
 
 				if (nBytes > 0) {
