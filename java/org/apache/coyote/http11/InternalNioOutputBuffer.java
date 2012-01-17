@@ -27,7 +27,6 @@ import java.nio.channels.CompletionHandler;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
-import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -204,9 +203,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// - If the call is synchronous, make regular blocking writes to flush
 		// the data
 		if (leftover.getLength() > 0) {
-			log.info("------> flush : step 1");
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
-				log.info("------> flush : step 1.1.1");
 				// Send leftover bytes
 				// res = Socket.send(socket, leftover.getBuffer(),
 				// leftover.getOffset(), leftover.getEnd());
@@ -214,7 +211,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
 				bb.flip();
 				res = blockingWrite(bb);
-				log.info("------> flush : step 1.1.2");
 				leftover.recycle();
 				// Send current buffer
 				if (res > 0 && bbuf.position() > 0) {
@@ -222,13 +218,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				}
 				bbuf.clear();
 			} else {
-				log.info("------> flush : step 1.2");
 				throw new IOException(sm.getString("oob.backlog"));
 			}
 		}
-		log.info("------> flush : step 2");
+
 		if (bbuf.position() > 0) {
-			log.info("------> flush : step 2.1");
 			bbuf.flip();
 
 			// -------------------------------------
@@ -238,16 +232,20 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			String s = new String(b);
 			System.out.println("---> Flush : content of the buffer -> " + s);
 
+			if (s.charAt(s.length() - 1) == '\n' || s.charAt(s.length() - 1) == '\r') {
+				System.out.println("***** CR or LF at the end of the buffer *****");
+			} else {
+				System.out.println("***** NO CR nor LF at the end of the buffer *****");
+			}
+
 			if (s.substring(s.length() - 2).equals(Constants.CRLF)) {
 				System.out.println("-----> Buffer contains CRLF");
 			} else {
 				System.out.println("-----> Buffer does not contain CRLF");
 			}
-
 			// -------------------------------------
 
 			if (nonBlocking) {
-				log.info("------> flush : step 2.1.1");
 				// Perform non blocking writes until all data is written, or the
 				// result of the write is 0
 				nonBlockingWrite(bbuf);
@@ -260,11 +258,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 						counter += res;
 						response.setLastWrite(res);
 						System.out.println("-----> res = " + res + ",  still to write : "
-								+ (bbuf.limit() - counter));
+								+ bbuf.remaining());
 					}
 					bbuf.clear();
 
-					if ((bbuf.limit() - counter) == 0) {
+					if (bbuf.remaining() == 0) {
 						bbuf.put(Constants.CRLF_BYTES);
 						bbuf.flip();
 						blockingWrite(bbuf);
