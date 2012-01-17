@@ -136,7 +136,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			@Override
 			public void failed(Throwable exc, Void attachment) {
-				
+
 			}
 		});
 	}
@@ -196,7 +196,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
 	 */
 	protected void flushBuffer() throws IOException {
-		System.out.println("----> " + getClass().getName() + "#flushBuffer() <----");
+		System.out.println("----> " + getClass().getName() + "#flushBuffer() : start");
 		int res = 0;
 
 		// If there are still leftover bytes here, this means the user did a
@@ -231,21 +231,20 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// result of the write is 0
 				nonBlockingWrite(bbuf);
 			} else {
-				int counter = 0;
-				while (counter < bbuf.limit()) {
+				System.out.println("-----> empty : " + (bbuf.capacity() - bbuf.limit()));
+				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf);
-					counter += res;
 					response.setLastWrite(res);
 					System.out.println("-----> res = " + res + ",  still to write : "
 							+ bbuf.remaining());
 				}
 				bbuf.clear();
 			}
-			log.info("------> flush : step 2.2");
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
+		System.out.println("----> " + getClass().getName() + "#flushBuffer() : end");
 	}
 
 	/*
