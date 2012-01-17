@@ -273,6 +273,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
+			
+			if(res == 0) {
+				bbuf.clear();
+				bbuf.put(Constants.CRLF_BYTES);
+				bbuf.flip();
+				blockingWrite(bbuf);
+			}
 		}
 	}
 
