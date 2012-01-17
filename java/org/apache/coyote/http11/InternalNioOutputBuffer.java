@@ -232,10 +232,16 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			String s = new String(b);
 			System.out.println("---> Flush : content of the buffer -> " + s);
 
-			if (s.charAt(s.length() - 1) == '\n' || s.charAt(s.length() - 1) == '\r') {
-				System.out.println("***** CR or LF at the end of the buffer *****");
+			if (s.charAt(s.length() - 1) == '\n') {
+				System.out.println("***** LF at the end of the buffer *****");
 			} else {
-				System.out.println("***** NO CR nor LF at the end of the buffer *****");
+				System.out.println("***** NO LF at the end of the buffer *****");
+			}
+
+			if (s.charAt(s.length() - 1) == '\r') {
+				System.out.println("***** CR at the end of the buffer *****");
+			} else {
+				System.out.println("***** NO CR at the end of the buffer *****");
 			}
 
 			if (s.substring(s.length() - 2).equals(Constants.CRLF)) {
