@@ -263,6 +263,12 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 								+ (bbuf.limit() - counter));
 					}
 					bbuf.clear();
+
+					if ((bbuf.limit() - counter) == 0) {
+						bbuf.put(Constants.CRLF_BYTES);
+						bbuf.flip();
+						blockingWrite(bbuf);
+					}
 				} catch (Exception e) {
 					// NOTHING
 					log.error(e.getMessage(), e);
@@ -272,13 +278,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			log.info("------> flush : step 2.2");
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
-			}
-			
-			if(res == 0) {
-				bbuf.clear();
-				bbuf.put(Constants.CRLF_BYTES);
-				bbuf.flip();
-				blockingWrite(bbuf);
 			}
 		}
 	}
