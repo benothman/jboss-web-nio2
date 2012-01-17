@@ -266,15 +266,19 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 						System.out.println("-----> res = " + res + ",  still to write : "
 								+ bbuf.remaining());
 					}
-					bbuf.clear();
 
 					if (bbuf.remaining() == 0) {
+						log.info("------> flush : step 2.1.3");
+						bbuf.clear();
 						bbuf.put(Constants.CRLF_BYTES);
 						bbuf.flip();
 						int x = blockingWrite(bbuf);
 						bbuf.clear();
 						System.out.println("***** x = " + x + " *****");
+					} else {
+						log.info("------> flush : step 2.1.4");
 					}
+					bbuf.clear();
 				} catch (Exception e) {
 					// NOTHING
 					log.error(e.getMessage(), e);
