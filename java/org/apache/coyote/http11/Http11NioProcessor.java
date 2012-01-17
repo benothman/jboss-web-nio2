@@ -29,7 +29,6 @@ import org.apache.coyote.ActionCode;
 import org.apache.coyote.Request;
 import org.apache.coyote.RequestInfo;
 import org.apache.coyote.Response;
-import org.apache.coyote.http11.filters.BufferedInputFilter;
 import org.apache.coyote.http11.filters.ChunkedInputFilter;
 import org.apache.coyote.http11.filters.ChunkedOutputFilter;
 import org.apache.coyote.http11.filters.GzipOutputFilter;
@@ -38,9 +37,6 @@ import org.apache.coyote.http11.filters.IdentityOutputFilter;
 import org.apache.coyote.http11.filters.SavedRequestInputFilter;
 import org.apache.coyote.http11.filters.VoidInputFilter;
 import org.apache.coyote.http11.filters.VoidOutputFilter;
-import org.apache.tomcat.jni.SSL;
-import org.apache.tomcat.jni.SSLSocket;
-import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.apache.tomcat.util.buf.MessageBytes;
@@ -48,10 +44,9 @@ import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
-import org.apache.tomcat.util.net.NioEndpoint.ChannelInfo;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.jsse.SSLNioChannel;
 import org.apache.tomcat.util.net.SocketStatus;
+import org.apache.tomcat.util.net.jsse.SSLNioChannel;
 
 /**
  * Processes HTTP requests.
@@ -289,9 +284,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		boolean keptAlive = false;
 		boolean openChannel = false;
 
-		int count = 0;
 		while (!error && keepAlive && !event) {
-			log.info("------> counter : " + (count++));
 			// Parsing the request header
 			try {
 
@@ -504,6 +497,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	private void flush() {
 		try {
 			outputBuffer.flush();
+			outputBuffer.flushLeftover();
 		} catch (IOException e) {
 			// Set error flag
 			error = true;
@@ -914,31 +908,24 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		}
 		MessageBytes protocolMB = request.protocol();
 		
-		
-		log.info("------> Protocol Message bytes -> " + protocolMB);
-		
 		if (protocolMB.equals(Constants.HTTP_11)) {
 			http11 = true;
 			protocolMB.setString(Constants.HTTP_11);
-			log.info("----> prepareRequest() - 1");
 		} else if (protocolMB.equals(Constants.HTTP_10)) {
 			http11 = false;
 			keepAlive = false;
 			protocolMB.setString(Constants.HTTP_10);
-			log.info("----> prepareRequest() - 2");
 		} else if (protocolMB.equals("")) {
 			// HTTP/0.9
 			http09 = true;
 			http11 = false;
 			keepAlive = false;
-			log.info("----> prepareRequest() - 3");
 		} else {
 			// Unsupported protocol
 			http11 = false;
 			error = true;
 			// Send 505; Unsupported HTTP version
 			response.setStatus(505);
-			log.info("----> prepareRequest() - 4");
 		}
 
 		MessageBytes methodMB = request.method();

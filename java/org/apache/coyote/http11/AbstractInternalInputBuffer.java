@@ -439,7 +439,6 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 * @throws IOException
 	 */
 	public void parseHeaders() throws IOException {
-		log.info("-----------> Parsing headers");
 		while (parseHeader()) {
 		}
 
@@ -455,7 +454,6 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 * @throws IOException
 	 */
 	public boolean parseHeader() throws IOException {
-		log.info("----------------> Parsing header");
 		// Check for blank line
 		byte chr = 0;
 		while (true) {

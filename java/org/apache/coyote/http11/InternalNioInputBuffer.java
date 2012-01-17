@@ -80,7 +80,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @param endpoint
 	 */
 	public InternalNioInputBuffer(Request request, int headerBufferSize, NioEndpoint endpoint) {
-
 		super(request, headerBufferSize);
 		this.endpoint = endpoint;
 		this.inputBuffer = new ChannelInputBuffer();
@@ -247,7 +246,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		//
 		// Reading the URI
 		//
-
 		boolean eol = false;
 
 		while (!space) {
@@ -272,7 +270,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 
 			pos++;
-
 		}
 
 		request.unparsedURI().setBytes(buf, start, end - start);
@@ -382,10 +379,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			bbuf.clear();
 			if (nonBlocking) {
-				log.info("Read non-blocking - 1");
 				nonBlockingRead(bbuf);
 			} else {
-				log.info("Read blocking - 1");
 				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
 				log.info("------> Number of bytes read : " + nRead);
 				if (nRead > 0) {
@@ -410,10 +405,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			bbuf.clear();
 			if (nonBlocking) {
-				log.info("Read non-blocking - 2");
 				nonBlockingRead(bbuf);
 			} else {
-				log.info("Read blocking - 2");
 				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
 				if (nRead > 0) {
 					bbuf.flip();

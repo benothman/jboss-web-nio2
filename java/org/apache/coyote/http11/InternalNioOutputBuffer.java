@@ -207,23 +207,24 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			log.info("------> flush : step 1");
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
 				log.info("------> flush : step 1.1.1");
-                // Send leftover bytes
-                //res = Socket.send(socket, leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
+				// Send leftover bytes
+				// res = Socket.send(socket, leftover.getBuffer(),
+				// leftover.getOffset(), leftover.getEnd());
 				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
 				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
 				bb.flip();
 				res = blockingWrite(bb);
 				log.info("------> flush : step 1.1.2");
-                leftover.recycle();
-                // Send current buffer
-                if (res > 0 && bbuf.position() > 0) {
-                	res = blockingWrite(bbuf);
-                }
-                bbuf.clear();
-            } else {
-            	log.info("------> flush : step 1.2");
-                throw new IOException(sm.getString("oob.backlog"));
-            }
+				leftover.recycle();
+				// Send current buffer
+				if (res > 0 && bbuf.position() > 0) {
+					res = blockingWrite(bbuf);
+				}
+				bbuf.clear();
+			} else {
+				log.info("------> flush : step 1.2");
+				throw new IOException(sm.getString("oob.backlog"));
+			}
 		}
 		log.info("------> flush : step 2");
 		if (bbuf.position() > 0) {
@@ -238,13 +239,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			} else {
 				log.info("------> flush : step 2.1.2");
 				try {
-					
 					int counter = 0;
-					while( counter < bbuf.limit()) {
-						res = this.channel.write(bbuf).get();
-						response.setLastWrite(res);
+					while (counter < bbuf.limit()) {
+						res = blockingWrite(bbuf);
 						counter += res;
-						System.out.println("-----> res = " + res +",  still to write : " + (bbuf.limit() - counter));
+						response.setLastWrite(res);
+						System.out.println("-----> res = " + res + ",  still to write : "
+								+ (bbuf.limit() - counter));
 					}
 					bbuf.clear();
 				} catch (Exception e) {
@@ -272,30 +273,66 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		int start = leftover.getStart();
 		byte[] b = leftover.getBuffer();
 
+		
+		
+		bbuf.clear();
+		bbuf.put(b, leftover.getOffset(), leftover.getLength());
+		bbuf.flip();
+		
+		if(nonBlocking) {
+			nonBlockingWrite(bbuf);
+		} else {
+			int res = 0;
+			while((res = blockingWrite(bbuf)) > 0) {
+				// Wait until all bytes are written, or the channel was closed
+			}
+			
+			if (res < 0) { // The channel was closed
+				throw new IOException(sm.getString("oob.failedwrite"));
+			}
+			
+			response.setLastWrite(res);
+			if (bbuf.position() < bbuf.limit()) {
+				// Could not write all leftover data: put back to write
+				leftover.setOffset(start);
+				return false;
+			} else {
+				bbuf.clear();
+				leftover.recycle();
+				return true;
+			}
+		}
+		
+		return true;
+		
+		
+		
+		
+		
+		// -------------------
+		/*
 		while (len > 0) {
 			int thisTime = len;
 			if (bbuf.position() == bbuf.capacity()) {
-				int pos = 0;
-				int end = bbuf.position();
 				int res = 0;
-				while (pos < end) {
-					// res = Socket.sendibb(socket, pos, end - pos);
-					// TODO update code to use channels
-					if (res > 0) {
-						pos += res;
-					} else {
-						break;
+				bbuf.flip();
+				if (nonBlocking) {
+					nonBlockingWrite(bbuf);
+				} else {
+					while((res = blockingWrite(bbuf)) > 0) {
+						// Wait until all bytes are written, or the channel was closed
 					}
 				}
-				if (res < 0) {
+
+				if (res < 0) { // The channel was closed
 					throw new IOException(sm.getString("oob.failedwrite"));
 				}
+				
 				response.setLastWrite(res);
-				if (pos < end) {
+
+				if (bbuf.position() < bbuf.limit()) {
 					// Could not write all leftover data: put back to write
-					// poller
 					leftover.setOffset(start);
-					bbuf.position(pos);
 					return false;
 				} else {
 					bbuf.clear();
@@ -304,6 +341,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			if (thisTime > bbuf.capacity() - bbuf.position()) {
 				thisTime = bbuf.capacity() - bbuf.position();
 			}
+			
+			
+			
 			bbuf.put(b, start, thisTime);
 			len = len - thisTime;
 			start = start + thisTime;
@@ -340,5 +380,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		leftover.recycle();
 
 		return true;
+		*/
 	}
 }
