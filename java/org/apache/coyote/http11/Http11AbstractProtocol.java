@@ -134,7 +134,7 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	 * Create a new instance of {@code Http11AbstractProtocol}
 	 */
 	public Http11AbstractProtocol() {
-		log.info("Creating a new instance");
+		super();
 	}
 
 	/**

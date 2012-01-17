@@ -79,8 +79,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	 */
 	@Override
 	public void init() throws Exception {
-		logger.info("--------- Initializing the Http11NioProtocol ---------");
-
 		endpoint.setName(getName());
 		endpoint.setHandler(cHandler);
 		try {
@@ -100,7 +98,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	 */
 	@Override
 	public void start() throws Exception {
-		logger.info("--------- Starting the Http11NioProtocol ---------");
 		if (org.apache.tomcat.util.Constants.ENABLE_MODELER) {
 			if (this.domain != null) {
 				try {

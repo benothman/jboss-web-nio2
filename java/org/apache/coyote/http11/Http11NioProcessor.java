@@ -269,7 +269,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 *             error during an I/O operation
 	 */
 	public SocketState process(NioChannel channel) throws IOException {
-		log.info("------> Starting processing the channel");
 		RequestInfo rp = request.getRequestProcessor();
 		rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 

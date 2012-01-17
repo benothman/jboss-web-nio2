@@ -27,7 +27,6 @@ import java.net.BindException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -91,7 +90,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public NioEndpoint() {
 		super();
-		logger.info("--------- Creating new instance of " + getClass().getName() + " ---------");
 	}
 
 	// ----------------------- Getters and Setters -----------------------
@@ -186,7 +184,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	@Override
 	public void init() throws Exception {
-		logger.info("--------- Initializing the NioEndpoint ---------");
 		if (initialized) {
 			return;
 		}
@@ -240,7 +237,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 
-		logger.info("NioEndpoint initialized");
 		initialized = true;
 	}
 
@@ -252,7 +248,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	@Override
 	public void start() throws Exception {
 		// Initialize channel if not done before
-		logger.info("--------- Starting the NioEndpoint ---------");
 		if (!initialized) {
 			init();
 		}
@@ -273,7 +268,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				acceptorThread.start();
 			}
 		}
-		logger.info("--------- NioEndpoint Started successfully ---------");
 	}
 
 	/*
@@ -483,7 +477,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * Process given channel.
 	 */
 	protected boolean processChannel(NioChannel channel) {
-		logger.info("--------> NioEndpoint : Processing channel");
 		try {
 			if (executor == null) {
 				Worker worker = getWorkerThread();
@@ -594,7 +587,6 @@ public class NioEndpoint extends AbstractEndpoint {
 							e.printStackTrace();
 						}
 					}
-					logger.info("Success processing the channel");
 				} catch (Exception x) {
 					x.printStackTrace();
 					if (running) {
