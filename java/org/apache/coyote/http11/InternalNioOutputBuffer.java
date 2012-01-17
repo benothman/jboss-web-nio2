@@ -225,38 +225,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		if (bbuf.position() > 0) {
 			bbuf.flip();
 
-			// -------------------------------------
-			byte[] b = new byte[bbuf.limit()];
-			bbuf.get(b);
-			bbuf.flip();
-			String s = new String(b);
-			System.out.println("---> Flush : content of the buffer -> " + s);
-
-			if (s.charAt(s.length() - 1) == '\n') {
-				System.out.println("***** LF at the end of the buffer *****");
-			} else {
-				System.out.println("***** NO LF at the end of the buffer *****");
-			}
-
-			if (s.charAt(s.length() - 1) == '\r') {
-				System.out.println("***** CR at the end of the buffer *****");
-			} else {
-				System.out.println("***** NO CR at the end of the buffer *****");
-			}
-
-			if (s.substring(s.length() - 2).equals(Constants.CRLF)) {
-				System.out.println("-----> Buffer contains CRLF");
-			} else {
-				System.out.println("-----> Buffer does not contain CRLF");
-			}
-			// -------------------------------------
-
 			if (nonBlocking) {
 				// Perform non blocking writes until all data is written, or the
 				// result of the write is 0
 				nonBlockingWrite(bbuf);
 			} else {
-				log.info("------> flush : step 2.1.2");
 				try {
 					int counter = 0;
 					while (counter < bbuf.limit()) {
@@ -265,19 +238,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 						response.setLastWrite(res);
 						System.out.println("-----> res = " + res + ",  still to write : "
 								+ bbuf.remaining());
-					}
-
-					if (bbuf.remaining() == 0) {
-						log.info("------> flush : step 2.1.3");
-						bbuf.clear();
-						bbuf.put(Constants.CRLF_BYTES);
-						bbuf.flip();
-						int x = blockingWrite(bbuf);
-						bbuf.clear();
-						System.out.println("***** x = " + x + " *****");
-					} else {
-						log.info("------> flush : step 2.1.4");
-					}
+					}					
 					bbuf.clear();
 				} catch (Exception e) {
 					// NOTHING
