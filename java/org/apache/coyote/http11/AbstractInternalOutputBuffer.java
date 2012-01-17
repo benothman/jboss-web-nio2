@@ -48,7 +48,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 * 
 	 */
 	protected static final Logger log = Logger.getLogger(AbstractInternalOutputBuffer.class);
-	
+
 	/**
 	 * The string manager for this package.
 	 */
@@ -231,7 +231,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *             an undelying I/O error occured
 	 */
 	public void flush() throws IOException {
-
+		System.out.println("----> " + getClass().getName() + "#flush() <----");
 		if (!committed) {
 
 			// Send the connector a request for commit. The connector should
@@ -288,13 +288,13 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *             an undelying I/O error occured
 	 */
 	public void endRequest() throws IOException {
+		System.out.println("----> " + getClass().getName() + "#endRequest() <----");
 
 		if (!committed) {
 			// Send the connector a request for commit. The connector should
 			// then validate the headers, send them (using sendHeader) and
 			// set the filters accordingly.
 			response.action(ActionCode.ACTION_COMMIT, null);
-
 		}
 
 		if (finished) {
@@ -579,7 +579,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 * Flush leftover bytes.
 	 * 
 	 * @return true if all leftover bytes have been flushed
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public abstract boolean flushLeftover() throws IOException;
 
@@ -599,7 +599,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 		 * Write chunk.
 		 */
 		public int doWrite(ByteChunk chunk, Response res) throws IOException {
-
+			System.out.println("----> " + getClass().getName() + "#doWrite() <----");
 			// If non blocking (event) and there are leftover bytes,
 			// put all remaining bytes in the leftover buffer (they are
 			// part of the same write operation)
