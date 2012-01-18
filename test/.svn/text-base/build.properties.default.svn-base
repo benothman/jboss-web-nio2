@@ -1,5 +1,0 @@
-# junit stuff
-junit.version=4.5
-junit.jar.loc=http://kent.dl.sourceforge.net/sourceforge/junit/junit-${junit.version}.jar
-junit.jar=${base.path}/junit-${junit.version}/junit-${junit.version}.jar
-base-junit.home=${base.path}/junit-${junit.version}
