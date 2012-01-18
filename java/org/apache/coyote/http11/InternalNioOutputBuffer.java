@@ -173,7 +173,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			@Override
 			public void failed(Throwable exc, Void attachment) {
-
+				exc.printStackTrace();
 			}
 		});
 	}
@@ -246,7 +246,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// Send leftover bytes
 				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
 				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
-				bb.flip();
+				bb.rewind();
 				res = blockingWrite(bb);
 				leftover.recycle();
 				// Send current buffer
@@ -260,7 +260,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 
 		if (bbuf.position() > 0) {
-			bbuf.flip();
+			bbuf.rewind();
 
 			if (nonBlocking) {
 				// Perform non blocking writes until all data is written, or the
