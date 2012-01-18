@@ -371,21 +371,17 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#fill()
 	 */
 	protected boolean fill() throws IOException {
-		System.out.println("-------> fill() - Start, keep-alive timeout : " + endpoint.getKeepAliveTimeout());
 		int nRead = 0;
 		if (parsingHeader) {
-			System.out.println("-------> fill() - Parsing header");
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
 
 			bbuf.clear();
 			if (nonBlocking) {
-				System.out.println("-------> fill() - Parsing header : Non Blocking");
 				nonBlockingRead(bbuf);
 			} else {
 				nRead = blockingRead(bbuf, 0, TimeUnit.MILLISECONDS);
-				System.out.println("-------> fill() - Parsing header : Blocking mode (read : " + nRead + ")");
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
@@ -400,7 +396,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				}
 			}
 		} else {
-			System.out.println("-------> fill() - Parsing others");
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
 				// allocate a
@@ -460,7 +455,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				}
 			}
 		}
-		System.out.println("-------> fill() - End <-------");
 		return (nRead >= 0);
 	}
 
