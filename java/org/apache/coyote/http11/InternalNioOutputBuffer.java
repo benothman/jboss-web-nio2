@@ -123,44 +123,44 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	private void nonBlockingWrite(final ByteBuffer buffer) {
 		
 		/*
-		 // Perform non blocking writes until all data is written, or the result
-         // of the write is 0
-                int pos = 0;
-                int end = bbuf.position();
-                while (pos < end) {
-                    res = Socket.sendibb(socket, pos, end - pos);
-                    if (res > 0) {
-                        pos += res;
-                    } else {
-                        break;
+			int pos = 0;
+            int end = bbuf.position();
+            while (pos < end) {
+            	res = Socket.sendibb(socket, pos, end - pos);
+                if (res > 0) {
+                	pos += res;
+                } else {
+                	break;
+                }
+            }
+            if (pos < end) {
+            	if (response.getFlushLeftovers() && (Http11AprProcessor.containerThread.get() == Boolean.TRUE)) {
+                	// Switch to blocking mode and write the data
+                    Socket.timeoutSet(socket, endpoint.getSoTimeout() * 1000);
+                    res = Socket.sendbb(socket, 0, end);
+                    Socket.timeoutSet(socket, 0);
+                } else {
+                	// Put any leftover bytes in the leftover byte chunk
+                    leftover.allocate(end - pos, -1);
+                    bbuf.position(pos);
+                    bbuf.limit(end);
+                    bbuf.get(leftover.getBuffer(), 0, end - pos);
+                    leftover.setEnd(end - pos);
+                    // Call for a write event because it is possible that no further write
+                    // operations are made
+                    if (!response.getFlushLeftovers()) {
+                    	response.action(ActionCode.ACTION_EVENT_WRITE, null);
                     }
                 }
-                if (pos < end) {
-                    if (response.getFlushLeftovers() && (Http11AprProcessor.containerThread.get() == Boolean.TRUE)) {
-                        // Switch to blocking mode and write the data
-                        Socket.timeoutSet(socket, endpoint.getSoTimeout() * 1000);
-                        res = Socket.sendbb(socket, 0, end);
-                        Socket.timeoutSet(socket, 0);
-                    } else {
-                        // Put any leftover bytes in the leftover byte chunk
-                        leftover.allocate(end - pos, -1);
-                        bbuf.position(pos);
-                        bbuf.limit(end);
-                        bbuf.get(leftover.getBuffer(), 0, end - pos);
-                        leftover.setEnd(end - pos);
-                        // Call for a write event because it is possible that no further write
-                        // operations are made
-                        if (!response.getFlushLeftovers()) {
-                            response.action(ActionCode.ACTION_EVENT_WRITE, null);
-                        }
-                    }
-                }
+           	}
 		 */
 		
 		this.channel.write(buffer, null, new CompletionHandler<Integer, Void>() {
 
 			@Override
 			public void completed(Integer nBytes, Void attachment) {
+				 // Perform non blocking writes until all data is written, or the result
+		         // of the write is 0
 				if (nBytes < 0) {
 					close();
 					return;

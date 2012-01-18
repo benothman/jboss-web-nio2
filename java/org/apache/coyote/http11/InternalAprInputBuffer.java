@@ -804,8 +804,8 @@ public class InternalAprInputBuffer implements InputBuffer {
 					throw new IOException(sm.getString("iib.failedread"));
 				}
 			}
+			
 			available = false;
-
 		}
 
 		return (nRead >= 0);

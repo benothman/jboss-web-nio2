@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
+import org.apache.tomcat.jni.Status;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -372,6 +374,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		int nRead = 0;
 
 		if (parsingHeader) {
+
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
@@ -380,14 +383,21 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf);
 			} else {
-				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
+				nRead = blockingRead(bbuf, 0, TimeUnit.MILLISECONDS);
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
 					lastValid = pos + nRead;
+				} else {
+					if ((-nRead) == Status.EAGAIN) {
+						return false;
+					} else {
+						throw new IOException(sm.getString("iib.failedread"));
+					}
 				}
 			}
 		} else {
+
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
 				// allocate a
@@ -399,8 +409,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 			pos = end;
 			lastValid = pos;
-
 			bbuf.clear();
+
 			if (nonBlocking) {
 				nonBlockingRead(bbuf);
 			} else {
@@ -410,6 +420,40 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
 					lastValid = pos + nRead;
+				} else if (nRead <= 0) {
+					if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
+						throw new SocketTimeoutException(sm.getString("iib.failedread"));
+					} else if ((-nRead) == Status.EAGAIN && nonBlocking) {
+						// As asynchronous reads are forbidden, this test is not
+						// useful
+						// && (Http11AprProcessor.containerThread.get() ==
+						// Boolean.TRUE)
+						if (available) {
+							nRead = 0;
+						} else {
+							// In this specific situation, perform the read
+							// again in
+							// blocking mode (the user is not
+							// using available and simply wants to read all
+							// data)
+							nRead = blockingRead(bbuf, endpoint.getSoTimeout() * 1000,
+									TimeUnit.MILLISECONDS);
+
+							if (nRead > 0) {
+								bbuf.flip();
+								bbuf.get(buf, pos, nRead);
+								lastValid = pos + nRead;
+							} else if (nRead <= 0) {
+								if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
+									throw new SocketTimeoutException(sm.getString("iib.failedread"));
+								} else {
+									throw new IOException(sm.getString("iib.failedread"));
+								}
+							}
+						}
+					} else {
+						throw new IOException(sm.getString("iib.failedread"));
+					}
 				}
 			}
 		}
