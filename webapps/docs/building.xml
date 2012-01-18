@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<document>
+
+    &project;
+
+    <properties>
+      <author>Remy Maucherat</author>
+      <title>Building JBossWeb</title>
+    </properties>
+
+<body>
+
+<section name="Introduction">
+
+<p>
+Building JBoss Web from SVN is very easy, and is the first step to contributing to
+JBossWeb. The following is a step by step TODO list.
+</p>
+
+</section>
+
+<section name="Download a Java Development Kit (JDK) release (version 1.5.x or later)">
+
+<p>
+The Sun JDK can be downloaded <a href="http://java.sun.com/j2se/">here</a>.
+</p>
+
+<p>
+<b>IMPORTANT</b>: Set an environment variable JAVA_HOME to the pathname of the 
+directory into which you installed the JDK release.
+</p>
+
+</section>
+
+<section name="Install Apache Ant 1.6.5 or later">
+
+<p>
+Download a binary distribution of Ant 1.6.5 or later from 
+<a href="http://ant.apache.org/bindownload.cgi">here</a>.
+</p>
+
+<p>
+Unpack the binary distribution into a convenient location so that the
+Ant release resides in its own directory (conventionally named
+"apache-ant-1.6.x").  For the purposes of the remainder of this document,
+the symbolic name "${ant.home}" is used to refer to the full pathname of
+ the release directory.
+</p>
+
+<p>
+Create an ANT_HOME environment variable to point the directory ${ant.home}, 
+and modify the PATH environment variable to include directory
+"${ant.home}/bin" in its list.  This makes the "ant" command line script
+available, which will be used to actually perform the build.
+</p>
+
+</section>
+
+<section name="Checkout or obtain the source code for JBoss Web">
+
+  <p>
+  JBoss Web SVN repository URL:
+  <code>http://svn.jboss.org/repos/jbossweb/trunk</code>
+  </p>
+  
+  <p>
+  Download a source package from:
+  <code>http://www.jboss.org/jbossweb/downloads/jboss-web</code>
+  </p>
+  
+  <p>
+  Checkout the source using SVN, selecting the desired version or
+  branch (current development source is at 
+  <code>http://svn.jboss.org/repos/jbossweb/trunk</code>), or 
+  unpack the source package. The location where the source has been
+  placed will be referred as ${jbossweb.source}.
+  </p>
+
+</section>
+
+<section name="Building JBoss Web">
+
+<p>
+Use the following commands:
+<source>
+    cd ${jbossweb.source}
+    ant download
+    ant
+</source>
+</p>
+
+<p>
+NOTE: That build jar files in output/jars, the <code>jbossweb.jar</code>
+have to be copied in <code>${jboss.server.base.dir)/modules/org/jboss/as/web/main</code> to be
+used in AS7.
+</p>
+
+<p>
+NOTE: Users accessing the Internet through a proxy must use a properties
+  file to indicate to Ant the proxy configuration. Read below.
+</p>
+
+<p>
+WARNING: Running this command will download binaries to the 
+  <code>/usr/share/java</code> directory. 
+  Make sure this is appropriate to do so on your computer. On Windows, 
+  this usually corresponds to the <code>C:\usr\share\java</code> directory, 
+  unless Cygwin is used. Read below to customize the directory used 
+  to download the binaries.
+</p>
+
+<p>
+The build can be controlled by creating a ${jbossweb.source}/build.properties
+  file, and adding the following content to it:
+<source>
+# ----- Proxy setup -----
+# Uncomment if using a proxy server.
+#proxy.host=proxy.domain
+#proxy.port=8080
+#proxy.use=on
+
+# ----- Default Base Path for Dependent Packages -----
+# Replace this path with the directory path where
+# dependencies binaries should be downloaded.
+base.path=/usr/share/java
+</source>
+</p>
+
+</section>
+
+<section name="Building with Eclipse">
+
+<p>
+<b>Important:</b>
+This is not a supported means of building JBoss Web; this information is
+provided without warranty :-).
+The only supported means of building JBoss Web is with the "ant build"
+described above.
+However, some developers like to work on Java code with a Java IDE,
+and the following steps have been used by some developers.
+</p>
+
+<p>
+Note that you <b>must</b> complete all the above steps to fetch
+the repositories and build some JAR files the first time.
+After you have completed the above steps, you can set up a
+series of Eclipse 4 projects.
+<b>Note</b> that this will not let you build everything under Eclipse;
+the build process requires use of Ant for the many stages that aren't
+simple Java compilations.
+However, it will allow you to view and edit the Java code,
+get warnings, reformat code, perform refactorings, run Tomcat
+under the IDE, and so on.
+</p>
+
+<p>
+Use Windows-&gt;Preferences and then Java-&gt;Build Path-&gt;Classpath
+Variables to add two new Classpath variables:
+</p>
+
+  <properties>
+
+    <property name="TOMCAT_LIBS_BASE" required="false">
+      <p>The base path where the binary dependencies have been downloaded.</p>
+    </property>
+
+    <property name="ANT_HOME" required="false">
+      <p>The base path of Ant 1.6.5 or later.</p>
+    </property>
+  
+  </properties>
+
+<p>
+Use File-&gt;New Project to create a new Java project 
+for each of the binaries repository (e.g., /usr/share/java), 
+container, connectors, jasper, servletapi. 
+Unless you thought ahead to make the ${jbossweb.source} directory be under
+your Workspace folder, tell Eclipse the external location using &quot;Import/Export...&quot;,
+General-&gt;Existing Project into Workspace.
+</p>
+
+<p>
+Eclipse .project and .classpath files are provided in each of these
+directories so Eclipse should find all source trees and jars, and
+hopefully compile without problems. <b>Note</b> that these
+files assume you are using Eclipse with a 5.0 or later JDK; also, the
+connectors module must be built with a compiler compliance level of 5.0.
+</p>
+
+<p>
+To run JBoss Web without a special IDE plug-in, you can simply use Run-&gt;Run...
+enter "org.apache.catalina.startup.Catalina" as the main class,
+"start" as program arguments, and
+"-Dcatalina.home=..." (with the name of your build directory) 
+as VM arguments.
+</p>
+
+</section>
+
+<section name="Building with other IDEs">
+<p>
+The same caveats apply as for Eclipse, above.
+</p>
+
+<p>
+The same general idea should work in most IDEs; it has been reported
+to work in Idea, for example.
+</p>
+
+</section>
+
+</body>
+</document>

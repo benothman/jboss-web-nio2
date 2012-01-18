@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/jbossweb/!svn/ver/1007/trunk/java/javax/servlet/resources
+END
+j2ee_web_services_client_1_1.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/jbossweb/!svn/ver/363/trunk/java/javax/servlet/resources/j2ee_web_services_client_1_1.xsd
+END
+j2ee_web_services_1_1.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/363/trunk/java/javax/servlet/resources/j2ee_web_services_1_1.xsd
+END
+j2ee_1_4.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/jbossweb/!svn/ver/363/trunk/java/javax/servlet/resources/j2ee_1_4.xsd
+END
+javaee_web_services_client_1_2.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/jbossweb/!svn/ver/955/trunk/java/javax/servlet/resources/javaee_web_services_client_1_2.xsd
+END
+web-app_3_0.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/jbossweb/!svn/ver/1007/trunk/java/javax/servlet/resources/web-app_3_0.xsd
+END
+javaee_web_services_1_2.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/955/trunk/java/javax/servlet/resources/javaee_web_services_1_2.xsd
+END
+XMLSchema.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/jbossweb/!svn/ver/905/trunk/java/javax/servlet/resources/XMLSchema.dtd
+END
+web-app_2_4.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/905/trunk/java/javax/servlet/resources/web-app_2_4.xsd
+END
+xml.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/repos/jbossweb/!svn/ver/170/trunk/java/javax/servlet/resources/xml.xsd
+END
+web-app_2_5.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/905/trunk/java/javax/servlet/resources/web-app_2_5.xsd
+END
+web-common_3_0.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1007/trunk/java/javax/servlet/resources/web-common_3_0.xsd
+END
+web-app_2_2.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/170/trunk/java/javax/servlet/resources/web-app_2_2.dtd
+END
+web-app_2_3.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/905/trunk/java/javax/servlet/resources/web-app_2_3.dtd
+END
+datatypes.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/jbossweb/!svn/ver/905/trunk/java/javax/servlet/resources/datatypes.dtd
+END
+web-fragment_3_0.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1007/trunk/java/javax/servlet/resources/web-fragment_3_0.xsd
+END
+javaee_5.xsd
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/jbossweb/!svn/ver/955/trunk/java/javax/servlet/resources/javaee_5.xsd
+END

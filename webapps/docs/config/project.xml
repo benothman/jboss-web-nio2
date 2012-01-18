@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="JBoss Web Configuration Reference"
+        href="http://labs.jboss.com/jbossweb/">
+
+  <title>JBoss Web Configuration Reference</title>
+
+  <logo href="/images/jbossweblogo.gif">
+    The JBoss Web Servlet/JSP Container
+  </logo>
+
+    
+  <body>
+
+    <menu name="Links">
+        <item name="Docs Home"             href="../index.html"/>
+        <item name="Config Ref. Home"      href="index.html"/>
+    </menu>
+
+    <menu name="Top Level Element">
+        <item name="Web SubSystem"         href="subsystem.html"/>
+    </menu>
+
+    <menu name="Connectors">
+        <item name="HTTP"                  href="http.html"/>
+        <item name="AJP"                   href="ajp.html"/>
+        <item name="HTTPS"                href="ssl.html"/>
+        <item name="Native"                href="native.html"/>
+    </menu>
+
+    <menu name="Configuration elements">
+        <item name="static-resources"      href="static.html"/>
+        <item name="jsp-configuration"     href="jsp.html"/>
+    </menu>
+
+    <menu name="Virtual Hosts">
+        <item name="virtual-server"        href="host.html"/>
+    </menu>
+
+    <menu name="Executors">
+        <item name="Executor"              href="executor.html"/>
+    </menu>
+
+  </body>
+
+</project>

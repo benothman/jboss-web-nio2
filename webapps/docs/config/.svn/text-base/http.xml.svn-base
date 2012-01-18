@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<document url="http.html">
+
+  &project;
+
+  <properties>
+    <author email="craigmcc@apache.org">Craig R. McClanahan</author>
+    <author email="yoavs@apache.org">Yoav Shapira</author>
+    <author email="jfclere@apache.org">Jean-Frederic Clere</author>
+    <title>The HTTP Connector</title>
+  </properties>
+
+<body>
+
+
+<section name="Introduction">
+
+  <p>The <strong>HTTP Connector</strong> element represents a
+  <strong>Connector</strong> component that supports the HTTP/1.1 protocol.
+  It enables Catalina to function as a stand-alone web server, in addition
+  to its ability to execute servlets and JSP pages.  A particular instance
+  of this component listens for connections on a specific TCP port number
+  on the server.  One or more such <strong>Connectors</strong> can be
+  configured as part of the <a href="subsystem.html">Web subSystem</a>
+  to perform request processing and create the response.</p>
+
+  <p>If you wish to configure the <strong>Connector</strong> that is used
+  for connections to web servers using the AJP protocol (such as the
+  <code>mod_jk 1.2.x</code> connector for Apache 1.3), see
+  <a href="ajp.html">here</a> instead.</p>
+
+  <p>Each incoming request requires
+  a thread for the duration of that request.  If more simultaneous requests
+  are received than can be handled by the currently available request
+  processing threads, additional threads will be created up to the
+  configured maximum (the value of the <code>max-connections</code> attribute).
+  Additional connections will be rejected.</p>
+
+</section>
+
+
+<section name="Attributes">
+
+  <subsection name="Common Attributes">
+
+  <p>All implementations of <strong>Connector</strong>
+  support the following attributes:</p>
+
+  <attributes>
+ 
+    <attribute name="name" required="true">
+      <p>Name of the connector</p>
+    </attribute>
+
+    <attribute name="enable-lookups" required="false">
+      <p>Set to <code>true</code> if you want calls to
+      <code>request.getRemoteHost()</code> to perform DNS lookups in
+      order to return the actual host name of the remote client.  Set
+      to <code>false</code> to skip the DNS lookup and return the IP
+      address in String form instead (thereby improving performance).
+      By default, DNS lookups are enabled.</p>
+    </attribute>
+
+    <attribute name="max-post-size" required="false">
+      <p>The maximum size in bytes of the POST which will be handled by
+      the container FORM URL parameter parsing. The limit can be disabled by
+      setting this attribute to a value less than or equal to 0.
+      If not specified, this attribute is set to 2097152 (2 megabytes).</p>
+    </attribute>
+
+    <attribute name="max-save-post-size" required="false">
+      <p>The maximum size in bytes of the POST which will be saved/buffered by
+      the container during FORM or CLIENT-CERT authentication. For both types
+      of authentication, the POST will be saved/buffered before the user is
+      authenticated. For CLIENT-CERT authentication, the POST is buffered for
+      the duration of the SSL handshake and the buffer emptied when the request
+      is processed. For FORM authentication the POST is saved whilst the user
+      is re-directed to the login form and is retained until the user
+      successfully authenticates or the session associated with the
+      authentication request expires. The limit can be disabled by setting this
+      attribute to -1. Setting the attribute to zero will disable the saving of
+      POST data during authentication and the buffering during SSL handshake. 
+      If not specified, this attribute is set to 4096 (4 kilobytes).</p>
+    </attribute>
+
+    <attribute name="protocol" required="false">
+      <p>
+        Sets the protocol to handle incoming traffic.
+        The default value is <code>HTTP/1.1</code> and configures the 
+        <code>org.apache.coyote.http11.Http11Protocol</code>. This is the blocking Java connector.<br/>
+        If the <code>PATH(Windows)</code> or <code>LD_LIBRARY_PATH(on most unix system)</code>  
+        environment variables contain the Tomcat native library, the APR connector
+        will automatically be configured. Please be advised that the APR connector has different
+        settings for HTTPS than the default Java connector.<br/>
+        Other values for this attribute are, but not limited to:<br/>
+        <code>org.apache.coyote.http11.Http11Protocol</code> - same as HTTP/1.1<br/>
+        <code>org.apache.coyote.http11.Http11NioProtocol</code> - non blocking Java connector, not supported in JBossWeb<br/>
+        <code>org.apache.coyote.http11.Http11AprProtocol</code> - the APR connector.<br/>
+        The configuration for both Java connectors are identical, both for http and https. <br/>
+        For more information on the APR connector and APR specific SSL settings please 
+        visit the <a href="../apr.html">APR documentation</a>
+        
+      </p>
+    </attribute>
+
+    <attribute name="proxy-name" required="false">
+      <p>If this <strong>Connector</strong> is being used in a proxy
+      configuration, configure this attribute to specify the server name
+      to be returned for calls to <code>request.getServerName()</code>.</p>
+    </attribute>
+
+    <attribute name="proxy-port" required="false">
+      <p>If this <strong>Connector</strong> is being used in a proxy
+      configuration, configure this attribute to specify the server port
+      to be returned for calls to <code>request.getServerPort()</code>.</p>
+    </attribute>
+
+    <attribute name="redirect-port" required="false">
+      <p>If this <strong>Connector</strong> is supporting non-SSL
+      requests, and a request is received for which a matching
+      <code>&lt;security-constraint&gt;</code> requires SSL transport,
+      Catalina will automatically redirect the request to the port
+      number specified here.</p>
+    </attribute>
+
+    <attribute name="ssl" required="false">
+      <p>
+      Use this element to enable SSL traffic on a connector.
+      To turn on SSL handshake/encryption/decryption on a connector.
+      When present you will want to set the 
+      <code>scheme</code> and the <code>secure</code> attributes as well
+      to pass the correct <code>request.getScheme()</code> and 
+      <code>request.isSecure()</code> values to the servlets
+      See <a href="ssl.html">SSL Support</a> for more information.
+      </p>
+    </attribute>
+
+    <attribute name="scheme" required="false">
+      <p>Set this attribute to the name of the protocol you wish to have
+      returned by calls to <code>request.getScheme()</code>.  For
+      example, you would set this attribute to "<code>https</code>"
+      for an SSL Connector.  The default value is "<code>http</code>".
+      </p>
+    </attribute>
+
+    <attribute name="secure" required="false">
+      <p>Set this attribute to <code>true</code> if you wish to have
+      calls to <code>request.isSecure()</code> to return <code>true</code>
+      for requests received by this Connector. You would want this on an
+      SSL Connector or a non SSL connector that is receiving data from a 
+      SSL accelerator, like a crypto card, a SSL appliance or even a webserver.
+      The default value is <code>false</code>.</p>
+    </attribute>
+
+    <attribute name="enabled" required="false">
+      <p>Set this attribute to <code>false</code> if you don't wan the
+      Connector to be used.
+      The default value is <code>true</code>.</p>
+    </attribute>
+
+    <attribute name="executor" required="false">
+      <p>A reference to the name in an <a href="executor.html">Executor</a> element.
+         If this attribute is enabled, and the named executor exists, the connector will
+         use the executor, and all the other thread attributes will be ignored.</p>
+    </attribute>
+  </attributes>
+
+  </subsection>
+
+  <subsection name="Standard Implementation">
+
+  <p>
+  HTTP doesn't support more attributes that the ones listed above.</p>
+
+  </subsection>
+  
+</section>
+
+
+<section name="Nested Components">
+
+  <p><code>ssl</code>: SSL configuration See <a href="ssl.html">HTTPS</a></p>
+
+</section>
+
+
+<section name="Special Features">
+
+
+  <subsection name="HTTP/1.1 and HTTP/1.0 Support">
+
+  <p>This <strong>Connector</strong> supports all of the required features
+  of the HTTP/1.1 protocol, as described in RFC 2616, including persistent
+  connections, pipelining, expectations and chunked encoding.  If the client
+  (typically a browser) supports only HTTP/1.0, the
+  <strong>Connector</strong> will gracefully fall back to supporting this
+  protocol as well.  No special configuration is required to enable this
+  support. The <strong>Connector</strong> also supports HTTP/1.0
+  keep-alive.</p>
+
+  <p>RFC 2616 requires that HTTP servers always begin their responses with
+  the highest HTTP version that they claim to support.  Therefore, this
+  <strong>Connector</strong> will always return <code>HTTP/1.1</code> at
+  the beginning of its responses.</p>
+
+  </subsection>
+
+
+  <subsection name="Proxy Support">
+
+  <p>The <code>proxy-name</code> and <code>proxy-port</code> attributes can
+  be used when JBoss Web is run behind a proxy server.  These attributes
+  modify the values returned to web applications that call the
+  <code>request.getServerName()</code> and <code>request.getServerPort()</code>
+  methods, which are often used to construct absolute URLs for redirects.
+  Without configuring these attributes, the values returned would reflect
+  the server name and port on which the connection from the proxy server
+  was received, rather than the server name and port to whom the client
+  directed the original request.</p>
+
+  <p>For more information, see the
+  <a href="../proxy-howto.html">Proxy Support HOW-TO</a>.</p>
+
+  </subsection>
+
+
+
+  <subsection name="SSL Support">
+
+  <p>See <a href="ssl.html">HTTPS connector</a>.</p>
+
+  <p>For more information, see the
+  <a href="../ssl-howto.html">SSL Configuration HOW-TO</a>.</p>
+
+  </subsection>
+
+</section>
+
+
+</body>
+
+</document>

@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1870/trunk/java/org/apache/coyote/http11
+END
+Http11Protocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1852/trunk/java/org/apache/coyote/http11/Http11Protocol.java
+END
+InputFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/http11/InputFilter.java
+END
+OutputFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/http11/OutputFilter.java
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/coyote/http11/LocalStrings_fr.properties
+END
+LocalStrings_es.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/coyote/http11/LocalStrings_es.properties
+END
+Http11AprProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1852/trunk/java/org/apache/coyote/http11/Http11AprProtocol.java
+END
+Constants.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/http11/Constants.java
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1657/trunk/java/org/apache/coyote/http11/LocalStrings.properties
+END
+Http11Processor.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1870/trunk/java/org/apache/coyote/http11/Http11Processor.java
+END
+Http11AprProcessor.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1870/trunk/java/org/apache/coyote/http11/Http11AprProcessor.java
+END
+InternalInputBuffer.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/961/trunk/java/org/apache/coyote/http11/InternalInputBuffer.java
+END
+InternalOutputBuffer.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1864/trunk/java/org/apache/coyote/http11/InternalOutputBuffer.java
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/coyote/http11/LocalStrings_ja.properties
+END
+InternalAprInputBuffer.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/839/trunk/java/org/apache/coyote/http11/InternalAprInputBuffer.java
+END
+InternalAprOutputBuffer.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/1864/trunk/java/org/apache/coyote/http11/InternalAprOutputBuffer.java
+END

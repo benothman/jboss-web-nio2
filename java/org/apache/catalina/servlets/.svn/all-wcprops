@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/repos/jbossweb/!svn/ver/1781/trunk/java/org/apache/catalina/servlets
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/jbossweb/!svn/ver/1194/trunk/java/org/apache/catalina/servlets/LocalStrings.properties
+END
+LocalStrings_es.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/catalina/servlets/LocalStrings_es.properties
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/servlets/LocalStrings_fr.properties
+END
+CGIServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1584/trunk/java/org/apache/catalina/servlets/CGIServlet.java
+END
+DefaultServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1781/trunk/java/org/apache/catalina/servlets/DefaultServlet.java
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/servlets/LocalStrings_ja.properties
+END
+Constants.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/catalina/servlets/Constants.java
+END
+WebdavServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1739/trunk/java/org/apache/catalina/servlets/WebdavServlet.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/170/trunk/java/org/apache/catalina/servlets/package.html
+END

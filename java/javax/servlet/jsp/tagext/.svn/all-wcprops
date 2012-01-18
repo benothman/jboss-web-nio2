@@ -1,0 +1,167 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext
+END
+ValidationMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/ValidationMessage.java
+END
+TryCatchFinally.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TryCatchFinally.java
+END
+FunctionInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/FunctionInfo.java
+END
+VariableInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/VariableInfo.java
+END
+TagData.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagData.java
+END
+PageData.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/PageData.java
+END
+TagLibraryValidator.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagLibraryValidator.java
+END
+TagSupport.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagSupport.java
+END
+TagAttributeInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagAttributeInfo.java
+END
+Tag.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/Tag.java
+END
+TagAdapter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagAdapter.java
+END
+TagLibraryInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagLibraryInfo.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/package.html
+END
+JspFragment.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/JspFragment.java
+END
+SimpleTagSupport.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/SimpleTagSupport.java
+END
+SimpleTag.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/SimpleTag.java
+END
+JspIdConsumer.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/JspIdConsumer.java
+END
+BodyTagSupport.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/BodyTagSupport.java
+END
+TagFileInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagFileInfo.java
+END
+TagInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagInfo.java
+END
+JspTag.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/JspTag.java
+END
+BodyContent.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/BodyContent.java
+END
+BodyTag.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/BodyTag.java
+END
+IterationTag.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/IterationTag.java
+END
+DynamicAttributes.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/DynamicAttributes.java
+END
+TagExtraInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagExtraInfo.java
+END
+TagVariableInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1244/trunk/java/javax/servlet/jsp/tagext/TagVariableInfo.java
+END

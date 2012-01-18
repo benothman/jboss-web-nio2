@@ -1,0 +1,155 @@
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/repos/jbossweb/!svn/ver/1870/trunk/webapps/docs
+END
+deployer-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/repos/jbossweb/!svn/ver/1780/trunk/webapps/docs/deployer-howto.xml
+END
+introduction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1750/trunk/webapps/docs/introduction.xml
+END
+rewrite.xml
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/repos/jbossweb/!svn/ver/875/trunk/webapps/docs/rewrite.xml
+END
+apr.xml
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/jbossweb/!svn/ver/859/trunk/webapps/docs/apr.xml
+END
+tomcat-docs.xsl
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/jbossweb/!svn/ver/1750/trunk/webapps/docs/tomcat-docs.xsl
+END
+legal.xml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/legal.xml
+END
+monitoring.xml
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/repos/jbossweb/!svn/ver/530/trunk/webapps/docs/monitoring.xml
+END
+logging.xml
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/logging.xml
+END
+windows-service-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/windows-service-howto.xml
+END
+changelog.xml
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/repos/jbossweb/!svn/ver/1870/trunk/webapps/docs/changelog.xml
+END
+building.xml
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/repos/jbossweb/!svn/ver/1774/trunk/webapps/docs/building.xml
+END
+virtual-hosting-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/virtual-hosting-howto.xml
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/build.xml
+END
+ssl-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/repos/jbossweb/!svn/ver/721/trunk/webapps/docs/ssl-howto.xml
+END
+sysprops.xml
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/repos/jbossweb/!svn/ver/1768/trunk/webapps/docs/sysprops.xml
+END
+default-servlet.xml
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/repos/jbossweb/!svn/ver/1389/trunk/webapps/docs/default-servlet.xml
+END
+jbossweb.css
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/jbossweb/!svn/ver/527/trunk/webapps/docs/jbossweb.css
+END
+project.xml
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/jbossweb/!svn/ver/1833/trunk/webapps/docs/project.xml
+END
+class-loader-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/class-loader-howto.xml
+END
+index.xml
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/repos/jbossweb/!svn/ver/1833/trunk/webapps/docs/index.xml
+END
+aio.xml
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/jbossweb/!svn/ver/973/trunk/webapps/docs/aio.xml
+END
+html-manager-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/html-manager-howto.xml
+END
+connectors.xml
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/connectors.xml
+END
+security-manager-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/security-manager-howto.xml
+END
+proxy-howto.xml
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/proxy-howto.xml
+END

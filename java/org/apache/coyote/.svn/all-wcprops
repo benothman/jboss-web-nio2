@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/repos/jbossweb/!svn/ver/1870/trunk/java/org/apache/coyote
+END
+Processor.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/Processor.java
+END
+ProtocolHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1680/trunk/java/org/apache/coyote/ProtocolHandler.java
+END
+Adapter.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/Adapter.java
+END
+RequestGroupInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/RequestGroupInfo.java
+END
+RequestInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/RequestInfo.java
+END
+ActionCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/966/trunk/java/org/apache/coyote/ActionCode.java
+END
+Request.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/repos/jbossweb/!svn/ver/1781/trunk/java/org/apache/coyote/Request.java
+END
+InputBuffer.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/InputBuffer.java
+END
+OutputBuffer.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/OutputBuffer.java
+END
+Constants.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/1648/trunk/java/org/apache/coyote/Constants.java
+END
+ActionHook.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/coyote/ActionHook.java
+END
+Response.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/1781/trunk/java/org/apache/coyote/Response.java
+END

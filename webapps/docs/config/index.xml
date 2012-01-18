@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<document url="index.html">
+
+  &project;
+
+  <properties>
+    <author email="craigmcc@apache.org">Craig R. McClanahan</author>
+    <author email="jfclere@gmail.com">Jean-Frederic Clere</author>
+    <title>Overview</title>
+  </properties>
+
+<body>
+
+
+<section name="Overview">
+
+<p>This manual contains reference information about all of the configuration
+directives that can be used in the Web subsystem to
+configure the behavior of the JBoss Web Servlet/JSP container.  It does not
+attempt to describe which configuration directives should be used to perform
+specific tasks - for that, see the various <em>HOW-TO</em> documents on the
+main index page.</p>
+
+<p>The configuration element descriptions are organized into the following
+major categories:</p>
+<ul>
+<li><strong>connectors</strong> - Represent the interface between external
+    clients sending requests to (and receiving responses from) a particular
+    Service.</li>
+<li><strong>virtual-server</strong> - Represent the virtual host corresponding
+    to requests matching it.</li>
+<li><strong>jsp-configuration</strong> - That is the configuration of 
+    the JSP container.</li>
+<li><strong>static-resources</strong> - That is the configuration of
+    Default Servlet (how the static ressources should served).</li>
+<li><strong>Nested Components</strong> - Represent elements that can be
+    nested inside the above elements.</li>
+</ul>
+
+<p>For each element, the corresponding documentation follows this general
+outline:</p>
+<ul>
+<li><strong>Introduction</strong> - Overall description of this particular
+    component.  There will be a corresponding Java <em>interface</em> (in
+    the <code>org.apache.catalina</code> pacakge) that is implemented by one
+    or more standard implementations.</li>
+<li><strong>Attributes</strong> - The set of attributes that are legal for
+    this element.</li>
+<li><strong>Nested Components</strong> - Enumerates which of the <em>Nested
+    Components</em> can be legally nested within this element.</li>
+<li><strong>Special Features</strong> - Describes the configuration of a large
+    variety of special features (specific to each element type).</li>
+</ul>
+
+</section>
+
+
+</body>
+</document>

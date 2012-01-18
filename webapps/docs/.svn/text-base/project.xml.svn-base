@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="JBoss Web Documentation"
+        href="http://labs.jboss.com/jbossweb/">
+
+    <title>JBoss Web</title>
+
+    <logo href="/images/jbossweblogo.gif">
+      The JBoss Web Servlet/JSP Container
+    </logo>
+
+
+    <body>
+
+    <menu name="User Guide">
+        <item name="Docs Home"           href="index.html"/>
+        <item name="Introduction"        href="introduction.html"/>
+        <item name="System Properties"   href="sysprops.html"/>
+        <item name="First webapp"        href="appdev/index.html"/>
+        <item name="Deployer"            href="deployer-howto.html"/>
+        <item name="Realms and AAA"      href="realm-howto.html"/>
+        <item name="Security Manager"    href="security-manager-howto.html"/>
+        <item name="Classloading"        href="class-loader-howto.html"/>
+        <item name="JSPs"                href="jasper-howto.html"/>
+        <item name="SSL"                 href="ssl-howto.html"/>
+        <item name="URL Rewriting"                href="rewrite.html"/>
+        <item name="Proxy Support"                href="proxy-howto.html"/>
+        <item name="MBean Descriptor"             href="mbeans-descriptor-howto.html"/>
+        <item name="Default Servlet"              href="default-servlet.html"/>
+        <item name="Connectors"                   href="connectors.html"/>
+        <item name="Monitoring and Management"    href="monitoring.html"/>
+        <item name="Logging"                      href="logging.html"/>
+        <item name="APR"                          href="apr.html"/>
+        <item name="Virtual Hosting"              href="virtual-hosting-howto.html"/>
+        <item name="Advanced IO"                  href="aio.html"/>
+    </menu>
+
+    <menu name="JBoss Web Development">
+        <item name="Building"              href="building.html"/>
+        <item name="Changelog"             href="changelog.html"/>
+        <item name="Architecture"          href="architecture/index.html" />
+        <item name="Functional Specs."     href="funcspecs/index.html"/>
+        <item name="Legal"                 href="legal.html"/>
+    </menu>
+
+    <menu name="Reference">
+        <item name="Release Notes"         href="RELEASE-NOTES.txt"/>
+        <item name="Configuration"         href="config/index.html"/>
+        <item name="Javadocs"              href="api/index.html"/>
+    </menu>
+
+    </body>
+
+</project>

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1144/trunk/java/javax/servlet/descriptor
+END
+JspConfigDescriptor.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/jbossweb/!svn/ver/1144/trunk/java/javax/servlet/descriptor/JspConfigDescriptor.java
+END
+TaglibDescriptor.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/jbossweb/!svn/ver/1134/trunk/java/javax/servlet/descriptor/TaglibDescriptor.java
+END
+JspPropertyGroupDescriptor.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/jbossweb/!svn/ver/1144/trunk/java/javax/servlet/descriptor/JspPropertyGroupDescriptor.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1134/trunk/java/javax/servlet/descriptor/package.html
+END

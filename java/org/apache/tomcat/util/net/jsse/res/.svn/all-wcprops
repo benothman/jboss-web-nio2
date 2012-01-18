@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/tomcat/util/net/jsse/res
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/jbossweb/!svn/ver/748/trunk/java/org/apache/tomcat/util/net/jsse/res/LocalStrings.properties
+END
+LocalStrings_es.properties
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/tomcat/util/net/jsse/res/LocalStrings_es.properties
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/tomcat/util/net/jsse/res/LocalStrings_fr.properties
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/tomcat/util/net/jsse/res/LocalStrings_ja.properties
+END

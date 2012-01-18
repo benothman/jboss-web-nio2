@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/jbossweb/!svn/ver/1729/trunk/java/org/apache/jasper/servlet
+END
+JspServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/972/trunk/java/org/apache/jasper/servlet/JspServlet.java
+END
+JspServletWrapper.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1390/trunk/java/org/apache/jasper/servlet/JspServletWrapper.java
+END
+mbeans-descriptors.xml
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/512/trunk/java/org/apache/jasper/servlet/mbeans-descriptors.xml
+END
+JasperLoader.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/jbossweb/!svn/ver/1729/trunk/java/org/apache/jasper/servlet/JasperLoader.java
+END

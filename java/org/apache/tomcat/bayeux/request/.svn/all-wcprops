@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request
+END
+PublishRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request/PublishRequest.java
+END
+MetaSubscribeRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request/MetaSubscribeRequest.java
+END
+MetaUnsubscribeRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request/MetaUnsubscribeRequest.java
+END
+MetaHandshakeRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request/MetaHandshakeRequest.java
+END
+MetaConnectRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request/MetaConnectRequest.java
+END
+MetaDisconnectRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/request/MetaDisconnectRequest.java
+END

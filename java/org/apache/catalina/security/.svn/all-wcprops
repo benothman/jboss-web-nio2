@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/repos/jbossweb/!svn/ver/1453/trunk/java/org/apache/catalina/security
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/security/LocalStrings.properties
+END
+SecurityUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/885/trunk/java/org/apache/catalina/security/SecurityUtil.java
+END
+LocalStrings_es.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/catalina/security/LocalStrings_es.properties
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/security/LocalStrings_fr.properties
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/security/LocalStrings_ja.properties
+END
+SecurityClassLoad.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/996/trunk/java/org/apache/catalina/security/SecurityClassLoad.java
+END
+SecurityConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1453/trunk/java/org/apache/catalina/security/SecurityConfig.java
+END

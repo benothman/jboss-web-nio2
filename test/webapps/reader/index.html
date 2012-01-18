@@ -1,0 +1,43 @@
+<HTML>
+<HEAD>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<TITLE>request#getReader test.</TITLE>
+</HEAD>
+<BODY>
+<FORM method="GET" action="test.jsp">Characters size:<input
+	type="text" name="size" value="8192" /><BR>
+Use MultiByte Character: <input value="false" type="radio" checked
+	name="ascii" />yes <input value="true" type="radio" name="ascii" />no
+<HR>
+[test case:]<BR>
+<input value="read" type="radio" checked name="kind" /><B>only read
+[readLine()/read()/read(char[1])]</B><BR>
+<input value="garbage" type="radio" name="kind" /><B>garbage in
+buffer</B><BR>
+<ul>
+	<li>real read size:<input type="text" name="readForGarbage"
+		value="4096"><BR>
+</ul>
+<input value="mark/reset" type="radio" name="kind" /><B>mark/reset</B><BR>
+<ul>
+	<li>read size before mark():<input type="text"
+		name="readBeforeMark" value="0"><BR>
+	<li>readAheadLimit size:<input type="text" name="readAheadLimit"
+		value="8192"><BR>
+	<li>read size after mark()/before reset():<input type="text"
+		name="readAfterMark" value="8192"><BR>
+</ul>
+
+<BR>
+<HR>
+<input type="submit" value="submit" /></FORM>
+<HR>
+Note: The real post body will be added followings:
+<BR>
+<ul>
+	<li>multipart boundary.
+	<li>Content-Disposition: form-data; name="[text form area name]"
+	<li>Some CR/LFs.
+</ul>
+</BODY>
+</HTML>

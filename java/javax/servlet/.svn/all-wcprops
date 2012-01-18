@@ -1,0 +1,263 @@
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/jbossweb/!svn/ver/1300/trunk/java/javax/servlet
+END
+ServletContextListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1193/trunk/java/javax/servlet/ServletContextListener.java
+END
+UnavailableException.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/UnavailableException.java
+END
+ServletException.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/ServletException.java
+END
+ServletRequestListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1193/trunk/java/javax/servlet/ServletRequestListener.java
+END
+ServletResponseWrapper.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/ServletResponseWrapper.java
+END
+Registration.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/1162/trunk/java/javax/servlet/Registration.java
+END
+ServletRegistration.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1239/trunk/java/javax/servlet/ServletRegistration.java
+END
+ServletContextAttributeEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/ServletContextAttributeEvent.java
+END
+ServletInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/ServletInputStream.java
+END
+FilterRegistration.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1208/trunk/java/javax/servlet/FilterRegistration.java
+END
+AsyncContext.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/1272/trunk/java/javax/servlet/AsyncContext.java
+END
+ServletRequestAttributeEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/ServletRequestAttributeEvent.java
+END
+AsyncListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/1185/trunk/java/javax/servlet/AsyncListener.java
+END
+Servlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/Servlet.java
+END
+Filter.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/Filter.java
+END
+DispatcherType.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/1134/trunk/java/javax/servlet/DispatcherType.java
+END
+ServletContext.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/1256/trunk/java/javax/servlet/ServletContext.java
+END
+SingleThreadModel.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/SingleThreadModel.java
+END
+ServletContextEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/ServletContextEvent.java
+END
+ServletRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/1185/trunk/java/javax/servlet/ServletRequest.java
+END
+RequestDispatcher.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/RequestDispatcher.java
+END
+HttpMethodConstraintElement.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/jbossweb/!svn/ver/1186/trunk/java/javax/servlet/HttpMethodConstraintElement.java
+END
+ServletRequestEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/ServletRequestEvent.java
+END
+ServletResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/ServletResponse.java
+END
+SessionCookieConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1223/trunk/java/javax/servlet/SessionCookieConfig.java
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/LocalStrings_fr.properties
+END
+ServletConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/repos/jbossweb/!svn/ver/1144/trunk/java/javax/servlet/ServletConfig.java
+END
+FilterConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/FilterConfig.java
+END
+SessionTrackingMode.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/1134/trunk/java/javax/servlet/SessionTrackingMode.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/package.html
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/LocalStrings.properties
+END
+AsyncEvent.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/repos/jbossweb/!svn/ver/1185/trunk/java/javax/servlet/AsyncEvent.java
+END
+ServletOutputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/ServletOutputStream.java
+END
+GenericServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/1144/trunk/java/javax/servlet/GenericServlet.java
+END
+MultipartConfigElement.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1186/trunk/java/javax/servlet/MultipartConfigElement.java
+END
+ServletContextAttributeListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1193/trunk/java/javax/servlet/ServletContextAttributeListener.java
+END
+ServletSecurityElement.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1186/trunk/java/javax/servlet/ServletSecurityElement.java
+END
+ServletRequestAttributeListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1193/trunk/java/javax/servlet/ServletRequestAttributeListener.java
+END
+FilterChain.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/repos/jbossweb/!svn/ver/1017/trunk/java/javax/servlet/FilterChain.java
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/jbossweb/!svn/ver/982/trunk/java/javax/servlet/LocalStrings_ja.properties
+END
+ServletContainerInitializer.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/jbossweb/!svn/ver/1186/trunk/java/javax/servlet/ServletContainerInitializer.java
+END
+HttpConstraintElement.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/1193/trunk/java/javax/servlet/HttpConstraintElement.java
+END
+ServletRequestWrapper.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/1185/trunk/java/javax/servlet/ServletRequestWrapper.java
+END

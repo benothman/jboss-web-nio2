@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<document url="host.html">
+
+  &project;
+
+  <properties>
+    <author email="jfclere@gmail.com">Jean-Frederic Clere</author>
+    <title>The static-resources element</title>
+  </properties>
+
+<body>
+
+
+<section name="Introduction">
+
+  <p>The <strong>static-resources</strong> describes how static
+   resources are handled by the <code>DefaultServlet</code> or by the <code>WebdavServlet</code>.
+   That is the default service for all web applications, that serves static resources.
+   it It processes all requests that are not mapped to other servlets with servlet mappings.</p>
+
+  <p>There should be only one <strong>static-resources</strong> element inside an
+  <a href="subsystem.html">subsystem=web</a> element.</p>
+
+</section>
+
+
+<section name="Attributes">
+
+  <subsection name="Common Attributes">
+
+    <p>The <strong>static-resources</strong>
+    supports the following attributes:</p>
+
+    <attributes>
+
+      <attribute name="listings" required="false">
+        <p>In case there isn't an index file in a directory a listing will be generated and used as index.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="sendfile" required="false">
+        <p>Minimum size for sendfile usage in bytes.
+        The default value is <code>49152</code>.
+        </p>
+      </attribute>
+
+      <attribute name="file-encoding" required="false">
+        <p>File encoding to be used when reading static files.</p>
+      </attribute>
+
+      <attribute name="read-only" required="false">
+        <p>Tell if the resource accessed are write protected.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+
+      <attribute name="webdav" required="false">
+        <p>This flag value indicates that the <code>WebdavServlet</code> will be used.
+        That adds support for WebDAV level 2.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="secret" required="true">
+        <p>Secret information used to generate reasonably secure lock ids for the <code>WebdavServlet</code></p>
+      </attribute>
+
+      <attribute name="max-depth" required="true">
+        <p>Default depth for the <code>WebdavServlet</code> that is for the PROPFIND Method.
+        The default value is <code>3</code>.
+        </p>
+      </attribute>
+
+      <attribute name="disabled" required="true">
+        <p>Tell the container that the <code>static-resources</code> Servlet should be disabled.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+    </attributes>
+
+  </subsection>
+</section>
+
+
+</body>
+
+
+</document>

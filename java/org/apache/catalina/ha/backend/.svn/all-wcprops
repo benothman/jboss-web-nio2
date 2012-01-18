@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/repos/jbossweb/!svn/ver/1190/trunk/java/org/apache/catalina/ha/backend
+END
+Sender.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1182/trunk/java/org/apache/catalina/ha/backend/Sender.java
+END
+Proxy.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1182/trunk/java/org/apache/catalina/ha/backend/Proxy.java
+END
+HeartbeatListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/1190/trunk/java/org/apache/catalina/ha/backend/HeartbeatListener.java
+END
+MultiCastSender.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/1190/trunk/java/org/apache/catalina/ha/backend/MultiCastSender.java
+END
+TcpSender.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1190/trunk/java/org/apache/catalina/ha/backend/TcpSender.java
+END
+CollectedInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/jbossweb/!svn/ver/1190/trunk/java/org/apache/catalina/ha/backend/CollectedInfo.java
+END

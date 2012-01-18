@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<document url="host.html">
+
+  &project;
+
+  <properties>
+    <author email="jfclere@gmail.com">Jean-Frederic Clere</author>
+    <title>The jsp-configuration element</title>
+  </properties>
+
+<body>
+
+
+<section name="Introduction">
+
+  <p>The <strong>jsp-configuration</strong> describes how the JSP
+   container is working.</p>
+
+  <p>There should be only one <strong>jsp-configuration</strong> element inside an
+   <a href="subsystem.html">subsystem=web</a> element.</p>
+
+</section>
+
+
+<section name="Attributes">
+
+  <subsection name="Common Attributes">
+
+    <p>The <strong>jsp-configuration</strong>
+    supports the following attributes:</p>
+
+    <attributes>
+
+      <attribute name="development" required="true">
+        <p>Name of the Virtual Host</p>
+      </attribute>
+
+      <attribute name="disabled" required="true">
+        <p>Tell the container that the <code>jsp-configuration</code> container should be disabled.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="keep-generated" required="false">
+        <p>
+        keep the generated Java source code for each page.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+
+      <attribute name="trim-spaces" required="false">
+        <p>Remove useless spaces from the response.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="tag-pooling" required="false">
+        <p>tag handler instances are pooled and reused.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+
+      <attribute name="mapped-file" required="false">
+        <p>static content are generated with one print statement per input line, to ease debugging.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+
+      <attribute name="check-interval" required="false">
+        <p>The time in seconds between checks to see if a JSP page needs to be recompiled.
+        The default value is <code>0</code> checks are dissabled.
+        </p>
+      </attribute>
+
+      <attribute name="modification-test-interval" required="false">
+        <p>The time in seconds a changed JSP aged before being recompiled.
+        The default value is <code>4</code>.
+        </p>
+      </attribute>
+
+      <attribute name="recompile-on-fail" required="false">
+        <p>Force a recompilation attempt on next access if compilation failed.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="smap" required="false">
+        <p>generate JSR 045 SMAP Files.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+
+      <attribute name="dump-smap" required="false">
+        <p>dump the SMAP info for JSR 045 debugging to a file
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="generate-strings-as-char-arrays" required="false">
+        <p>generate text strings as char arrays.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="error-on-use-bean-invalid-class-attribute" required="false">
+        <p>cause a compilation error when the bean can't be instantiated.
+        The default value is <code>false</code>.
+        </p>
+      </attribute>
+
+      <attribute name="scratch-dir" required="false">
+        <p>scratch directory to use when compiling JSP pages.
+        The default value is <code>work</code>.
+        </p>
+      </attribute>
+
+      <attribute name="source-vm" required="false">
+        <p>JDK version the source files are compatible with.
+        The default value is <code>1.5</code>.
+        </p>
+      </attribute>
+
+      <attribute name="target-vm" required="false">
+        <p>JDK version the class files are compatible with.
+        The default value is <code>1.5</code>.
+        </p>
+      </attribute>
+
+      <attribute name="java-encoding" required="false">
+        <p>Java file encoding to use for generating java source files.
+        The default value is <code>UTF8</code>.
+        </p>
+      </attribute>
+
+      <attribute name="x-powered-by" required="false">
+        <p>Generated servlet adds X-Powered-By response header.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+
+      <attribute name="display-source-fragment" required="false">
+        <p>include a source fragment in exception messages.
+        The default value is <code>true</code>.
+        </p>
+      </attribute>
+    </attributes>
+
+  </subsection>
+</section>
+
+
+</body>
+
+
+</document>

@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1237/trunk/java/org/apache/tomcat/bayeux
+END
+ClientImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/1237/trunk/java/org/apache/tomcat/bayeux/ClientImpl.java
+END
+RequestFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/RequestFactory.java
+END
+BayeuxServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/828/trunk/java/org/apache/tomcat/bayeux/BayeuxServlet.java
+END
+RequestBase.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/860/trunk/java/org/apache/tomcat/bayeux/RequestBase.java
+END
+TomcatBayeux.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/825/trunk/java/org/apache/tomcat/bayeux/TomcatBayeux.java
+END
+BayeuxRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/BayeuxRequest.java
+END
+MessageImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/MessageImpl.java
+END
+HttpError.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/HttpError.java
+END
+ChannelImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1237/trunk/java/org/apache/tomcat/bayeux/ChannelImpl.java
+END
+BayeuxException.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/784/trunk/java/org/apache/tomcat/bayeux/BayeuxException.java
+END
+UUIDGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/959/trunk/java/org/apache/tomcat/bayeux/UUIDGenerator.java
+END

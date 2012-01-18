@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1272/trunk/java/javax/servlet/annotation
+END
+WebInitParam.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1186/trunk/java/javax/servlet/annotation/WebInitParam.java
+END
+WebServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/1272/trunk/java/javax/servlet/annotation/WebServlet.java
+END
+HandlesTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1162/trunk/java/javax/servlet/annotation/HandlesTypes.java
+END
+WebFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/jbossweb/!svn/ver/1134/trunk/java/javax/servlet/annotation/WebFilter.java
+END
+WebListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1184/trunk/java/javax/servlet/annotation/WebListener.java
+END
+HttpConstraint.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1184/trunk/java/javax/servlet/annotation/HttpConstraint.java
+END
+HttpMethodConstraint.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1184/trunk/java/javax/servlet/annotation/HttpMethodConstraint.java
+END
+MultipartConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1181/trunk/java/javax/servlet/annotation/MultipartConfig.java
+END
+ServletSecurity.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1184/trunk/java/javax/servlet/annotation/ServletSecurity.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/jbossweb/!svn/ver/1134/trunk/java/javax/servlet/annotation/package.html
+END

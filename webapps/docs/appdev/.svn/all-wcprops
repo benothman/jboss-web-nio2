@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/jbossweb/!svn/ver/1777/trunk/webapps/docs/appdev
+END
+deployment.xml
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/repos/jbossweb/!svn/ver/1774/trunk/webapps/docs/appdev/deployment.xml
+END
+source.xml
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/jbossweb/!svn/ver/1774/trunk/webapps/docs/appdev/source.xml
+END
+installation.xml
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/1774/trunk/webapps/docs/appdev/installation.xml
+END
+introduction.xml
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/jbossweb/!svn/ver/1774/trunk/webapps/docs/appdev/introduction.xml
+END
+processes.xml
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/repos/jbossweb/!svn/ver/1774/trunk/webapps/docs/appdev/processes.xml
+END
+project.xml
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/appdev/project.xml
+END
+index.xml
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/jbossweb/!svn/ver/512/trunk/webapps/docs/appdev/index.xml
+END
+web.xml.txt
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/repos/jbossweb/!svn/ver/170/trunk/webapps/docs/appdev/web.xml.txt
+END
+build.xml.txt
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/repos/jbossweb/!svn/ver/170/trunk/webapps/docs/appdev/build.xml.txt
+END
+jbossweb.xml
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/repos/jbossweb/!svn/ver/1777/trunk/webapps/docs/appdev/jbossweb.xml
+END

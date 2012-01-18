@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/repos/jbossweb/!svn/ver/1712/trunk/java/org/apache/el/lang
+END
+FunctionMapperFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/el/lang/FunctionMapperFactory.java
+END
+VariableMapperFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/el/lang/VariableMapperFactory.java
+END
+ExpressionBuilder.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/1572/trunk/java/org/apache/el/lang/ExpressionBuilder.java
+END
+ELArithmetic.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/jbossweb/!svn/ver/1712/trunk/java/org/apache/el/lang/ELArithmetic.java
+END
+EvaluationContext.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/el/lang/EvaluationContext.java
+END
+FunctionMapperImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/582/trunk/java/org/apache/el/lang/FunctionMapperImpl.java
+END
+VariableMapperImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/el/lang/VariableMapperImpl.java
+END
+ELSupport.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/jbossweb/!svn/ver/1388/trunk/java/org/apache/el/lang/ELSupport.java
+END

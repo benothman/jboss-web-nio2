@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/repos/jbossweb/!svn/ver/1390/trunk/java/org/apache/jasper/security
+END
+SecurityUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1237/trunk/java/org/apache/jasper/security/SecurityUtil.java
+END
+SecurityClassLoad.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/jbossweb/!svn/ver/1390/trunk/java/org/apache/jasper/security/SecurityClassLoad.java
+END

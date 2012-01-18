@@ -1,0 +1,48 @@
+# -----------------------------------------------------------------------------
+# build.properties.sample
+#
+# This is an example "build.properties" file, used to customize building 
+# JBoss Web for your local environment.  It defines the location of all external
+# modules that JBoss Web depends on.  Copy this file to "build.properties"
+# in the top-level source directory, and customize it as needed.
+#
+# $Id: build.properties.default 526202 2007-04-06 15:44:38Z remm $
+# -----------------------------------------------------------------------------
+
+# ----- Version Control Flags -----
+version.major=7
+version.minor=0
+version.build=0
+version.patch=0
+version.tag=SNAPSHOT
+
+# ----- Default Base Path for Dependent Packages -----
+# Please note this path must be absolute, not relative,
+# as it is referenced with different working directory
+# contexts by the various build scripts.
+base.path=/usr/share/java
+#base.path=C:/path/to/the/repository
+#base.path=/usr/local
+
+compile.source=1.7
+compile.target=1.7
+compile.debug=true
+
+base-commons.loc=http://archive.apache.org/dist/commons
+base-tomcat.loc=http://archive.apache.org/dist/tomcat
+base-sf.loc=http://downloads.sourceforge.net
+
+# ----- Eclipse JDT, version 3.2 or later -----
+jdt.home=${base.path}/plugins
+jdt.lib=${jdt.home}
+jdt.jar=${jdt.lib}/org.eclipse.jdt.core_3.7.0.v_B61.jar
+jdt.loc=http://download.eclipse.org/eclipse/downloads/drops/R-3.7-201106131736/org.eclipse.jdt-3.7.zip
+
+jdt-src.home=${base.path}/eclipse/plugins
+jdt-src.lib=${jdt.home}
+jdt-src.loc=http://download.eclipse.org/eclipse/downloads/drops/R-3.7-201106131736/eclipse-sourceBuild-srcIncluded-3.7.zip
+
+# ----- Dojo Toolkit (for test webapp) -----
+dojo-js.home=${base.path}/dojo-release-1.4.3
+dojo-js.loc=http://download.dojotoolkit.org/release-1.4.3/dojo-release-1.4.3.tar.gz
+dojo-js.jar=${dojo-js.home}/dojo/dojo.js

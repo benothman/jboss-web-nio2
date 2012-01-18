@@ -1,0 +1,251 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/repos/jbossweb/!svn/ver/1880/trunk/java/org/apache/catalina/core
+END
+StandardWrapperValve.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1764/trunk/java/org/apache/catalina/core/StandardWrapperValve.java
+END
+ApplicationFilterFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/1728/trunk/java/org/apache/catalina/core/ApplicationFilterFactory.java
+END
+StandardContextValve.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1590/trunk/java/org/apache/catalina/core/StandardContextValve.java
+END
+DummyRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1144/trunk/java/org/apache/catalina/core/DummyRequest.java
+END
+LocalStrings_es.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/catalina/core/LocalStrings_es.properties
+END
+StandardThreadExecutor.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/861/trunk/java/org/apache/catalina/core/StandardThreadExecutor.java
+END
+AprLifecycleListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1692/trunk/java/org/apache/catalina/core/AprLifecycleListener.java
+END
+RestrictedListeners.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/core/RestrictedListeners.properties
+END
+ApplicationHttpRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/jbossweb/!svn/ver/1579/trunk/java/org/apache/catalina/core/ApplicationHttpRequest.java
+END
+Constants.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/jbossweb/!svn/ver/1145/trunk/java/org/apache/catalina/core/Constants.java
+END
+ApplicationResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/catalina/core/ApplicationResponse.java
+END
+JreMemoryLeakPreventionListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/jbossweb/!svn/ver/1297/trunk/java/org/apache/catalina/core/JreMemoryLeakPreventionListener.java
+END
+StandardPipeline.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/jbossweb/!svn/ver/1673/trunk/java/org/apache/catalina/core/StandardPipeline.java
+END
+StandardPart.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1533/trunk/java/org/apache/catalina/core/StandardPart.java
+END
+StandardHostValve.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1880/trunk/java/org/apache/catalina/core/StandardHostValve.java
+END
+StandardHost.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/jbossweb/!svn/ver/1686/trunk/java/org/apache/catalina/core/StandardHost.java
+END
+ApplicationFilterConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/1673/trunk/java/org/apache/catalina/core/ApplicationFilterConfig.java
+END
+StandardWrapper.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1729/trunk/java/org/apache/catalina/core/StandardWrapper.java
+END
+StandardContext.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1857/trunk/java/org/apache/catalina/core/StandardContext.java
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/core/LocalStrings_fr.properties
+END
+ApplicationContext.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1263/trunk/java/org/apache/catalina/core/ApplicationContext.java
+END
+ApplicationDispatcher.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/1728/trunk/java/org/apache/catalina/core/ApplicationDispatcher.java
+END
+DummyResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/jbossweb/!svn/ver/1144/trunk/java/org/apache/catalina/core/DummyResponse.java
+END
+ServiceMapperListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/1564/trunk/java/org/apache/catalina/core/ServiceMapperListener.java
+END
+RestrictedServlets.properties
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/1194/trunk/java/org/apache/catalina/core/RestrictedServlets.properties
+END
+RestrictedFilters.properties
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/core/RestrictedFilters.properties
+END
+ApplicationFilterChain.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/jbossweb/!svn/ver/1728/trunk/java/org/apache/catalina/core/ApplicationFilterChain.java
+END
+ApplicationRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1458/trunk/java/org/apache/catalina/core/ApplicationRequest.java
+END
+ContainerBase.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/jbossweb/!svn/ver/1673/trunk/java/org/apache/catalina/core/ContainerBase.java
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/1471/trunk/java/org/apache/catalina/core/LocalStrings.properties
+END
+StandardService.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/jbossweb/!svn/ver/1851/trunk/java/org/apache/catalina/core/StandardService.java
+END
+ApplicationHttpResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/catalina/core/ApplicationHttpResponse.java
+END
+ApplicationFilterConfigFacade.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/repos/jbossweb/!svn/ver/1144/trunk/java/org/apache/catalina/core/ApplicationFilterConfigFacade.java
+END
+mbeans-descriptors.xml
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/repos/jbossweb/!svn/ver/1466/trunk/java/org/apache/catalina/core/mbeans-descriptors.xml
+END
+StandardEngineValve.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/repos/jbossweb/!svn/ver/699/trunk/java/org/apache/catalina/core/StandardEngineValve.java
+END
+StandardWrapperFacade.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/jbossweb/!svn/ver/1250/trunk/java/org/apache/catalina/core/StandardWrapperFacade.java
+END
+StandardEngine.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1673/trunk/java/org/apache/catalina/core/StandardEngine.java
+END
+StandardServer.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/repos/jbossweb/!svn/ver/1673/trunk/java/org/apache/catalina/core/StandardServer.java
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/core/LocalStrings_ja.properties
+END
+JasperListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/repos/jbossweb/!svn/ver/953/trunk/java/org/apache/catalina/core/JasperListener.java
+END
+ApplicationContextFacade.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/jbossweb/!svn/ver/1236/trunk/java/org/apache/catalina/core/ApplicationContextFacade.java
+END

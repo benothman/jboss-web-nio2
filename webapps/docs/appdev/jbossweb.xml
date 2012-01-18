@@ -1,0 +1,219 @@
+<?xml version="1.0"?>
+<!DOCTYPE document [
+  <!ENTITY project SYSTEM "project.xml">
+]>
+<document url="jbossweb.html">
+
+  &project;
+
+  <properties>
+    <author email="jfclere@gmail.com">Jean-Frederic Clere</author>
+    <title>JBoss Web Application Deployment Descriptor</title>
+  </properties>
+
+<body>
+
+
+<section name="Introduction">
+
+  <p>The <strong>jboss-web.xml</strong> is an XML file containing 
+  the JBossWeb specific behaviour of a webapp. It replaces
+  the Tomcat <code>context.xml</code> file.
+  You need only to use it if you want properties and behaviour
+  that extent the <code>web.xml</code> of the Servlet 3.0 specifications.</p>
+
+</section>
+
+
+<section name="Attributes">
+
+  <subsection name="Common Attributes">
+
+    <p>The <strong>jboss-web.xml</strong>
+    supports the following attributes:</p>
+
+    <attributes>
+
+      <attribute name="env-entry" required="false">
+        <p>An element <code>env-entry</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="ejb-ref" required="false">
+        <p>An element <code>ejb-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="ejb-local-ref" required="false">
+        <p>An element <code>ejb-local-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="service-ref" required="false">
+        <p>An element <code>service-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="resource-ref" required="false">
+        <p>An element <code>resource-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="resource-env-ref" required="false">
+        <p>An element <code>resource-env-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="message-destination-ref" required="false">
+        <p>An element <code>message-destination-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="persistence-context-ref" required="false">
+        <p>An element <code>persistence-context-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="persistence-unit-ref" required="false">
+        <p>An element <code>persistence-unit-ref</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="post-construct" required="false">
+        <p>An element <code>post-construct</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="pre-destroy" required="false">
+        <p>An element <code>pre-destroy</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="data-source" required="false">
+        <p>An element <code>data-source</code> as defined in J2EE</p>
+      </attribute>
+
+      <attribute name="context-root" required="false">
+        <p>Root context of the web-app. It defaults to the filename of the deployememt without the .war suffix</p>
+      </attribute>
+
+      <attribute name="virtual-host" required="false">
+        <p>Name of the <code>virtual-host</code> the application will accept request from.</p>
+      </attribute>
+
+      <attribute name="annotation" required="false">
+        <p>Element describing an <code>annotation</code> of the webapp.</p>
+      </attribute>
+
+      <attribute name="listener" required="false">
+        <p>Element describing a <code>listener</code> of the webapp.</p>
+      </attribute>
+
+      <attribute name="session-config" required="false">
+        <p>Element describing the <code>session-config</code> of the webapp.</p>
+      </attribute>
+
+      <attribute name="valve" required="false">
+        <p>Element describing a <code>valve</code> of the webapp.</p>
+      </attribute>
+
+      <attribute name="overlay" required="false">
+        <p>name of the overlay to add the webapp</p>
+      </attribute>
+
+      <attribute name="security-domain" required="false">
+        <p>Name of the security domain to use for the webapp</p>
+      </attribute>
+
+      <attribute name="security-role" required="false">
+        <p>Element describing a <code>security-role</code> of the webapp.</p>
+      </attribute>
+
+      <attribute name="jacc-star-role-allow" required="false">
+        <p>NOT YET SUPPORTED: See <a href="https://issues.jboss.org/browse/JBMETA-134">JBMETA-134</a></p>
+      </attribute>
+
+      <attribute name="disable-cross-context" required="false">
+        <p>Prevent application to call another application context.
+        Default: <code>true</code></p>
+      </attribute>
+
+    </attributes>
+
+  </subsection>
+
+
+</section>
+
+
+<section name="Nested Components">
+
+  <subsection name="annotation">
+
+    <p><code>annotation</code>describes how the annotation of the webapp</p>
+
+    <attributes>
+      <attribute name="class-name" required="false">
+        <p>name of class of the annotation.</p>
+      </attribute>
+
+      <attribute name="servlet-security" required="false">
+        <p><code>servlet-security</code> Element (like @ServletSecurity)</p>
+      </attribute>
+
+      <attribute name="run-as" required="false">
+        <p><code>servlet-security</code> Element (like @RunAs)</p>
+      </attribute>
+
+      <attribute name="multi-part" required="false">
+        <p><code>servlet-security</code> Element (like @MultipartConfig)</p>
+      </attribute>
+    </attributes>
+  </subsection>
+
+  <subsection name="listener">
+    <p><code>listener</code>describes a listener of the webapp.</p>
+
+    <attributes>
+      <attribute name="class-name" required="true">
+        <p>name of class of the listener.</p>
+        <p>list of <code>condition</code>Elements. See condition below.</p>
+      </attribute>
+
+      <attribute name="listener-type" required="true">
+        <p>Tell what kind of listener to add to the Context of the webapp:</p>
+        <ul>
+        <li>CONTAINER: Add a ContainerListener to the Context.
+           <br/><br/></li>
+        <li>LIFECYCLE: Add a LifecycleListener to the Context.
+           <br/><br/></li>
+        <li>SERVLET_INSTANCE: Add a InstanceListener to the Context.
+           <br/><br/></li>
+        <li>SERVLET_CONTAINER: Add a WrapperListener to the Context.
+           <br/><br/></li>
+        <li>SERVLET_LIFECYCLE: Add a WrapperLifecycle to the Context.
+           <br/><br/></li>
+        </ul>
+      </attribute>
+
+      <attribute name="module" required="true">
+        <p>name of the module containing the listener class.</p>
+      </attribute>
+
+      <attribute name="param" required="true">
+        <p>A parameter: <code>param-name</code> and <code>param-name</code></p>
+      </attribute>
+    </attributes>
+  </subsection>
+
+  <subsection name="session-config">
+    <p><code>session-config</code> describes the session configuration of the web-app that is like 
+    the <code>&lt;session-config&gt;</code> of the <code>web.xml</code>. It is here for compatibility</p>
+  </subsection>
+
+  <subsection name="valve">
+    <p><code>valve</code> describes a valve of the webapp.
+      Similar to the <code>listener</code> has <code>class-name</code>, <code>module</code> and <code>&lt;param/&gt;</code>
+    </p>
+  </subsection>
+
+  <subsection name="security-role">
+    <p><code>security-role</code> describes a securite role of the web-app that is like
+    the <code>&lt;security-role;</code> of the <code>web.xml</code>. It is here for compatibility</p>
+  </subsection>
+</section>
+
+
+</body>
+
+
+</document>

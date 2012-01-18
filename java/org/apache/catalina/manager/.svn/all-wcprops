@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/repos/jbossweb/!svn/ver/1407/trunk/java/org/apache/catalina/manager
+END
+LocalStrings.properties
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/895/trunk/java/org/apache/catalina/manager/LocalStrings.properties
+END
+StatusManagerServlet.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/repos/jbossweb/!svn/ver/515/trunk/java/org/apache/catalina/manager/StatusManagerServlet.java
+END
+LocalStrings_es.properties
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/789/trunk/java/org/apache/catalina/manager/LocalStrings_es.properties
+END
+LocalStrings_fr.properties
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/manager/LocalStrings_fr.properties
+END
+StatusTransformer.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/repos/jbossweb/!svn/ver/1237/trunk/java/org/apache/catalina/manager/StatusTransformer.java
+END
+LocalStrings_de.properties
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/manager/LocalStrings_de.properties
+END
+LocalStrings_ja.properties
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/repos/jbossweb/!svn/ver/520/trunk/java/org/apache/catalina/manager/LocalStrings_ja.properties
+END
+Constants.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/jbossweb/!svn/ver/995/trunk/java/org/apache/catalina/manager/Constants.java
+END
