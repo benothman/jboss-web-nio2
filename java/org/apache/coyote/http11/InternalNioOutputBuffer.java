@@ -27,6 +27,7 @@ import java.nio.channels.CompletionHandler;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
+import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -120,6 +121,42 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param buffer
 	 */
 	private void nonBlockingWrite(final ByteBuffer buffer) {
+		
+		/*
+		 // Perform non blocking writes until all data is written, or the result
+         // of the write is 0
+                int pos = 0;
+                int end = bbuf.position();
+                while (pos < end) {
+                    res = Socket.sendibb(socket, pos, end - pos);
+                    if (res > 0) {
+                        pos += res;
+                    } else {
+                        break;
+                    }
+                }
+                if (pos < end) {
+                    if (response.getFlushLeftovers() && (Http11AprProcessor.containerThread.get() == Boolean.TRUE)) {
+                        // Switch to blocking mode and write the data
+                        Socket.timeoutSet(socket, endpoint.getSoTimeout() * 1000);
+                        res = Socket.sendbb(socket, 0, end);
+                        Socket.timeoutSet(socket, 0);
+                    } else {
+                        // Put any leftover bytes in the leftover byte chunk
+                        leftover.allocate(end - pos, -1);
+                        bbuf.position(pos);
+                        bbuf.limit(end);
+                        bbuf.get(leftover.getBuffer(), 0, end - pos);
+                        leftover.setEnd(end - pos);
+                        // Call for a write event because it is possible that no further write
+                        // operations are made
+                        if (!response.getFlushLeftovers()) {
+                            response.action(ActionCode.ACTION_EVENT_WRITE, null);
+                        }
+                    }
+                }
+		 */
+		
 		this.channel.write(buffer, null, new CompletionHandler<Integer, Void>() {
 
 			@Override
@@ -128,8 +165,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					close();
 					return;
 				}
-
-				if (buffer.position() < buffer.limit()) {
+				// TODO complete implementation
+				if (buffer.hasRemaining()) {
 					channel.write(buffer, null, this);
 				}
 			}
@@ -196,7 +233,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
 	 */
 	protected void flushBuffer() throws IOException {
-		System.out.println("----> " + getClass().getName() + "#flushBuffer() : start  ( "+System.currentTimeMillis()+" )");
 		int res = 0;
 
 		// If there are still leftover bytes here, this means the user did a
@@ -236,7 +272,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf);
 					response.setLastWrite(res);
-					System.out.println("-----> res = " + res + ",  still to write : "
+					System.out.println("-----> res = " + res + ",  remain : "
 							+ bbuf.remaining());
 				}
 				bbuf.clear();
@@ -245,7 +281,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
-		System.out.println("----> " + getClass().getName() + "#flushBuffer() : end ( "+System.currentTimeMillis()+" )");
 	}
 
 	/*
