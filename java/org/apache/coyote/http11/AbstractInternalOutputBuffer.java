@@ -287,7 +287,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *             an undelying I/O error occured
 	 */
 	public void endRequest() throws IOException {
-		System.out.println("----> " + getClass().getName() + "#endRequest() <----");
+		System.out.println("----> " + getClass().getName() + "#endRequest()  ( "+System.currentTimeMillis()+" )");
 
 		if (!committed) {
 			// Send the connector a request for commit. The connector should
@@ -592,13 +592,13 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 * 
 	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
-	protected class OutputBufferImpl implements OutputBuffer {
+	class OutputBufferImpl implements OutputBuffer {
 
 		/**
 		 * Write chunk.
 		 */
 		public int doWrite(ByteChunk chunk, Response res) throws IOException {
-			System.out.println("----> " + getClass().getName() + "#doWrite() <----");
+			System.out.println("----> " + getClass().getName() + "#doWrite() ( "+System.currentTimeMillis()+" )");
 			// If non blocking (event) and there are leftover bytes,
 			// put all remaining bytes in the leftover buffer (they are
 			// part of the same write operation)

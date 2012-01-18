@@ -196,7 +196,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
 	 */
 	protected void flushBuffer() throws IOException {
-		System.out.println("----> " + getClass().getName() + "#flushBuffer() : start");
+		System.out.println("----> " + getClass().getName() + "#flushBuffer() : start  ( "+System.currentTimeMillis()+" )");
 		int res = 0;
 
 		// If there are still leftover bytes here, this means the user did a
@@ -245,7 +245,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
-		System.out.println("----> " + getClass().getName() + "#flushBuffer() : end");
+		System.out.println("----> " + getClass().getName() + "#flushBuffer() : end ( "+System.currentTimeMillis()+" )");
 	}
 
 	/*
