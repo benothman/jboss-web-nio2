@@ -371,7 +371,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#fill()
 	 */
 	protected boolean fill() throws IOException {
-		System.out.println("-------> fill() - Start <-------");
+		System.out.println("-------> fill() - Start, keep-alive timeout : " + endpoint.getKeepAliveTimeout());
 		int nRead = 0;
 		if (parsingHeader) {
 			System.out.println("-------> fill() - Parsing header");
@@ -389,7 +389,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
-					System.out.println("Client request -> "+ new String(buf));
+					System.out.println(new String(buf));
 					lastValid = pos + nRead;
 				} else {
 					if ((-nRead) == Status.EAGAIN) {
