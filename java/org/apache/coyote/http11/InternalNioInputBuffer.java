@@ -357,10 +357,18 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#endRequest()
 	 */
 	public void endRequest() throws IOException {
-		System.out.println("--> End request, keep-alive timeout: " + endpoint.getKeepAliveTimeout());
+		System.out
+				.println("--> End request, keep-alive timeout: " + endpoint.getKeepAliveTimeout());
 		super.endRequest();
 		ByteBuffer bb = ByteBuffer.allocate(0);
-		channel.read(bb, endpoint.getKeepAliveTimeout(), TimeUnit.SECONDS, channel,
+
+		int timeout = endpoint.getKeepAliveTimeout();
+		if (timeout < 0) {
+			// timeout = 5 * 60;
+			timeout = 10;
+		}
+
+		channel.read(bb, timeout, TimeUnit.SECONDS, channel,
 				new CompletionHandler<Integer, NioChannel>() {
 
 					@Override
