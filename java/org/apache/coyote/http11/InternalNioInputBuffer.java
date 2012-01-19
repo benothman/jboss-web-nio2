@@ -360,33 +360,39 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		System.out
 				.println("--> End request, keep-alive timeout: " + endpoint.getKeepAliveTimeout());
 		super.endRequest();
-		ByteBuffer bb = ByteBuffer.allocate(0);
 
-		int timeout = endpoint.getKeepAliveTimeout();
-		if (timeout < 0) {
-			// timeout = 5 * 60;
-			timeout = 10;
+		String connection = request.getHeader("Connection");
+
+		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
+			ByteBuffer bb = ByteBuffer.allocate(0);
+
+			int timeout = endpoint.getKeepAliveTimeout();
+			if (timeout < 0) {
+				// timeout = 5 * 60;
+				timeout = 10;
+			}
+			channel.read(bb, timeout, TimeUnit.SECONDS, channel,
+					new CompletionHandler<Integer, NioChannel>() {
+
+						@Override
+						public void completed(Integer nBytes, NioChannel attachment) {
+							System.out.println("EndRequest --> completed: " + nBytes);
+							if (nBytes < 0) {
+								close(attachment);
+							}
+						}
+
+						@Override
+						public void failed(Throwable exc, NioChannel attachment) {
+							exc.printStackTrace();
+							if (exc instanceof InterruptedByTimeoutException) {
+								close(attachment);
+							}
+						}
+					});
+
 		}
 
-		channel.read(bb, timeout, TimeUnit.SECONDS, channel,
-				new CompletionHandler<Integer, NioChannel>() {
-
-					@Override
-					public void completed(Integer nBytes, NioChannel attachment) {
-						System.out.println("EndRequest --> completed: " + nBytes);
-						if (nBytes < 0) {
-							close(attachment);
-						}
-					}
-
-					@Override
-					public void failed(Throwable exc, NioChannel attachment) {
-						exc.printStackTrace();
-						if (exc instanceof InterruptedByTimeoutException) {
-							close(attachment);
-						}
-					}
-				});
 	}
 
 	/*
