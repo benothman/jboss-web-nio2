@@ -416,11 +416,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	protected boolean fill() throws IOException {
 		int nRead = 0;
-
-		System.out.println("--------------> SoTimeout: " + endpoint.getSoTimeout()
-				+ ", Keep-alive timeout: " + endpoint.getKeepAliveTimeout());
-
-		int timeout = 1000 * (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
+		final int timeout = (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
 				: endpoint.getSoTimeout());
 
 		final TimeUnit unit = TimeUnit.MILLISECONDS;
