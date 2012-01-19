@@ -392,7 +392,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 							}
 						}
 					});
-
 		}
 
 	}
@@ -427,6 +426,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf);
 			} else {
+				
+				int timeout = endpoint.getSoTimeout();
+				System.out.println("NioEndpoint.getSoTimeout() -> " + timeout);
 				nRead = blockingRead(bbuf, 0, TimeUnit.MILLISECONDS);
 				if (nRead > 0) {
 					bbuf.flip();
