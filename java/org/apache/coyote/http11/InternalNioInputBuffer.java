@@ -384,7 +384,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 						@Override
 						public void failed(Throwable exc, NioChannel attachment) {
-							System.out.println("NioChannel[" + attachment.getId() + "] -> read operation fails");
+							System.out.println("NioChannel[" + attachment.getId()
+									+ "] -> read operation fails");
 							exc.printStackTrace();
 							if (exc instanceof InterruptedByTimeoutException) {
 								close(attachment);
@@ -507,6 +508,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * Close the channel
 	 */
 	private static void close(NioChannel channel) {
+		System.out.println("Closing NioChannel[" + channel.getId() + "]");
 		try {
 			channel.close();
 		} catch (IOException e) {
