@@ -361,9 +361,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connection = request.getHeader("Connection");
-		
-		System.out.println("Connection: " + connection);
-		
+
+		System.out.println("***** End request -> Connection: " + connection + " *****");
+
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
 			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
