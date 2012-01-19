@@ -416,6 +416,14 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	protected boolean fill() throws IOException {
 		int nRead = 0;
+
+		System.out.println("--------------> SoTimeout: " + endpoint.getSoTimeout()
+				+ ", Keep-alive timeout: " + endpoint.getKeepAliveTimeout());
+
+		int timeout = 1000 * (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
+				: endpoint.getSoTimeout());
+
+		final TimeUnit unit = TimeUnit.MILLISECONDS;
 		if (parsingHeader) {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
@@ -423,12 +431,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			bbuf.clear();
 			if (nonBlocking) {
-				nonBlockingRead(bbuf);
+				nonBlockingRead(bbuf, timeout, unit);
 			} else {
-
-				int timeout = endpoint.getSoTimeout();
-				System.out.println("NioEndpoint.getSoTimeout() -> " + timeout);
-				nRead = blockingRead(bbuf, timeout, TimeUnit.MILLISECONDS);
+				nRead = blockingRead(bbuf, timeout, unit);
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
@@ -457,9 +462,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			bbuf.clear();
 
 			if (nonBlocking) {
-				nonBlockingRead(bbuf);
+				nonBlockingRead(bbuf, timeout, unit);
 			} else {
-				nRead = blockingRead(bbuf, endpoint.getSoTimeout(), TimeUnit.MILLISECONDS);
+				nRead = blockingRead(bbuf, timeout, unit);
 
 				if (nRead > 0) {
 					bbuf.flip();
@@ -481,8 +486,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 							// blocking mode (the user is not
 							// using available and simply wants to read all
 							// data)
-							nRead = blockingRead(bbuf, endpoint.getSoTimeout() * 1000,
-									TimeUnit.MILLISECONDS);
+							nRead = blockingRead(bbuf, timeout, unit);
 
 							if (nRead > 0) {
 								bbuf.flip();
@@ -518,15 +522,20 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	}
 
 	/**
+	 * Read a sequence of bytes in non-blocking mode from he current channel
 	 * 
 	 * @param bb
+	 *            the byte buffer which will contain the bytes read from the
+	 *            current channel
 	 */
-	private void nonBlockingRead(ByteBuffer bb) {
-		this.channel.read(bbuf, null, new CompletionHandler<Integer, Void>() {
+	private void nonBlockingRead(ByteBuffer bb, int timeout, TimeUnit unit) {
+
+		this.channel.read(bb, timeout, unit, channel, new CompletionHandler<Integer, NioChannel>() {
+
 			@Override
-			public void completed(Integer nBytes, Void attachment) {
+			public void completed(Integer nBytes, NioChannel attachment) {
 				if (nBytes < 0) {
-					close(channel);
+					close(attachment);
 				}
 
 				if (nBytes > 0) {
@@ -537,29 +546,29 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 
 			@Override
-			public void failed(Throwable exc, Void attachment) {
+			public void failed(Throwable exc, NioChannel attachment) {
 				if (exc instanceof InterruptedByTimeoutException) {
-					// Interrupted by a time out
+					close(attachment);
 				}
 			}
 		});
 	}
 
 	/**
-	 * Read from the channel
+	 * Read a sequence of bytes in blocking mode from he current channel
 	 * 
 	 * @param bb
-	 * @return
+	 * @return the number of bytes read or -1 if the end of the stream was
+	 *         reached
 	 */
 	private int blockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
 		try {
-			//if (timeout > 0) {
-				return this.channel.read(bb).get(0, unit);
-			//}
+			if (timeout > 0) {
+				return this.channel.read(bb).get(timeout, unit);
+			}
 
-			//return this.channel.read(bb).get();
+			return this.channel.read(bb).get();
 		} catch (TimeoutException te) {
-			log.error(te.getMessage(), te);
 			close(channel);
 		} catch (Exception e) {
 			// NOP
