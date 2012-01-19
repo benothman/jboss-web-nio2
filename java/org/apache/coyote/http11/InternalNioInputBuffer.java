@@ -364,7 +364,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		String connection = request.getHeader("Connection");
 
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
-			ByteBuffer bb = ByteBuffer.allocate(0);
+			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
 			int timeout = endpoint.getKeepAliveTimeout();
 			if (timeout < 0) {
