@@ -58,6 +58,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	protected static Logger logger = Logger.getLogger(NioEndpoint.class);
 
 	protected AsynchronousServerSocketChannel listener;
+	private ThreadFactory threadFactory;
 
 	/**
 	 * Available workers.
@@ -193,15 +194,18 @@ public class NioEndpoint extends AbstractEndpoint {
 			acceptorThreadCount = 1;
 		}
 
+		// Create the thread factory
+		if (this.threadFactory == null) {
+			this.threadFactory = new DefaultThreadFactory(getName() + "-", threadPriority);
+		}
+
 		this.channelList = new ChannelList(getMaxThreads());
 		ExecutorService executorService;
-		// Create the thread factory
-		DefaultThreadFactory threadFactory = new DefaultThreadFactory(threadPriority);
 		if (this.executor != null) {
 			executorService = (ExecutorService) this.executor;
 		} else {
 			// Create the executor service
-			executorService = Executors.newFixedThreadPool(getMaxThreads(), threadFactory);
+			executorService = Executors.newFixedThreadPool(getMaxThreads(), this.threadFactory);
 			// initialize the endpoint executor
 			setExecutor(executorService);
 		}
@@ -264,6 +268,8 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			// Start acceptor threads
 			for (int i = 0; i < acceptorThreadCount; i++) {
+
+				this.threadFactory.newThread(new Acceptor());
 				Thread acceptorThread = new Thread(new Acceptor(), getName() + "-Acceptor");
 				acceptorThread.setPriority(threadPriority);
 				acceptorThread.setDaemon(daemon);
@@ -578,7 +584,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
 					channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
-					System.out.println("New client connection");
+					System.out.println("New client connection : " + channel);
 					if (getSoLinger() > 0) {
 						channel.setOption(StandardSocketOptions.SO_LINGER, getSoLinger());
 					}
@@ -1390,7 +1396,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	/**
 	 * The default thread factory
 	 */
-	static class DefaultThreadFactory implements ThreadFactory {
+	private static class DefaultThreadFactory implements ThreadFactory {
 		private static final AtomicInteger poolNumber = new AtomicInteger(1);
 		private final ThreadGroup group;
 		private final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -1402,11 +1408,15 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * 
 		 * @param threadPriority
 		 */
-		DefaultThreadFactory(int threadPriority) {
+		DefaultThreadFactory(String namePrefix, int threadPriority) {
 			SecurityManager s = System.getSecurityManager();
 			group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-			namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
+			this.namePrefix = namePrefix;
 			this.threadPriority = threadPriority;
+		}
+
+		DefaultThreadFactory(int threadPriority) {
+			this("pool-" + poolNumber.getAndIncrement() + "-thread-", threadPriority);
 		}
 
 		/**

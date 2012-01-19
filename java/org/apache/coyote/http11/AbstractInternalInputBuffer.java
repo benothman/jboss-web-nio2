@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
@@ -111,6 +112,17 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 */
 	protected InputBuffer inputBuffer;
 
+	/**
+	 * Read timeout
+	 */
+	protected int readTimeout = -1;
+
+	/**
+	 * The default time unit
+	 */
+	protected static final TimeUnit unit = TimeUnit.MILLISECONDS;
+
+	
 	/**
 	 * Create a new instance of {@code AbstractInternalInputBuffer}
 	 * 

@@ -86,7 +86,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		super(request, headerBufferSize);
 		this.endpoint = endpoint;
 		this.inputBuffer = new InputBufferImpl();
-
+		this.readTimeout = (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
+				: endpoint.getSoTimeout());
 		if (headerBufferSize < (8 * 1024)) {
 			bbuf = ByteBuffer.allocateDirect(6 * 1500);
 		} else {
@@ -416,10 +417,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	protected boolean fill() throws IOException {
 		int nRead = 0;
-		final int timeout = (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
-				: endpoint.getSoTimeout());
 
-		final TimeUnit unit = TimeUnit.MILLISECONDS;
 		if (parsingHeader) {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
@@ -427,13 +425,13 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			bbuf.clear();
 			if (nonBlocking) {
-				nonBlockingRead(bbuf, timeout, unit);
+				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
-				nRead = blockingRead(bbuf, timeout, unit);
+				nRead = blockingRead(bbuf, readTimeout, unit);
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
-					System.out.println(new String(buf));
+					System.out.println("--> " + new String(buf));
 					lastValid = pos + nRead;
 				} else {
 					if ((-nRead) == Status.EAGAIN) {
@@ -458,9 +456,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			bbuf.clear();
 
 			if (nonBlocking) {
-				nonBlockingRead(bbuf, timeout, unit);
+				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
-				nRead = blockingRead(bbuf, timeout, unit);
+				nRead = blockingRead(bbuf, readTimeout, unit);
 
 				if (nRead > 0) {
 					bbuf.flip();
@@ -482,7 +480,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 							// blocking mode (the user is not
 							// using available and simply wants to read all
 							// data)
-							nRead = blockingRead(bbuf, timeout, unit);
+							nRead = blockingRead(bbuf, readTimeout, unit);
 
 							if (nRead > 0) {
 								bbuf.flip();
@@ -509,7 +507,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * Close the channel
 	 */
 	private static void close(NioChannel channel) {
-		System.out.println("Closing NioChannel[" + channel.getId() + "]");
+		System.out.println("Closing channel : " + channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
@@ -524,7 +522,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 *            the byte buffer which will contain the bytes read from the
 	 *            current channel
 	 */
-	private void nonBlockingRead(ByteBuffer bb, int timeout, TimeUnit unit) {
+	private void nonBlockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
 
 		this.channel.read(bb, timeout, unit, channel, new CompletionHandler<Integer, NioChannel>() {
 

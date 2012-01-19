@@ -120,6 +120,11 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	protected boolean nonBlocking = false;
 
 	/**
+	 * Write timeout
+	 */
+	protected int writeTimeout = -1;
+
+	/**
 	 * Create a new instance of {@code AbstractInternalOutputBuffer}
 	 * 
 	 * @param response
