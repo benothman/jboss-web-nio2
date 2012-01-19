@@ -229,7 +229,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 
 				listener.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
-				listener.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
 				if (address == null) {
