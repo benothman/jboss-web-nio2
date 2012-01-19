@@ -361,14 +361,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connection = request.getHeader("Connection");
-
+		
+		System.out.println("Connection: " + connection);
+		
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
 			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
-			int timeout = endpoint.getSoTimeout();
-			if (timeout < 0) {
-				timeout = 5 * 60 * 1000;
-			}
 			channel.read(bb, readTimeout, unit, channel,
 					new CompletionHandler<Integer, NioChannel>() {
 
