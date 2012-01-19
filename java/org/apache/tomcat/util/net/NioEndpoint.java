@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 
 import org.apache.tomcat.jni.File;
+import org.apache.tomcat.jni.OS;
 import org.apache.tomcat.util.net.AprEndpoint.Sendfile;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 import org.jboss.logging.Logger;
@@ -227,6 +228,12 @@ public class NioEndpoint extends AbstractEndpoint {
 					listener = this.serverSocketChannelFactory.createServerChannel(port, backlog,
 							address);
 				}
+
+				if (OS.IS_UNIX) {
+					listener.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
+				}
+				listener.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
+
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
 				if (address == null) {
@@ -372,7 +379,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addChannel(NioChannel channel, int timeout, int flag) {
 		this.channelList.add(channel, timeout, flag);
 	}
-
+	
 	/**
 	 * Create (or allocate) and return an available processor for use in
 	 * processing a specific HTTP request, if possible. If the maximum allowed
@@ -575,6 +582,10 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
+					channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
+					if (getSoLinger() > 0) {
+						channel.setOption(StandardSocketOptions.SO_LINGER, getSoLinger());
+					}
 
 					// Hand this channel off to an appropriate processor
 					if (!processChannel(channel)) {
@@ -669,7 +680,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	// --------------------------------------------- SocketTimeouts Inner Class
 
 	/**
-	 * Socket list class, used to avoid using a possibly large amount of objects
+	 * Channel list class, used to avoid using a possibly large amount of objects
 	 * with very little actual use.
 	 */
 	public class ChannelTimeouts {

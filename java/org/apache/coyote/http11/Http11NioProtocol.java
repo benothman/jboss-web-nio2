@@ -37,7 +37,6 @@ import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
 import org.apache.tomcat.util.net.SocketStatus;
-import org.jboss.logging.Logger;
 
 /**
  * {@code Http11NioProtocol}
@@ -50,7 +49,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 	protected NioEndpoint endpoint = new NioEndpoint();
 	private Http11ConnectionHandler cHandler = new Http11ConnectionHandler(this);
-	private static final Logger logger = Logger.getLogger(Http11NioProtocol.class);
 
 	/**
 	 * Create a new instance of {@code Http11NioProtocol}

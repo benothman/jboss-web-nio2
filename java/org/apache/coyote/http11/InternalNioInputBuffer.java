@@ -354,6 +354,34 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#endRequest()
+	 */
+	public void endRequest() throws IOException {
+		super.endRequest();
+		ByteBuffer bb = ByteBuffer.allocate(0);
+		channel.read(bb, endpoint.getKeepAliveTimeout(), TimeUnit.SECONDS, channel,
+				new CompletionHandler<Integer, NioChannel>() {
+
+					@Override
+					public void completed(Integer nBytes, NioChannel attachment) {
+						if (nBytes < 0) {
+							close(attachment);
+						}
+					}
+
+					@Override
+					public void failed(Throwable exc, NioChannel attachment) {
+						exc.printStackTrace();
+						if (exc instanceof SocketTimeoutException) {
+							close(attachment);
+						}
+					}
+				});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see
 	 * org.apache.coyote.InputBuffer#doRead(org.apache.tomcat.util.buf.ByteChunk
 	 * , org.apache.coyote.Request)
@@ -461,7 +489,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	/**
 	 * Close the channel
 	 */
-	private void close() {
+	private static void close(NioChannel channel) {
 		try {
 			channel.close();
 		} catch (IOException e) {
@@ -478,7 +506,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			@Override
 			public void completed(Integer nBytes, Void attachment) {
 				if (nBytes < 0) {
-					close();
+					close(channel);
 				}
 
 				if (nBytes > 0) {
