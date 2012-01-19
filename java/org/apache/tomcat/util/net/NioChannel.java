@@ -37,6 +37,7 @@ import java.nio.channels.WritePendingException;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * {@code NioChannel}
@@ -47,8 +48,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class NioChannel implements AsynchronousByteChannel {
 
+	private static final AtomicLong counter = new AtomicLong();
+	
 	private AsynchronousSocketChannel channel;
-
+	private long id;
 	/**
 	 * Create a new instance of {@code NioChannel}
 	 * 
@@ -59,8 +62,16 @@ public class NioChannel implements AsynchronousByteChannel {
 			throw new NullPointerException("null channel parameter");
 		}
 		this.channel = channel;
+		this.id = counter.getAndIncrement();
 	}
 
+	/**
+	 * @return the channel id
+	 */
+	public long getId() {
+		return this.id;
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
