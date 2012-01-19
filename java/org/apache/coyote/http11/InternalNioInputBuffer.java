@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
@@ -357,10 +358,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#endRequest()
 	 */
 	public void endRequest() throws IOException {
-		System.out
-				.println("--> End request, keep-alive timeout: " + endpoint.getKeepAliveTimeout());
 		super.endRequest();
-
 		String connection = request.getHeader("Connection");
 
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
@@ -375,7 +373,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 						@Override
 						public void completed(Integer nBytes, NioChannel attachment) {
-							System.out.println("EndRequest --> completed: " + nBytes);
 							if (nBytes < 0) {
 								close(attachment);
 							}
@@ -555,13 +552,15 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @return
 	 */
 	private int blockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
-		System.out.println("Blocking read NioChannel[" + channel.getId() + "]");
 		try {
 			if (timeout > 0) {
 				return this.channel.read(bb).get(timeout, unit);
 			}
 
 			return this.channel.read(bb).get();
+		} catch (TimeoutException te) {
+			log.error(te.getMessage(), te);
+			close(channel);
 		} catch (Exception e) {
 			// NOP
 			log.warn("An error occurs when trying a blocking read");
