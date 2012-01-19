@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 
 import org.apache.tomcat.jni.File;
-import org.apache.tomcat.jni.OS;
 import org.apache.tomcat.util.net.AprEndpoint.Sendfile;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 import org.jboss.logging.Logger;
@@ -229,11 +228,8 @@ public class NioEndpoint extends AbstractEndpoint {
 							address);
 				}
 
-				if (OS.IS_UNIX) {
-					listener.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
-				}
+				listener.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
 				listener.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
-
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
 				if (address == null) {
@@ -379,7 +375,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addChannel(NioChannel channel, int timeout, int flag) {
 		this.channelList.add(channel, timeout, flag);
 	}
-	
+
 	/**
 	 * Create (or allocate) and return an available processor for use in
 	 * processing a specific HTTP request, if possible. If the maximum allowed
@@ -680,8 +676,8 @@ public class NioEndpoint extends AbstractEndpoint {
 	// --------------------------------------------- SocketTimeouts Inner Class
 
 	/**
-	 * Channel list class, used to avoid using a possibly large amount of objects
-	 * with very little actual use.
+	 * Channel list class, used to avoid using a possibly large amount of
+	 * objects with very little actual use.
 	 */
 	public class ChannelTimeouts {
 		protected int size;
