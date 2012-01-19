@@ -366,10 +366,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
 			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
-			int timeout = endpoint.getKeepAliveTimeout();
+			int timeout = endpoint.getSoTimeout();
 			if (timeout < 0) {
-				// timeout = 5 * 60;
-				timeout = 10;
+				timeout = 5 * 60 * 1000;
 			}
 			channel.read(bb, timeout, TimeUnit.SECONDS, channel,
 					new CompletionHandler<Integer, NioChannel>() {
@@ -392,6 +391,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 							}
 						}
 					});
+		} else {
+			// Closing the channel
+			close(channel);
 		}
 
 	}
@@ -426,7 +428,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf);
 			} else {
-				
+
 				int timeout = endpoint.getSoTimeout();
 				System.out.println("NioEndpoint.getSoTimeout() -> " + timeout);
 				nRead = blockingRead(bbuf, timeout, TimeUnit.MILLISECONDS);
