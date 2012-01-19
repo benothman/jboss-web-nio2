@@ -553,11 +553,11 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	private int blockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
 		try {
-			if (timeout > 0) {
-				return this.channel.read(bb).get(timeout, unit);
-			}
+			//if (timeout > 0) {
+				return this.channel.read(bb).get(0, unit);
+			//}
 
-			return this.channel.read(bb).get();
+			//return this.channel.read(bb).get();
 		} catch (TimeoutException te) {
 			log.error(te.getMessage(), te);
 			close(channel);
@@ -566,7 +566,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			log.warn("An error occurs when trying a blocking read");
 			log.error(e.getMessage(), e);
 		}
-		return 0;
+		return -1;
 	}
 
 	// ------------------------------------- ChannelInputBuffer Inner Class
