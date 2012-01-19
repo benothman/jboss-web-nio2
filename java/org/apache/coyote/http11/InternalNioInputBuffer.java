@@ -551,6 +551,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @return
 	 */
 	private int blockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
+		System.out.println("Blocking read NioChannel[" + channel.getId() + "]");
 		try {
 			if (timeout > 0) {
 				return this.channel.read(bb).get(timeout, unit);
