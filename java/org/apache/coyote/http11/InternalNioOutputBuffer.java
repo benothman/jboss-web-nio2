@@ -266,8 +266,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// result of the write is 0
 				nonBlockingWrite(bbuf);
 			} else {
-				System.out.println("-----> capacity: " + bbuf.capacity() + ", empty : "
-						+ (bbuf.capacity() - bbuf.limit()));
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf);
 					response.setLastWrite(res);
