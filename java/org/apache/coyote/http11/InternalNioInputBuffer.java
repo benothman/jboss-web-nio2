@@ -369,7 +369,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (timeout < 0) {
 				timeout = 5 * 60 * 1000;
 			}
-			channel.read(bb, timeout, TimeUnit.SECONDS, channel,
+			channel.read(bb, readTimeout, unit, channel,
 					new CompletionHandler<Integer, NioChannel>() {
 
 						@Override
