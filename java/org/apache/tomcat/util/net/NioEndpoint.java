@@ -578,6 +578,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
 					channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
+					System.out.println("New client connection");
 					if (getSoLinger() > 0) {
 						channel.setOption(StandardSocketOptions.SO_LINGER, getSoLinger());
 					}
