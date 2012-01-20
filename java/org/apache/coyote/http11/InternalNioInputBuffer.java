@@ -370,6 +370,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 						@Override
 						public void completed(Integer nBytes, NioChannel attachment) {
+							System.out.println("Completed -> " + nBytes);
 							if (nBytes < 0) {
 								close(attachment);
 							}
@@ -377,6 +378,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 						@Override
 						public void failed(Throwable exc, NioChannel attachment) {
+							exc.printStackTrace();
 							if (exc instanceof InterruptedByTimeoutException) {
 								close(attachment);
 							}
