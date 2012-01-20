@@ -245,9 +245,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			System.out.println("##### Step - 1 #####");
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
-				
 				System.out.println("##### Step - 2 #####");
-				
+
 				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
 				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
 				bb.rewind();
@@ -256,7 +255,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// Send current buffer
 				if (res > 0 && bbuf.position() > 0) {
 					bbuf.rewind();
-					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+					while (bbuf.hasRemaining()) {
+						res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+					}
 				}
 				bbuf.clear();
 			} else {
@@ -274,14 +275,14 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			} else {
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-					if (res > 0) {
-						response.setLastWrite(res);
-					} else {
+					System.out.println("-----> res = " + res + ", remain = " + bbuf.remaining());
+					if (res <= 0) {
 						break;
 					}
 				}
-				bbuf.clear();
 			}
+			response.setLastWrite(res);
+			bbuf.clear();
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
