@@ -99,6 +99,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param channel
 	 */
 	private static void close(NioChannel channel) {
+		System.out.println("--> Closing connecton : " + channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
@@ -288,7 +289,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		System.out.println("Clearing the buffer");
 		bbuf.clear();
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

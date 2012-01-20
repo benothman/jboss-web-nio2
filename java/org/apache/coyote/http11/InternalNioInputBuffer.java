@@ -408,7 +408,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
-					System.out.println("--> " + new String(buf));
 					lastValid = pos + nRead;
 				} else {
 					if ((-nRead) == Status.EAGAIN) {
