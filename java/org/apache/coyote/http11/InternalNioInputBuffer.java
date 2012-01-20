@@ -24,6 +24,7 @@ package org.apache.coyote.http11;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -139,6 +140,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	public void recycle() {
 		super.recycle();
+		bbuf.clear();
 		channel = null;
 		available = false;
 	}
@@ -361,6 +363,14 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connection = request.getHeader("Connection");
+		
+		if (connection != null && !connection.trim().equalsIgnoreCase("keep-alive")) {
+			close(channel);
+		} else {
+			//channel.setOption(StandardSocketOptions.class, value);
+		}
+		
+		/*
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
 			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
@@ -385,6 +395,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			// Closing the channel
 			close(channel);
 		}
+		*/
 
 	}
 
@@ -513,7 +524,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 *            the byte buffer which will contain the bytes read from the
 	 *            current channel
 	 */
-	private void nonBlockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
+	private void nonBlockingRead(final ByteBuffer bb, long timeout, TimeUnit unit) {
 
 		this.channel.read(bb, timeout, unit, channel, new CompletionHandler<Integer, NioChannel>() {
 
@@ -524,8 +535,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				}
 
 				if (nBytes > 0) {
-					bbuf.flip();
-					bbuf.get(buf, pos, nBytes);
+					bb.flip();
+					bb.get(buf, pos, nBytes);
 					lastValid = pos + nBytes;
 				}
 			}

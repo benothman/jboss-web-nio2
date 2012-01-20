@@ -220,6 +220,8 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 * connection.
 	 */
 	public void recycle() {
+		System.out.println("Recycle the input buffer");
+		
 		// Recycle Request object
 		request.recycle();
 		lastValid = 0;

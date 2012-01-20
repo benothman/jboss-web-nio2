@@ -253,6 +253,8 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 * Recycle this object
 	 */
 	public void recycle() {
+		System.out.println("Recycle the output buffer");
+
 		// Recycle Request object
 		response.recycle();
 		bbuf.clear();
