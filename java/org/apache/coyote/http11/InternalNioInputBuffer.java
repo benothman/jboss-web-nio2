@@ -85,6 +85,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	public InternalNioInputBuffer(Request request, int headerBufferSize, NioEndpoint endpoint) {
 		super(request, headerBufferSize);
+		System.out.println("******* Create a new " + getClass().getName() + " *******");
 		this.endpoint = endpoint;
 		this.inputBuffer = new InputBufferImpl();
 		this.readTimeout = (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
@@ -363,39 +364,29 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connection = request.getHeader("Connection");
-		
-		if (connection != null && !connection.trim().equalsIgnoreCase("keep-alive")) {
+
+		if (connection == null || !connection.trim().equalsIgnoreCase("keep-alive")) {
 			close(channel);
 		} else {
-			//channel.setOption(StandardSocketOptions.class, value);
+			channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
 		}
-		
+
 		/*
-		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
-			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
-
-			channel.read(bb, readTimeout, unit, channel,
-					new CompletionHandler<Integer, NioChannel>() {
-
-						@Override
-						public void completed(Integer nBytes, NioChannel attachment) {
-							if (nBytes < 0) {
-								close(attachment);
-							}
-						}
-
-						@Override
-						public void failed(Throwable exc, NioChannel attachment) {
-							if (exc instanceof InterruptedByTimeoutException) {
-								close(attachment);
-							}
-						}
-					});
-		} else {
-			// Closing the channel
-			close(channel);
-		}
-		*/
+		 * if (connection != null &&
+		 * connection.trim().equalsIgnoreCase("keep-alive")) { ByteBuffer bb =
+		 * ByteBuffer.allocate(bbuf.capacity());
+		 * 
+		 * channel.read(bb, readTimeout, unit, channel, new
+		 * CompletionHandler<Integer, NioChannel>() {
+		 * 
+		 * @Override public void completed(Integer nBytes, NioChannel
+		 * attachment) { if (nBytes < 0) { close(attachment); } }
+		 * 
+		 * @Override public void failed(Throwable exc, NioChannel attachment) {
+		 * if (exc instanceof InterruptedByTimeoutException) {
+		 * close(attachment); } } }); } else { // Closing the channel
+		 * close(channel); }
+		 */
 
 	}
 
