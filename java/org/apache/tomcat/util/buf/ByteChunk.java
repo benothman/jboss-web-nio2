@@ -65,6 +65,11 @@ import java.io.Serializable;
 public final class ByteChunk implements Cloneable, Serializable {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
 	 * Input interface, used when the buffer is emptiy
 	 * 
 	 * Same as java.nio.channel.ReadableByteChannel

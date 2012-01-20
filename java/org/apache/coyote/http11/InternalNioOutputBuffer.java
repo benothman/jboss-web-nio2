@@ -242,9 +242,12 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// - If the call is synchronous, make regular blocking writes to flush
 		// the data
 		if (leftover.getLength() > 0) {
+			System.out.println("##### Step - 1 #####");
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
-				System.out.println("----- Sending leftover bytes -----");
 				// Send leftover bytes
+				
+				System.out.println("##### Step - 2 #####");
+				
 				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
 				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
 				bb.rewind();
@@ -252,6 +255,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				leftover.recycle();
 				// Send current buffer
 				if (res > 0 && bbuf.position() > 0) {
+					bbuf.rewind();
 					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
 				}
 				bbuf.clear();
@@ -270,24 +274,18 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			} else {
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-					System.out.println("-----> res = " + res + ",  remain : " + bbuf.remaining());
 					if (res > 0) {
 						response.setLastWrite(res);
 					} else {
 						break;
 					}
 				}
-				clear();
+				bbuf.clear();
 			}
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
-	}
-
-	private void clear() {
-		System.out.println("Clearing the buffer");
-		bbuf.clear();
 	}
 
 	/*
