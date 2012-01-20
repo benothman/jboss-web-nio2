@@ -365,28 +365,34 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		super.endRequest();
 		String connection = request.getHeader("Connection");
 
-		if (connection == null || !connection.trim().equalsIgnoreCase("keep-alive")) {
-			close(channel);
-		} else {
-			channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
-		}
+		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
+			final ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
-		/*
-		 * if (connection != null &&
-		 * connection.trim().equalsIgnoreCase("keep-alive")) { ByteBuffer bb =
-		 * ByteBuffer.allocate(bbuf.capacity());
-		 * 
-		 * channel.read(bb, readTimeout, unit, channel, new
-		 * CompletionHandler<Integer, NioChannel>() {
-		 * 
-		 * @Override public void completed(Integer nBytes, NioChannel
-		 * attachment) { if (nBytes < 0) { close(attachment); } }
-		 * 
-		 * @Override public void failed(Throwable exc, NioChannel attachment) {
-		 * if (exc instanceof InterruptedByTimeoutException) {
-		 * close(attachment); } } }); } else { // Closing the channel
-		 * close(channel); }
-		 */
+			channel.read(bb, readTimeout, unit, channel,
+					new CompletionHandler<Integer, NioChannel>() {
+
+						@Override
+						public void completed(Integer nBytes, NioChannel attachment) {
+							if (nBytes < 0) {
+								close(attachment);
+							}
+							
+							bb.flip();
+							byte [] bytes = new byte[nBytes];
+							System.out.println("New query from the client: "+ new String(bytes));
+						}
+
+						@Override
+						public void failed(Throwable exc, NioChannel attachment) {
+							if (exc instanceof InterruptedByTimeoutException) {
+								close(attachment);
+							}
+						}
+					});
+		} else {
+			// Closing the channel
+			close(channel);
+		}
 
 	}
 
