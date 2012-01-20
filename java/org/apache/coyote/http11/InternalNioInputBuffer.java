@@ -365,32 +365,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		String connection = request.getHeader("Connection");
 
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
-			final ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
-
-			channel.read(bb, readTimeout, unit, channel,
-					new CompletionHandler<Integer, NioChannel>() {
-
-						@Override
-						public void completed(Integer nBytes, NioChannel attachment) {
-							if (nBytes < 0) {
-								close(attachment);
-								return;
-							}
-							
-							bb.flip();
-							byte [] bytes = new byte[nBytes];
-							bb.get(bytes);
-							System.out.println("New query from the client: "+ new String(bytes));
-							endpoint.getHandler().process(attachment);
-						}
-
-						@Override
-						public void failed(Throwable exc, NioChannel attachment) {
-							if (exc instanceof InterruptedByTimeoutException) {
-								close(attachment);
-							}
-						}
-					});
+			// TODO
 		} else {
 			// Closing the channel
 			close(channel);
