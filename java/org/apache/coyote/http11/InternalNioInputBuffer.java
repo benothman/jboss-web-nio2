@@ -24,7 +24,6 @@ package org.apache.coyote.http11;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -375,12 +374,14 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 						public void completed(Integer nBytes, NioChannel attachment) {
 							if (nBytes < 0) {
 								close(attachment);
+								return;
 							}
 							
 							bb.flip();
 							byte [] bytes = new byte[nBytes];
 							bb.get(bytes);
 							System.out.println("New query from the client: "+ new String(bytes));
+							endpoint.getHandler().process(attachment);
 						}
 
 						@Override
