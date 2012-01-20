@@ -410,12 +410,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	protected boolean fill() throws IOException {
 		int nRead = 0;
 
+		bbuf.clear();
 		if (parsingHeader) {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
 
-			bbuf.clear();
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
@@ -445,7 +445,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 			pos = end;
 			lastValid = pos;
-			bbuf.clear();
 
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
