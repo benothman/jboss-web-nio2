@@ -276,7 +276,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 						break;
 					}
 				}
-				bbuf.clear();
+				clear();
 			}
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
@@ -284,6 +284,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 	}
 
+	private void clear() {
+		System.out.println("Clearing the buffer");
+		bbuf.clear();
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
