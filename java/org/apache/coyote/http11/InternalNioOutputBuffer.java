@@ -24,7 +24,9 @@ package org.apache.coyote.http11;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
@@ -93,6 +95,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 	/**
 	 * Close the channel
+	 * 
+	 * @param channel
 	 */
 	private static void close(NioChannel channel) {
 		try {
@@ -109,11 +113,18 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
 		try {
+			if (timeout > 0) {
+				return this.channel.write(buffer).get(timeout, unit);
+			}
 			return this.channel.write(buffer).get();
+		} catch (TimeoutException te) {
+			close(channel);
 		} catch (Exception e) {
-			e.printStackTrace();
-			return -1;
+			// NOP
+			log.warn("An error occurs when trying a blocking write");
+			log.error(e.getMessage(), e);
 		}
+		return -1;
 	}
 
 	/**
@@ -139,28 +150,32 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		 * response.action(ActionCode.ACTION_EVENT_WRITE, null); } } }
 		 */
 
-		this.channel.write(buffer, timeout, unit, channel, new CompletionHandler<Integer, NioChannel>() {
+		this.channel.write(buffer, timeout, unit, channel,
+				new CompletionHandler<Integer, NioChannel>() {
 
-			@Override
-			public void completed(Integer nBytes, NioChannel attachment) {
-				// Perform non blocking writes until all data is written, or the
-				// result
-				// of the write is 0
-				if (nBytes < 0) {
-					close(attachment);
-					return;
-				}
-				// TODO complete implementation
-				if (buffer.hasRemaining()) {
-					channel.write(buffer, null, this);
-				}
-			}
+					@Override
+					public void completed(Integer nBytes, NioChannel attachment) {
+						// Perform non blocking writes until all data is
+						// written, or the
+						// result
+						// of the write is 0
+						if (nBytes < 0) {
+							close(attachment);
+							return;
+						}
+						// TODO complete implementation
+						if (buffer.hasRemaining()) {
+							attachment.write(buffer, null, this);
+						}
+					}
 
-			@Override
-			public void failed(Throwable exc, NioChannel attachment) {
-				
-			}
-		});
+					@Override
+					public void failed(Throwable exc, NioChannel attachment) {
+						if (exc instanceof InterruptedByTimeoutException) {
+							close(attachment);
+						}
+					}
+				});
 	}
 
 	/**
@@ -254,8 +269,12 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			} else {
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-					response.setLastWrite(res);
 					System.out.println("-----> res = " + res + ",  remain : " + bbuf.remaining());
+					if (res > 0) {
+						response.setLastWrite(res);
+					} else {
+						break;
+					}
 				}
 				bbuf.clear();
 			}

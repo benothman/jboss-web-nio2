@@ -361,9 +361,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connection = request.getHeader("Connection");
-
-		System.out.println("***** End request -> Connection: " + connection + " *****");
-
 		if (connection != null && connection.trim().equalsIgnoreCase("keep-alive")) {
 			ByteBuffer bb = ByteBuffer.allocate(bbuf.capacity());
 
@@ -379,9 +376,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 						@Override
 						public void failed(Throwable exc, NioChannel attachment) {
-							System.out.println("NioChannel[" + attachment.getId()
-									+ "] -> read operation fails");
-							exc.printStackTrace();
 							if (exc instanceof InterruptedByTimeoutException) {
 								close(attachment);
 							}
