@@ -379,6 +379,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 							
 							bb.flip();
 							byte [] bytes = new byte[nBytes];
+							bb.get(bytes);
 							System.out.println("New query from the client: "+ new String(bytes));
 						}
 
