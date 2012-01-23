@@ -79,12 +79,13 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		endpoint.setName(getName());
 		endpoint.setHandler(cHandler);
 		try {
+			System.out.println(getClass().getName() + " -> timeout = " + this.timeout);
 			endpoint.init();
 		} catch (Exception ex) {
 			log.error(sm.getString("http11protocol.endpoint.initerror"), ex);
 			throw ex;
 		}
-		// 
+		//
 		log.info(sm.getString("http11protocol.init", getName()));
 	}
 
@@ -823,6 +824,9 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				}
 
 				SocketState state = processor.process(channel);
+				if (processor.keepAlive) {
+
+				}
 				if (state == SocketState.LONG) {
 					// Associate the connection with the processor. The next
 					// request

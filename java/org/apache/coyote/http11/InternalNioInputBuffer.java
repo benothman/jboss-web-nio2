@@ -352,7 +352,14 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connectionHeader = request.getHeader("Connection");
-
+		
+		if (connectionHeader == null || !connectionHeader.trim().equalsIgnoreCase("keep-alive")) {
+			close(channel);
+		}
+		
+		
+		
+		
 		if (connectionHeader != null && connectionHeader.trim().equalsIgnoreCase("keep-alive")) {
 			final ByteBuffer bb = ByteBuffer.allocateDirect(1);
 			channel.read(bb, readTimeout, unit, channel,

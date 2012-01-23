@@ -178,6 +178,17 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	}
 
 	/**
+	 * 
+	 * @param channel
+	 */
+	private void setChannel(NioChannel channel) {
+		// Setting up the channel
+		this.channel = channel;
+		this.inputBuffer.setChannel(channel);
+		this.outputBuffer.setChannel(channel);
+	}
+
+	/**
 	 * Process pipelined HTTP requests using the specified input and output
 	 * streams.
 	 * 
@@ -273,11 +284,9 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
 		this.reset();
-
 		// Setting up the channel
-		this.channel = channel;
-		inputBuffer.setChannel(channel);
-		outputBuffer.setChannel(channel);
+		this.setChannel(channel);
+		
 		int keepAliveLeft = maxKeepAliveRequests;
 		int soTimeout = endpoint.getSoTimeout();
 		boolean keptAlive = false;
@@ -347,7 +356,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 								|| statusDropsConnection(response.getStatus());
 					}
 				} catch (InterruptedIOException e) {
-					e.printStackTrace();
 					error = true;
 				} catch (Throwable t) {
 					log.error(sm.getString("http11processor.request.process"), t);
@@ -496,7 +504,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	private void flush() {
 		try {
 			outputBuffer.flush();
-			//outputBuffer.flushLeftover();
+			// outputBuffer.flushLeftover();
 		} catch (IOException e) {
 			// Set error flag
 			error = true;
@@ -906,7 +914,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			request.scheme().setString("https");
 		}
 		MessageBytes protocolMB = request.protocol();
-		
+
 		if (protocolMB.equals(Constants.HTTP_11)) {
 			http11 = true;
 			protocolMB.setString(Constants.HTTP_11);

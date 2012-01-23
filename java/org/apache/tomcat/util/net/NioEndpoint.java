@@ -505,6 +505,10 @@ public class NioEndpoint extends AbstractEndpoint {
 		return true;
 	}
 
+	
+	
+	
+	
 	/**
 	 * Process given channel for an event.
 	 */
@@ -1340,11 +1344,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void run() {
 
 			// Process the request from this socket
-			if (handler.process(channel) == Handler.SocketState.CLOSED) {
+			if (handler.process(this.channel) == Handler.SocketState.CLOSED) {
 				// Close channel
 				close();
 			}
-			channel = null;
+			this.channel = null;
 		}
 
 		/**
@@ -1359,6 +1363,14 @@ public class NioEndpoint extends AbstractEndpoint {
 				e.printStackTrace();
 			}
 		}
+		
+		/**
+		 * @param channel
+		 */
+		public void setChannel(NioChannel channel) {
+			this.channel = channel;
+		}
+		
 	}
 
 	// --------------------------------------- ChannelEventProcessor Inner Class
