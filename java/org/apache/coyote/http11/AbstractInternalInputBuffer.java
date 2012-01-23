@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.InputBuffer;
@@ -77,6 +78,11 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	protected byte[] buf;
 
 	/**
+	 * Direct byte buffer used to perform actual reading.
+	 */
+	protected ByteBuffer bbuf;
+
+	/**
 	 * Last valid byte.
 	 */
 	protected int lastValid;
@@ -122,7 +128,6 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 */
 	protected static final TimeUnit unit = TimeUnit.MILLISECONDS;
 
-	
 	/**
 	 * Create a new instance of {@code AbstractInternalInputBuffer}
 	 * 
@@ -147,6 +152,12 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 		lastActiveFilter = -1;
 		parsingHeader = true;
 		swallowInput = true;
+
+		if (headerBufferSize < (8 * 1024)) {
+			bbuf = ByteBuffer.allocateDirect(6 * 1500);
+		} else {
+			bbuf = ByteBuffer.allocateDirect((headerBufferSize / 1500 + 1) * 1500);
+		}
 	}
 
 	/**
@@ -220,8 +231,6 @@ public abstract class AbstractInternalInputBuffer implements InputBuffer {
 	 * connection.
 	 */
 	public void recycle() {
-		System.out.println("Recycle the input buffer");
-		
 		// Recycle Request object
 		request.recycle();
 		lastValid = 0;

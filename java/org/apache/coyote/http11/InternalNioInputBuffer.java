@@ -51,11 +51,6 @@ import org.apache.tomcat.util.net.NioEndpoint;
 public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 	/**
-	 * Direct byte buffer used to perform actual reading.
-	 */
-	protected ByteBuffer bbuf;
-
-	/**
 	 * Underlying channel.
 	 */
 	protected NioChannel channel;
@@ -88,11 +83,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		this.inputBuffer = new InputBufferImpl();
 		this.readTimeout = (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
 				: endpoint.getSoTimeout());
-		if (headerBufferSize < (8 * 1024)) {
-			bbuf = ByteBuffer.allocateDirect(6 * 1500);
-		} else {
-			bbuf = ByteBuffer.allocateDirect((headerBufferSize / 1500 + 1) * 1500);
-		}
 	}
 
 	/**
@@ -427,7 +417,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
 
-					System.out.println(" -> " + new String(buf));
+					System.out.println(new String(buf));
 
 					lastValid = pos + nRead;
 				} else {
