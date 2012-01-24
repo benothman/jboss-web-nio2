@@ -266,7 +266,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 
 		if (bbuf.position() > 0) {
-			bbuf.rewind();
+			bbuf.flip();
 			byte b[] = new byte[bbuf.remaining()];
 
 			bbuf.get(b);
@@ -274,7 +274,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			System.out.println(new String(b));
 			System.out.println("************** End Buffer content **************");
 
-			bbuf.rewind();
+			bbuf.flip();
 
 			if (nonBlocking) {
 				// Perform non blocking writes until all data is written, or the
