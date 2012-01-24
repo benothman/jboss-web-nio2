@@ -65,7 +65,7 @@ public class NioChannel implements AsynchronousByteChannel {
 		}
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
-		this.buffer = ByteBuffer.allocateDirect(64);
+		this.buffer = ByteBuffer.allocateDirect(8);
 	}
 
 	/**

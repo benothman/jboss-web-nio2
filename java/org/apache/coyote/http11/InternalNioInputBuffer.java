@@ -379,11 +379,13 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#fill()
 	 */
 	protected boolean fill() throws IOException {
-		int nRead = 0;
+		int nRead = 0, tmp = 0;
+		
 		bbuf.clear();
 		
 		if(channel.getFlag()) {
 			channel.getBuffer().flip();
+			tmp = channel.getBuffer().remaining(); 
 			byte b[] = new byte[channel.getBuffer().remaining()];
 			channel.getBuffer().get(b);
 			System.out.println("READ -> " + new String(b));
@@ -402,6 +404,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			} else {
 				nRead = blockingRead(bbuf, readTimeout, unit);
 				if (nRead > 0) {
+					nRead += tmp;
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
 					lastValid = pos + nRead;
@@ -429,7 +432,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
-				nRead = blockingRead(bbuf, readTimeout, unit);
+				nRead += blockingRead(bbuf, readTimeout, unit);
 
 				if (nRead > 0) {
 					bbuf.flip();
