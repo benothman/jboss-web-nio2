@@ -315,33 +315,36 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// and the method should return true
 
 					final NioChannel ch = channel;
-					ch.reset();					
-					System.out.println(" -------> Timout : " + soTimeout);
-					ch.read(ch.getBuffer(), soTimeout, TimeUnit.MILLISECONDS, null,
-							new CompletionHandler<Integer, Void>() {
 
-								@Override
-								public void completed(Integer nBytes, Void attachment) {
-									System.out.println("==> completed : " + nBytes);
-									if (nBytes < 0) {
-										close(ch);
-									}
-									// TODO
-									if (nBytes > 0) {
-										ch.setFlag();
-										endpoint.processChannel(ch);
-									}
-								}
+					if (ch.isOpen()) {
+						// Prepare the channel for async read
+						ch.reset();
+						System.out.println(" -------> Timout : " + soTimeout);
+						ch.read(ch.getBuffer(), soTimeout, TimeUnit.MILLISECONDS, null,
+								new CompletionHandler<Integer, NioChannel>() {
 
-								@Override
-								public void failed(Throwable exc, Void attachment) {
-									exc.printStackTrace();
-									if (exc instanceof InterruptedByTimeoutException) {
-										close(ch);
+									@Override
+									public void completed(Integer nBytes, NioChannel attachment) {
+										System.out.println("==> completed : " + nBytes);
+										if (nBytes < 0) {
+											close(ch);
+										}
+										// TODO
+										if (nBytes > 0) {
+											ch.setFlag();
+											endpoint.processChannel(ch);
+										}
 									}
-								}
-							});
 
+									@Override
+									public void failed(Throwable exc, NioChannel attachment) {
+										exc.printStackTrace();
+										if (exc instanceof InterruptedByTimeoutException) {
+											close(ch);
+										}
+									}
+								});
+					}
 					openChannel = true;
 					break;
 				}
