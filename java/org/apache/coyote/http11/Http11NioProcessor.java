@@ -316,19 +316,13 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 
 					final NioChannel ch = channel;
 					ByteBuffer bb = ByteBuffer.allocateDirect(1);
+					System.out.println(" -------> Timout : " + soTimeout);
 					ch.read(bb, soTimeout, TimeUnit.MILLISECONDS, null,
 							new CompletionHandler<Integer, Void>() {
 
-								private void close(NioChannel c) {
-									try {
-										c.close();
-									} catch (IOException e) {
-										// NOP
-									}
-								}
-
 								@Override
 								public void completed(Integer nBytes, Void attachment) {
+									System.out.println("==> completed : " + nBytes);
 									if (nBytes < 0) {
 										close(ch);
 									}
@@ -457,7 +451,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		System.out.println("Step #15");
 		rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
 
-		System.out.println(getClass().getName() + " --> event = " + event);
 		if (event) {
 			System.out.println("Step #15.1");
 			if (error) {
@@ -590,6 +583,21 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		} catch (IOException e) {
 			// Set error flag
 			error = true;
+		}
+	}
+
+	/**
+	 * Close the specified channel without handling of possible exception
+	 * 
+	 * @param channel
+	 *            the channel to be closed
+	 */
+	private static void close(NioChannel nioChannel) {
+		System.out.println("Closing channel: " + nioChannel);
+		try {
+			nioChannel.close();
+		} catch (IOException e) {
+			// NOP
 		}
 	}
 
