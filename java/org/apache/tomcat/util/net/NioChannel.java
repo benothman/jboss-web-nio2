@@ -49,9 +49,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NioChannel implements AsynchronousByteChannel {
 
 	private static final AtomicLong counter = new AtomicLong();
-
 	private AsynchronousSocketChannel channel;
 	private long id;
+	private ByteBuffer buffer;
+	private boolean flag;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
@@ -64,6 +65,36 @@ public class NioChannel implements AsynchronousByteChannel {
 		}
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
+		this.buffer = ByteBuffer.allocateDirect(64);
+	}
+
+	/**
+	 * Reset the flag and the internal buffer
+	 */
+	public void reset() {
+		this.flag = false;
+		this.buffer.clear();
+	}
+
+	/**
+	 * Set the flag to true
+	 */
+	public void setFlag() {
+		this.flag = true;
+	}
+
+	/**
+	 * @return the value of the <tt>flag</tt>
+	 */
+	public boolean getFlag() {
+		return this.flag;
+	}
+
+	/**
+	 * @return the internal buffer
+	 */
+	public ByteBuffer getBuffer() {
+		return this.buffer;
 	}
 
 	/**

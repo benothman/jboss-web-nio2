@@ -315,9 +315,9 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// and the method should return true
 
 					final NioChannel ch = channel;
-					ByteBuffer bb = ByteBuffer.allocateDirect(1);
+					ch.reset();					
 					System.out.println(" -------> Timout : " + soTimeout);
-					ch.read(bb, soTimeout, TimeUnit.MILLISECONDS, null,
+					ch.read(ch.getBuffer(), soTimeout, TimeUnit.MILLISECONDS, null,
 							new CompletionHandler<Integer, Void>() {
 
 								@Override
@@ -328,6 +328,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 									}
 									// TODO
 									if (nBytes > 0) {
+										ch.setFlag();
 										endpoint.processChannel(ch);
 									}
 								}

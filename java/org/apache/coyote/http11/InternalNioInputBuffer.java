@@ -379,13 +379,19 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	protected boolean fill() throws IOException {
 		int nRead = 0;
-
 		bbuf.clear();
+		
+		if(channel.getFlag()) {
+			channel.getBuffer().flip();
+			bbuf.put(channel.getBuffer());
+			channel.reset();
+		}
+		
 		if (parsingHeader) {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-
+			
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
