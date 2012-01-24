@@ -196,7 +196,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * 
 	 * <p>
 	 * Otherwise this method works in the same manner as the
-	 * {@link AsynchronousByteChannel#read(ByteBuffer,Object,CompletionHandler)}
+	 * {@link NioChannel#read(ByteBuffer,Object,CompletionHandler)}
 	 * method.
 	 * 
 	 * @param dst
@@ -355,7 +355,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * 
 	 * <p>
 	 * Otherwise this method works in the same manner as the
-	 * {@link AsynchronousByteChannel#write(ByteBuffer,Object,CompletionHandler)}
+	 * {@link NioChannel#write(ByteBuffer,Object,CompletionHandler)}
 	 * method.
 	 * 
 	 * @param src

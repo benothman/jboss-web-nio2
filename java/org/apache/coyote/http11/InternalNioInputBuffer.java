@@ -347,21 +347,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#endRequest()
-	 */
-	public void endRequest() throws IOException {
-		super.endRequest();
-		/*
-		String connectionHeader = request.getHeader("Connection");
-		if (connectionHeader == null || !connectionHeader.trim().equalsIgnoreCase("keep-alive")) {
-			close(channel);
-		}
-		*/
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see
 	 * org.apache.coyote.InputBuffer#doRead(org.apache.tomcat.util.buf.ByteChunk
 	 * , org.apache.coyote.Request)
@@ -380,12 +365,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	protected boolean fill() throws IOException {
 		int nRead = 0, tmp = 0;
-		
+
 		bbuf.clear();
-		
-		if(channel.getFlag()) {
+
+		if (channel.getFlag()) {
 			channel.getBuffer().flip();
-			tmp = channel.getBuffer().remaining(); 
+			tmp = channel.getBuffer().remaining();
 			byte b[] = new byte[channel.getBuffer().remaining()];
 			channel.getBuffer().get(b);
 			System.out.println("READ -> " + new String(b));
@@ -393,12 +378,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			bbuf.put(channel.getBuffer());
 			channel.reset();
 		}
-		
+
 		if (parsingHeader) {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-			
+
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
@@ -481,7 +466,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * Close the channel
 	 */
 	private static void close(NioChannel channel) {
-		System.out.println(InternalNioInputBuffer.class.getName() + " --> Closing channel: " + channel);
+		System.out.println(InternalNioInputBuffer.class.getName() + " --> Closing channel: "
+				+ channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
