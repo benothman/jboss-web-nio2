@@ -286,20 +286,24 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		this.reset();
 		// Setting up the channel
 		this.setChannel(channel);
-		
+
 		int keepAliveLeft = maxKeepAliveRequests;
 		int soTimeout = endpoint.getSoTimeout();
 		boolean keptAlive = false;
 		boolean openChannel = false;
-
+		System.out.println("Step #0");
 		while (!error && keepAlive && !event) {
 			// Parsing the request header
 			try {
+				System.out.println("Step #1");
 
 				if (!disableUploadTimeout && keptAlive && soTimeout > 0) {
+					System.out.println("Step #1.1");
 					endpoint.setSoTimeout(soTimeout * 1000);
 				}
+				System.out.println("Step #2");
 				if (!inputBuffer.parseRequestLine(keptAlive)) {
+					System.out.println("Step #2.1");
 					// This means that no data is available right now
 					// (long keepalive), so that the processor should be
 					// recycled
@@ -307,16 +311,21 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					openChannel = true;
 					break;
 				}
+				System.out.println("Step #3");
 				request.setStartTime(System.currentTimeMillis());
 				keptAlive = true;
 				if (!disableUploadTimeout) {
+					System.out.println("Step #3.1");
 					endpoint.setSoTimeout(timeout * 1000);
 				}
+				System.out.println("Step #4");
 				inputBuffer.parseHeaders();
 			} catch (IOException e) {
+				System.out.println("Step #5");
 				error = true;
 				break;
 			} catch (Throwable t) {
+				System.out.println("Step #6");
 				if (log.isDebugEnabled()) {
 					log.debug(sm.getString("http11processor.header.parse"), t);
 				}
@@ -324,12 +333,14 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				response.setStatus(400);
 				error = true;
 			}
-
+			System.out.println("Step #7");
 			// Setting up filters, and parse some request headers
 			rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
 			try {
+				System.out.println("Step #8");
 				prepareRequest();
 			} catch (Throwable t) {
+				System.out.println("Step #8.1");
 				if (log.isDebugEnabled()) {
 					log.debug(sm.getString("http11processor.request.prepare"), t);
 				}
@@ -337,12 +348,16 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				response.setStatus(500);
 				error = true;
 			}
-
-			if (maxKeepAliveRequests > 0 && --keepAliveLeft == 0)
+			System.out.println("Step #9");
+			if (maxKeepAliveRequests > 0 && --keepAliveLeft == 0) {
+				System.out.println("Step #9.1");
 				keepAlive = false;
+			}
 
+			System.out.println("Step #10");
 			// Process the request in the adapter
 			if (!error) {
+				System.out.println("Step #10.1");
 				try {
 					rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
 					adapter.service(request, response);
@@ -352,12 +367,15 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// If we fail here, then the response is likely already
 					// committed, so we can't try and set headers.
 					if (keepAlive && !error) { // Avoid checking twice.
+						System.out.println("Step #10.1.1");
 						error = response.getErrorException() != null
 								|| statusDropsConnection(response.getStatus());
 					}
 				} catch (InterruptedIOException e) {
+					System.out.println("Step #10.2");
 					error = true;
 				} catch (Throwable t) {
+					System.out.println("Step #10.3");
 					log.error(sm.getString("http11processor.request.process"), t);
 					// 500 - Internal Server Error
 					response.setStatus(500);
@@ -365,47 +383,57 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					t.printStackTrace();
 				}
 			}
-
+			System.out.println("Step #11");
 			// Finish the handling of the request
 			if (error) {
+				System.out.println("Step #11.1");
 				// If there is an unspecified error, the connection will be
 				// closed
 				inputBuffer.setSwallowInput(false);
 			}
 			if (!event) {
+				System.out.println("Step #11.2");
 				endRequest();
 			}
+			System.out.println("Step #12");
 
 			// If there was an error, make sure the request is counted as
 			// and error, and update the statistics counter
 			if (error) {
+				System.out.println("Step #12.1");
 				response.setStatus(500);
 			}
 			request.updateCounters();
-
+			System.out.println("Step #13");
 			boolean pipelined = false;
 			if (!event) {
+				System.out.println("Step #13.1");
 				// Next request
 				pipelined = inputBuffer.nextRequest();
 				outputBuffer.nextRequest();
 			}
-
+			System.out.println("Step #14");
 			rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
 		}
-
+		System.out.println("Step #15");
 		rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
 
+		System.out.println(getClass().getName() + " --> event = " + event);
 		if (event) {
+			System.out.println("Step #15.1");
 			if (error) {
+				System.out.println("Step #15.1.1");
 				inputBuffer.nextRequest();
 				outputBuffer.nextRequest();
 				recycle();
 				return SocketState.CLOSED;
 			} else {
+				System.out.println("Step #15.1.2");
 				eventProcessing = false;
 				return SocketState.LONG;
 			}
 		} else {
+			System.out.println("Step #15.2");
 			recycle();
 			return (openChannel) ? SocketState.OPEN : SocketState.CLOSED;
 		}
