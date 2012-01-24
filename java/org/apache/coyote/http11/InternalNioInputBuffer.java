@@ -351,11 +351,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	public void endRequest() throws IOException {
 		super.endRequest();
+		/*
 		String connectionHeader = request.getHeader("Connection");
-
 		if (connectionHeader == null || !connectionHeader.trim().equalsIgnoreCase("keep-alive")) {
 			close(channel);
 		}
+		*/
 	}
 
 	/*
@@ -474,8 +475,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	private static void close(NioChannel channel) {
 		System.out.println(InternalNioInputBuffer.class.getName() + " --> Closing channel: " + channel);
-
-		System.out.println("Closing channel : " + channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
