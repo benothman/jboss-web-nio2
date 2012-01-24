@@ -267,13 +267,21 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		if (bbuf.position() > 0) {
 			bbuf.rewind();
+			byte b[] = new byte[bbuf.remaining()];
+
+			bbuf.get(b);
+			System.out.println("************** Start Buffer content **************");
+			System.out.println(new String(b));
+			System.out.println("************** End Buffer content **************");
+
+			bbuf.rewind();
 
 			if (nonBlocking) {
 				// Perform non blocking writes until all data is written, or the
 				// result of the write is 0
 				nonBlockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
 			} else {
-				
+
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
 					System.out.println("-----> res = " + res + ", remain = " + bbuf.remaining());
