@@ -333,34 +333,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 									}
 								}
 							});
-					
-					/*
-					ch.reset();
-					ch.read(ch.getBuffer(), soTimeout, TimeUnit.MILLISECONDS, null,
-							new CompletionHandler<Integer, NioChannel>() {
-
-								@Override
-								public void completed(Integer nBytes, NioChannel attachment) {
-									if (nBytes < 0) {
-										// Attempting the end of the stream
-										close(ch);
-									}
-
-									if (nBytes > 0) {
-										ch.setFlag();
-										endpoint.processChannel(ch);
-									}
-								}
-
-								@Override
-								public void failed(Throwable exc, NioChannel attachment) {
-									exc.printStackTrace();
-									if (exc instanceof InterruptedByTimeoutException) {
-										close(ch);
-									}
-								}
-							});
-					*/
 					openChannel = true;
 					break;
 				}
