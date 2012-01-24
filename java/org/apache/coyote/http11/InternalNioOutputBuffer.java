@@ -276,7 +276,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			} else {
 				while (bbuf.hasRemaining()) {
 					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-					System.out.println("-----> written = " + res + ", remain = " + bbuf.remaining());
 					if (res <= 0) {
 						break;
 					}

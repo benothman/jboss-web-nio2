@@ -413,9 +413,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
-				nRead += blockingRead(bbuf, readTimeout, unit);
+				nRead = blockingRead(bbuf, readTimeout, unit);
 
 				if (nRead > 0) {
+					nRead += tmp;
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
 					lastValid = pos + nRead;

@@ -312,6 +312,20 @@ public class NioChannel implements AsynchronousByteChannel {
 		this.channel.read(dsts, offset, length, timeout, unit, attachment, handler);
 	}
 
+	/**
+	 * 
+	 * @param timeout
+	 * @param unit
+	 * @param attachment
+	 * @param handler
+	 */
+	public <A> void awaitRead(long timeout, TimeUnit unit,
+			A attachment, CompletionHandler<Integer, ? super A> handler) {
+		reset();
+		this.channel.read(buffer, timeout, unit, attachment, handler);
+	} 
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 
