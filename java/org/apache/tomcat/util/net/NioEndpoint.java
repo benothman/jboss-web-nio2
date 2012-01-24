@@ -1432,7 +1432,13 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.threadPriority = threadPriority;
 		}
 
-		DefaultThreadFactory(int threadPriority) {
+		/**
+		 * 
+		 * Create a new instance of {@code DefaultThreadFactory}
+		 * 
+		 * @param threadPriority
+		 */
+		public DefaultThreadFactory(int threadPriority) {
 			this("pool-" + poolNumber.getAndIncrement() + "-thread-", threadPriority);
 		}
 
