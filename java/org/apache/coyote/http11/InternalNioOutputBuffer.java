@@ -99,7 +99,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param channel
 	 */
 	private static void close(NioChannel channel) {
-		System.out.println("--> Closing connecton : " + channel);
+		System.out.println(InternalNioOutputBuffer.class.getName() + " --> Closing channel: " + channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
@@ -124,6 +124,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			// NOP
 			log.warn("An error occurs when trying a blocking write");
 			log.error(e.getMessage(), e);
+			e.printStackTrace();
 		}
 		return -1;
 	}

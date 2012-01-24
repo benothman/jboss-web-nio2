@@ -20,9 +20,7 @@ package org.apache.coyote.http11;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.lang.Character.UnicodeScript;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.security.cert.CertificateFactory;
@@ -319,7 +317,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					if (ch.isOpen()) {
 						// Prepare the channel for async read
 						ch.reset();
-						System.out.println(" -------> Timout : " + soTimeout);
 						ch.read(ch.getBuffer(), soTimeout, TimeUnit.MILLISECONDS, null,
 								new CompletionHandler<Integer, NioChannel>() {
 
@@ -597,7 +594,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 *            the channel to be closed
 	 */
 	private static void close(NioChannel nioChannel) {
-		System.out.println("Closing channel: " + nioChannel);
+		System.out.println(Http11NioProcessor.class.getName() + " --> Closing channel: " + nioChannel);
 		try {
 			nioChannel.close();
 		} catch (IOException e) {

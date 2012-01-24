@@ -473,6 +473,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * Close the channel
 	 */
 	private static void close(NioChannel channel) {
+		System.out.println(InternalNioInputBuffer.class.getName() + " --> Closing channel: " + channel);
+
 		System.out.println("Closing channel : " + channel);
 		try {
 			channel.close();
