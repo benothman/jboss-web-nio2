@@ -352,40 +352,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public void endRequest() throws IOException {
 		super.endRequest();
 		String connectionHeader = request.getHeader("Connection");
-		
+
 		if (connectionHeader == null || !connectionHeader.trim().equalsIgnoreCase("keep-alive")) {
 			close(channel);
 		}
-		
-		
-		
-		
-		if (connectionHeader != null && connectionHeader.trim().equalsIgnoreCase("keep-alive")) {
-			final ByteBuffer bb = ByteBuffer.allocateDirect(1);
-			channel.read(bb, readTimeout, unit, channel,
-					new CompletionHandler<Integer, NioChannel>() {
-
-						@Override
-						public void completed(Integer nBytes, NioChannel attachment) {
-							System.out.println("Completed -> " + nBytes);
-							if (nBytes < 0) {
-								close(attachment);
-							}
-						}
-
-						@Override
-						public void failed(Throwable exc, NioChannel attachment) {
-							exc.printStackTrace();
-							if (exc instanceof InterruptedByTimeoutException) {
-								close(attachment);
-							}
-						}
-					});
-		} else {
-			// Closing the channel
-			close(channel);
-		}
-
 	}
 
 	/*
@@ -423,9 +393,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
-
-					System.out.println(new String(buf));
-
 					lastValid = pos + nRead;
 				} else {
 					if ((-nRead) == Status.EAGAIN) {

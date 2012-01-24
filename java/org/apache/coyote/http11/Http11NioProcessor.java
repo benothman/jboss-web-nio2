@@ -20,10 +20,15 @@ package org.apache.coyote.http11;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.lang.Character.UnicodeScript;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Request;
@@ -308,6 +313,40 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// (long keepalive), so that the processor should be
 					// recycled
 					// and the method should return true
+
+					final NioChannel ch = channel;
+					ByteBuffer bb = ByteBuffer.allocateDirect(1);
+					ch.read(bb, soTimeout, TimeUnit.MILLISECONDS, null,
+							new CompletionHandler<Integer, Void>() {
+
+								private void close(NioChannel c) {
+									try {
+										c.close();
+									} catch (IOException e) {
+										// NOP
+									}
+								}
+
+								@Override
+								public void completed(Integer nBytes, Void attachment) {
+									if (nBytes < 0) {
+										close(ch);
+									}
+									// TODO
+									if (nBytes > 0) {
+										endpoint.processChannel(ch);
+									}
+								}
+
+								@Override
+								public void failed(Throwable exc, Void attachment) {
+									exc.printStackTrace();
+									if (exc instanceof InterruptedByTimeoutException) {
+										close(ch);
+									}
+								}
+							});
+
 					openChannel = true;
 					break;
 				}

@@ -483,8 +483,12 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	/**
 	 * Process given channel.
+	 * 
+	 * @param channel
+	 * @return <tt>true</tt> if the processing of the channel finish
+	 *         successfully else <tt>false</tt>
 	 */
-	protected boolean processChannel(NioChannel channel) {
+	public boolean processChannel(NioChannel channel) {
 		try {
 			if (executor == null) {
 				Worker worker = getWorkerThread();
@@ -505,14 +509,15 @@ public class NioEndpoint extends AbstractEndpoint {
 		return true;
 	}
 
-	
-	
-	
-	
 	/**
 	 * Process given channel for an event.
+	 * 
+	 * @param channel
+	 * @param status
+	 * @return <tt>true</tt> if the processing of the channel finish
+	 *         successfully else <tt>false</tt>
 	 */
-	protected boolean processChannel(NioChannel channel, SocketStatus status) {
+	public boolean processChannel(NioChannel channel, SocketStatus status) {
 		try {
 			if (executor == null) {
 				Worker worker = getWorkerThread();
@@ -1363,14 +1368,14 @@ public class NioEndpoint extends AbstractEndpoint {
 				e.printStackTrace();
 			}
 		}
-		
+
 		/**
 		 * @param channel
 		 */
 		public void setChannel(NioChannel channel) {
 			this.channel = channel;
 		}
-		
+
 	}
 
 	// --------------------------------------- ChannelEventProcessor Inner Class
