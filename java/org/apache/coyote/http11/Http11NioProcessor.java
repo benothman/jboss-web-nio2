@@ -277,7 +277,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 * streams.
 	 * 
 	 * @param channel
-	 * @return
+	 * @return the process state
 	 * 
 	 * @throws IOException
 	 *             error during an I/O operation
@@ -307,7 +307,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// (long keep-alive), so that the processor should be
 					// recycled and the method should return true
 					final NioChannel ch = channel;
-					System.out.println("Keep-alive for " + ch);
 					// Prepare the channel for asynchronous read
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
@@ -351,6 +350,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				if (log.isDebugEnabled()) {
 					log.debug(sm.getString("http11processor.header.parse"), t);
 				}
+				log.error(sm.getString("http11processor.header.parse"), t);
 				// 400 - Bad Request
 				response.setStatus(400);
 				error = true;
@@ -558,15 +558,14 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	/**
 	 * Close the specified channel without handling of possible exception
 	 * 
-	 * @param channel
+	 * @param ch
 	 *            the channel to be closed
 	 */
-	private static void close(NioChannel nioChannel) {
+	private static void close(NioChannel ch) {
 		try {
-			nioChannel.close();
+			ch.close();
 		} catch (IOException ioe) {
 			// NOP
-			ioe.printStackTrace();
 		}
 	}
 
