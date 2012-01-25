@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
+import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.AsynchronousByteChannel;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
@@ -33,7 +35,9 @@ import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
 import java.nio.channels.ShutdownChannelGroupException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.nio.channels.WritePendingException;
+import java.nio.channels.spi.AsynchronousChannelProvider;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +73,92 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * Opens an asynchronous socket channel.
+	 * 
+	 * <p>
+	 * The new channel is created by invoking the
+	 * {@link AsynchronousChannelProvider#openAsynchronousSocketChannel
+	 * openAsynchronousSocketChannel} method on the
+	 * {@link AsynchronousChannelProvider} that created the group. If the group
+	 * parameter is {@code null} then the resulting channel is created by the
+	 * system-wide default provider, and bound to the <em>default group</em>.
+	 * 
+	 * @param group
+	 *            The group to which the newly constructed channel should be
+	 *            bound, or {@code null} for the default group
+	 * 
+	 * @return A new asynchronous socket channel
+	 * 
+	 * @throws ShutdownChannelGroupException
+	 *             If the channel group is shutdown
+	 * @throws IOException
+	 *             If an I/O error occurs
+	 */
+	public static NioChannel open(AsynchronousChannelGroup group) throws IOException {
+		AsynchronousSocketChannel channel = AsynchronousSocketChannel.open(group);
+		return new NioChannel(channel);
+	}
+
+	/**
+	 * Opens a {@code NioChannel}.
+	 * 
+	 * <p>
+	 * This method returns an {@code NioChannel} that is bound to the
+	 * <em>default group</em>.This method is equivalent to evaluating the
+	 * expression: <blockquote>
+	 * 
+	 * <pre>
+	 * open((AsynchronousChannelGroup) null);
+	 * </pre>
+	 * 
+	 * </blockquote>
+	 * 
+	 * @return A new {@code NioChannel}
+	 * 
+	 * @throws IOException
+	 *             If an I/O error occurs
+	 */
+	public static NioChannel open() throws IOException {
+		return open(null);
+	}
+
+	/**
+	 * Binds the channel's socket to a local address.
+	 * 
+	 * <p>
+	 * This method is used to establish an association between the socket and a
+	 * local address. Once an association is established then the socket remains
+	 * bound until the channel is closed. If the {@code local} parameter has the
+	 * value {@code null} then the socket will be bound to an address that is
+	 * assigned automatically.
+	 * 
+	 * @param local
+	 *            The address to bind the socket, or {@code null} to bind the
+	 *            socket to an automatically assigned socket address
+	 * 
+	 * @return This channel
+	 * 
+	 * @throws AlreadyBoundException
+	 *             If the socket is already bound
+	 * @throws UnsupportedAddressTypeException
+	 *             If the type of the given address is not supported
+	 * @throws ClosedChannelException
+	 *             If the channel is closed
+	 * @throws IOException
+	 *             If some other I/O error occurs
+	 * @throws SecurityException
+	 *             If a security manager is installed and it denies an
+	 *             unspecified permission. An implementation of this interface
+	 *             should specify any required permissions.
+	 * 
+	 * @see #getLocalAddress
+	 */
+	public NioChannel bind(SocketAddress local) throws IOException {
+		this.channel.bind(local);
+		return this;
+	}
+
+	/**
 	 * Reset the flag and the internal buffer
 	 */
 	public void reset() {
@@ -86,7 +176,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	/**
 	 * @return the value of the <tt>flag</tt>
 	 */
-	public boolean getFlag() {
+	public boolean flag() {
 		return this.flag;
 	}
 
@@ -102,6 +192,15 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	public long getId() {
 		return this.id;
+	}
+
+	/**
+	 * Returns the provider that created this channel.
+	 * 
+	 * @return the channel provider
+	 */
+	public final AsynchronousChannelProvider provider() {
+		return this.channel.provider();
 	}
 
 	/*
@@ -132,25 +231,6 @@ public class NioChannel implements AsynchronousByteChannel {
 		if (isOpen() && force) {
 			this.channel.close();
 		}
-	}
-
-	/**
-	 * Getter for channel
-	 * 
-	 * @return the channel
-	 */
-	public AsynchronousSocketChannel getChannel() {
-		return this.channel;
-	}
-
-	/**
-	 * Setter for the channel
-	 * 
-	 * @param channel
-	 *            the channel to set
-	 */
-	public void setChannel(AsynchronousSocketChannel channel) {
-		this.channel = channel;
 	}
 
 	/*
@@ -313,11 +393,14 @@ public class NioChannel implements AsynchronousByteChannel {
 
 	/**
 	 * <p>
-	 * Wait for a incoming data. The received data will be stored by default in
+	 * Wait for incoming data. The received data will be stored by default in
 	 * the internal buffer (By default, one byte). The user should retrieve this
 	 * byte first and complete the read operation. This method works like a
-	 * listener for the incoming data on this channel.</p>
-	 * <p>Note: The channel is reset (flag, buffer) before the read operation</p>
+	 * listener for the incoming data on this channel.
+	 * </p>
+	 * <p>
+	 * Note: The channel is reset (flag, buffer) before the read operation
+	 * </p>
 	 * 
 	 * @param timeout
 	 *            The maximum time for the I/O operation to complete
@@ -336,27 +419,26 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		
+
 		// reset the flag and the buffer
 		reset();
-		if(handler == null) {
+		if (handler == null) {
 			throw new NullPointerException("null handler parameter");
 		}
-		
+
+		// Perform an asynchronous read operation using the internal buffer
 		read(buffer, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
 			@Override
-			public void completed(Integer result, A attachment) {
+			public void completed(Integer result, A attach) {
 				// Set the flag to true
 				setFlag();
-				handler.completed(result, attachment);
+				handler.completed(result, attach);
 			}
 
 			@Override
-			public void failed(Throwable exc, A attachment) {
-				handler.failed(exc, attachment);
-				// reset flag and clear the internal buffer
-				reset();
+			public void failed(Throwable exc, A attach) {
+				handler.failed(exc, attach);
 			}
 		});
 	}
@@ -541,7 +623,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * socket receive buffer that has not been read, or data arrives
 	 * subsequently, is also system dependent.
 	 * 
-	 * @return The channel
+	 * @return This channel
 	 * 
 	 * @throws NotYetConnectedException
 	 *             If this channel is not yet connected
@@ -565,7 +647,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * The effect on an outstanding write operation is system dependent and
 	 * therefore not specified.
 	 * 
-	 * @return The channel
+	 * @return This channel
 	 * 
 	 * @throws NotYetConnectedException
 	 *             If this channel is not yet connected
