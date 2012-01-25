@@ -232,7 +232,7 @@ public class NioEndpoint extends AbstractEndpoint {
 							address);
 				}
 
-				listener.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
+				listener.setOption(StandardSocketOptions.SO_REUSEADDR, this.reuseAddress);
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
 				if (address == null) {
@@ -268,8 +268,6 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			// Start acceptor threads
 			for (int i = 0; i < acceptorThreadCount; i++) {
-
-				this.threadFactory.newThread(new Acceptor());
 				Thread acceptorThread = new Thread(new Acceptor(), getName() + "-Acceptor");
 				acceptorThread.setPriority(threadPriority);
 				acceptorThread.setDaemon(daemon);
@@ -336,19 +334,12 @@ public class NioEndpoint extends AbstractEndpoint {
 		// Process the connection
 		int step = 1;
 		try {
-
 			// 1: Set socket options: timeout, linger, etc
 			if (soLinger >= 0) {
 				channel.setOption(StandardSocketOptions.SO_LINGER, soLinger);
 			}
 			if (tcpNoDelay) {
-				// Socket.optSet(socket, Socket.APR_TCP_NODELAY, (tcpNoDelay ? 1
-				// : 0));
 				channel.setOption(StandardSocketOptions.TCP_NODELAY, tcpNoDelay);
-			}
-
-			if (soTimeout > 0) {
-				// Socket.timeoutSet(socket, soTimeout * 1000);
 			}
 
 			// 2: SSL handshake

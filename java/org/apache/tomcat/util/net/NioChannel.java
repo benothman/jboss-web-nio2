@@ -156,7 +156,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see java.nio.channels.ReadableByteChannel#read(java.nio.ByteBuffer)
+	 * @see java.nio.channels.AsynchronousByteChannel#read(java.nio.ByteBuffer)
 	 */
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
@@ -196,8 +196,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * 
 	 * <p>
 	 * Otherwise this method works in the same manner as the
-	 * {@link NioChannel#read(ByteBuffer,Object,CompletionHandler)}
-	 * method.
+	 * {@link NioChannel#read(ByteBuffer,Object,CompletionHandler)} method.
 	 * 
 	 * @param dst
 	 *            The buffer into which bytes are to be transferred
@@ -313,23 +312,38 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * <p>
+	 * Wait for a incoming data. The received data will be stored by default in
+	 * the internal buffer (By default, one byte). The user should retrieve this
+	 * byte first and complete the read operation. This method works like a
+	 * listener for the incoming data on this channel.</p>
+	 * <p>Note: The channel is reset (flag, buffer) before the read operation</p>
 	 * 
 	 * @param timeout
+	 *            The maximum time for the I/O operation to complete
 	 * @param unit
+	 *            The time unit of the {@code timeout} argument
 	 * @param attachment
+	 *            The object to attach to the I/O operation; can be {@code null}
 	 * @param handler
+	 *            The handler for consuming the result
+	 * @throws ReadPendingException
+	 *             If a read operation is already in progress on this channel
+	 * @throws NotYetConnectedException
+	 *             If this channel is not yet connected
+	 * @throws ShutdownChannelGroupException
+	 *             If the channel group has terminated
 	 */
-	public <A> void awaitRead(long timeout, TimeUnit unit,
-			A attachment, CompletionHandler<Integer, ? super A> handler) {
+	public <A> void awaitRead(long timeout, TimeUnit unit, A attachment,
+			CompletionHandler<Integer, ? super A> handler) {
 		reset();
-		this.channel.read(buffer, timeout, unit, attachment, handler);
-	} 
-	
-	
+		read(buffer, timeout, unit, attachment, handler);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see java.nio.channels.WritableByteChannel#write(java.nio.ByteBuffer)
+	 * @see java.nio.channels.AsynchronousByteChannel#write(java.nio.ByteBuffer)
 	 */
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
@@ -369,8 +383,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * 
 	 * <p>
 	 * Otherwise this method works in the same manner as the
-	 * {@link NioChannel#write(ByteBuffer,Object,CompletionHandler)}
-	 * method.
+	 * {@link NioChannel#write(ByteBuffer,Object,CompletionHandler)} method.
 	 * 
 	 * @param src
 	 *            The buffer from which bytes are to be retrieved

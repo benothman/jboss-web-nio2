@@ -117,8 +117,8 @@ public final class FastHttpDateFormat {
                 }
             }
         }
+        
         return currentDate;
-
     }
 
 

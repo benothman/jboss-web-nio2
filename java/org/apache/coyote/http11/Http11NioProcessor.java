@@ -304,11 +304,10 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 
 				if (!inputBuffer.parseRequestLine(keptAlive)) {
 					// This means that no data is available right now
-					// (long keepalive), so that the processor should be
-					// recycled
-					// and the method should return true
+					// (long keep-alive), so that the processor should be
+					// recycled and the method should return true
 					final NioChannel ch = channel;
-					// Prepare the channel for async read
+					// Prepare the channel for asynchronous read
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
 
@@ -327,8 +326,10 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 
 								@Override
 								public void failed(Throwable exc, NioChannel attachment) {
-									exc.printStackTrace();
 									if (exc instanceof InterruptedByTimeoutException) {
+										System.out
+												.println("Read timout, closing connection on channel: "
+														+ attachment);
 										close(ch);
 									}
 								}
@@ -561,8 +562,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 *            the channel to be closed
 	 */
 	private static void close(NioChannel nioChannel) {
-		System.out.println(Http11NioProcessor.class.getName() + " --> Closing channel: "
-				+ nioChannel);
 		try {
 			nioChannel.close();
 		} catch (IOException ioe) {
