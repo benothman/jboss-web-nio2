@@ -112,7 +112,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	// --------------------------------------------------------- Public Methods
 
 	/**
-	 * Number of keepalive sockets.
+	 * Number of keep-alive channels.
 	 * 
 	 * @return the number of connection
 	 */
@@ -268,8 +268,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			// Start acceptor threads
 			for (int i = 0; i < acceptorThreadCount; i++) {
-				Thread acceptorThread = new Thread(new Acceptor(), getName() + "-Acceptor");
-				acceptorThread.setPriority(threadPriority);
+				Thread acceptorThread = this.threadFactory.newThread(new Acceptor());
 				acceptorThread.setDaemon(daemon);
 				acceptorThread.start();
 			}
@@ -325,16 +324,17 @@ public class NioEndpoint extends AbstractEndpoint {
 		initialized = false;
 	}
 
-	// ------------------------------------------------------ Protected Methods
-
 	/**
-	 * Process the specified connection.
+	 * Configure the channel options
 	 */
 	protected boolean setChannelOptions(NioChannel channel) {
 		// Process the connection
 		int step = 1;
 		try {
 			// 1: Set socket options: timeout, linger, etc
+			if (keepAliveTimeout > 0) {
+				channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
+			}
 			if (soLinger >= 0) {
 				channel.setOption(StandardSocketOptions.SO_LINGER, soLinger);
 			}
@@ -347,7 +347,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			// TODO complete SSL handshake
 
 			step = 2;
-
 		} catch (Throwable t) {
 			if (logger.isDebugEnabled()) {
 				if (step == 2) {
@@ -583,10 +582,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
-					if (getSoLinger() > 0) {
-						channel.setOption(StandardSocketOptions.SO_LINGER, getSoLinger());
-					}
+					// set the channel options
+					setChannelOptions(channel);
 
 					// Hand this channel off to an appropriate processor
 					if (!processChannel(channel)) {
@@ -596,11 +593,9 @@ public class NioEndpoint extends AbstractEndpoint {
 							channel.close();
 						} catch (IOException e) {
 							logger.error(e.getMessage(), e);
-							e.printStackTrace();
 						}
 					}
 				} catch (Exception x) {
-					x.printStackTrace();
 					if (running) {
 						logger.error(sm.getString("endpoint.accept.fail"), x);
 					}
@@ -1182,18 +1177,16 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
-		 * Process the specified
-		 * {@code java.nio.channels.AsynchronousSocketChannel}
+		 * Process the specified {@code org.apache.tomcat.util.net.NioChannel}
 		 * 
 		 * @param asyncChannel
-		 *            the {@code java.nio.channels.AsynchronousSocketChannel}
+		 *            the {@code org.apache.tomcat.util.net.NioChannel}
 		 * @return a channel state
 		 */
 		public SocketState process(NioChannel asyncChannel);
 
 		/**
-		 * Process the specified
-		 * {@code java.nio.channels.AsynchronousSocketChannel}
+		 * Process the specified {@code org.apache.tomcat.util.net.NioChannel}
 		 * 
 		 * @param asyncChannel
 		 * @param status
@@ -1282,7 +1275,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	/**
 	 * This class is the equivalent of the Worker, but will simply use in an
-	 * external Executor thread pool. This will also set the socket options and
+	 * external Executor thread pool. This will also set the channel options and
 	 * do the handshake.
 	 */
 	protected class ChannelWithOptionsProcessor extends ChannelProcessor {
@@ -1365,7 +1358,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void setChannel(NioChannel channel) {
 			this.channel = channel;
 		}
-
 	}
 
 	// --------------------------------------- ChannelEventProcessor Inner Class
@@ -1403,7 +1395,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	/**
 	 * The default thread factory
 	 */
-	private static class DefaultThreadFactory implements ThreadFactory {
+	protected static class DefaultThreadFactory implements ThreadFactory {
 		private static final AtomicInteger poolNumber = new AtomicInteger(1);
 		private final ThreadGroup group;
 		private final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -1413,9 +1405,10 @@ public class NioEndpoint extends AbstractEndpoint {
 		/**
 		 * Create a new instance of {@code DefaultThreadFactory}
 		 * 
+		 * @param namePrefix
 		 * @param threadPriority
 		 */
-		DefaultThreadFactory(String namePrefix, int threadPriority) {
+		public DefaultThreadFactory(String namePrefix, int threadPriority) {
 			SecurityManager s = System.getSecurityManager();
 			group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
 			this.namePrefix = namePrefix;

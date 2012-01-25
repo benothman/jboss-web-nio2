@@ -229,7 +229,7 @@ public abstract class AbstractEndpoint {
 	public abstract void init() throws Exception;
 
 	/**
-	 * Start the endpoint, creating acceptor, poller and sendfile threads.
+	 * Start the endpoint, creating acceptor, poller and sendfile threads, etc.
 	 * 
 	 * @throws Exception
 	 */
@@ -246,7 +246,7 @@ public abstract class AbstractEndpoint {
 	}
 
 	/**
-	 * Resume the endpoint, which will make it start accepting new sockets
+	 * Resume the endpoint, which will make it start accepting new connections
 	 * again.
 	 */
 	public void resume() {
