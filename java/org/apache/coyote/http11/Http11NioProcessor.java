@@ -307,6 +307,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// (long keep-alive), so that the processor should be
 					// recycled and the method should return true
 					final NioChannel ch = channel;
+					System.out.println("Keep-alive for " + ch);
 					// Prepare the channel for asynchronous read
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
