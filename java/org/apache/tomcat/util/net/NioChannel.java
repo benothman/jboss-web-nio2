@@ -79,7 +79,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	/**
 	 * Set the flag to true
 	 */
-	public void setFlag() {
+	private void setFlag() {
 		this.flag = true;
 	}
 
@@ -334,10 +334,31 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @throws ShutdownChannelGroupException
 	 *             If the channel group has terminated
 	 */
-	public <A> void awaitRead(long timeout, TimeUnit unit, A attachment,
-			CompletionHandler<Integer, ? super A> handler) {
+	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+		
+		// reset the flag and the buffer
 		reset();
-		read(buffer, timeout, unit, attachment, handler);
+		if(handler == null) {
+			throw new NullPointerException("null handler parameter");
+		}
+		
+		read(buffer, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
+
+			@Override
+			public void completed(Integer result, A attachment) {
+				// Set the flag to true
+				setFlag();
+				handler.completed(result, attachment);
+			}
+
+			@Override
+			public void failed(Throwable exc, A attachment) {
+				handler.failed(exc, attachment);
+				// reset flag and clear the internal buffer
+				reset();
+			}
+		});
 	}
 
 	/*

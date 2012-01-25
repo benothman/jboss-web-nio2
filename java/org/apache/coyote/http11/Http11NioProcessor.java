@@ -319,7 +319,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 									}
 
 									if (nBytes > 0) {
-										ch.setFlag();
 										endpoint.processChannel(ch);
 									}
 								}

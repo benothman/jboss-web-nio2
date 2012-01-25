@@ -589,11 +589,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					if (!processChannel(channel)) {
 						logger.info("Fail processing the channel");
 						// Close channel right away
-						try {
-							channel.close();
-						} catch (IOException e) {
-							logger.error(e.getMessage(), e);
-						}
+						close(channel);
 					}
 				} catch (Exception x) {
 					if (running) {
@@ -602,6 +598,18 @@ public class NioEndpoint extends AbstractEndpoint {
 				} catch (Throwable t) {
 					logger.error(sm.getString("endpoint.accept.fail"), t);
 				}
+			}
+		}
+
+		/**
+		 * 
+		 * @param channel
+		 */
+		private void close(NioChannel channel) {
+			try {
+				channel.close();
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
 			}
 		}
 	}

@@ -236,6 +236,8 @@ class NioJSSESupport implements SSLSupport {
 				ByteBuffer buffer = ByteBuffer.allocateDirect(0);
 				int x = channel.read(buffer).get();
 				
+				// TODO
+				
 			} catch (Exception sslex) {
 				log.info("SSL Error getting client Certs", sslex);
 				throw new IOException(sslex);
