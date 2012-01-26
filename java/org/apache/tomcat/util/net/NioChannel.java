@@ -22,6 +22,7 @@
 package org.apache.tomcat.util.net;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
@@ -158,6 +159,19 @@ public class NioChannel implements AsynchronousByteChannel {
 		return this;
 	}
 
+	
+	/**
+	 * 
+	 * @param hostname
+	 * @param port
+	 * @return This channel
+	 * @throws IOException
+	 * @see {@link #bind(SocketAddress)}
+	 */
+	public NioChannel bind(String hostname, int port) throws IOException {
+		return bind(new InetSocketAddress(hostname, port));
+	}
+	
 	/**
 	 * Reset the flag and the internal buffer
 	 */
@@ -393,8 +407,8 @@ public class NioChannel implements AsynchronousByteChannel {
 
 	/**
 	 * <p>
-	 * Wait for incoming data. The received data will be stored by default in
-	 * the internal buffer (By default, one byte). The user should retrieve this
+	 * Wait for incoming data in a non-blocking mode. The received data will be stored by default in
+	 * the internal buffer (By default, only one byte). The user should retrieve this
 	 * byte first and complete the read operation. This method works like a
 	 * listener for the incoming data on this channel.
 	 * </p>

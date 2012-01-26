@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.OutputBuffer;
@@ -208,6 +209,17 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	}
 
 	/**
+	 * Perform a write operation. The operation may be blocking or non-blocking
+	 * depending on the value of {@code nonBlocking} flag.
+	 * 
+	 * @param buffer the buffer containing the data to write
+	 * @param timeout a timeout for the operation
+	 * @param unit The time unit of the timeout
+	 * @return
+	 */
+	protected abstract int write(final ByteBuffer buffer, final long timeout, final TimeUnit unit);
+	
+	/**
 	 * Add an output filter to the filter library.
 	 * 
 	 * @param filter
@@ -235,14 +247,12 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *             an undelying I/O error occured
 	 */
 	public void flush() throws IOException {
-		System.out.println("----> " + getClass().getName() + "#flush()");
 		if (!committed) {
 
 			// Send the connector a request for commit. The connector should
 			// then validate the headers, send them (using sendHeader) and
 			// set the filters accordingly.
 			response.action(ActionCode.ACTION_COMMIT, null);
-
 		}
 
 		// Flush the current buffer

@@ -27,6 +27,7 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -356,8 +357,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				: activeFilters[lastActiveFilter].doRead(chunk, req);
 	}
 
-	// ------------------------------------------------------ Protected Methods
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -463,8 +462,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * Close the channel
 	 */
 	private static void close(NioChannel channel) {
-		System.out.println(InternalNioInputBuffer.class.getName() + " --> Closing channel: "
-				+ channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
@@ -481,7 +478,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	private void nonBlockingRead(final ByteBuffer bb, long timeout, TimeUnit unit) {
 
-		this.channel.read(bb, timeout, unit, channel, new CompletionHandler<Integer, NioChannel>() {
+		final NioChannel ch = this.channel;
+		ch.read(bb, timeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
 
 			@Override
 			public void completed(Integer nBytes, NioChannel attachment) {
@@ -521,7 +519,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			return this.channel.read(bb).get();
 		} catch (TimeoutException te) {
 			close(channel);
-		} catch (Exception e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// NOP
 			log.warn("An error occurs when trying a blocking read");
 			log.error(e.getMessage(), e);

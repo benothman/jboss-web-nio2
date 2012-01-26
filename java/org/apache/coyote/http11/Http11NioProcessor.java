@@ -307,14 +307,14 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// (long keep-alive), so that the processor should be
 					// recycled and the method should return true
 					final NioChannel ch = channel;
-					// Prepare the channel for asynchronous read
+					// Perform an asynchronous read operation to wait for incoming data
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
 
 								@Override
 								public void completed(Integer nBytes, NioChannel attachment) {
 									if (nBytes < 0) {
-										// Attempting the end of the stream
+										// Reach the end of the stream
 										close(ch);
 									}
 
@@ -350,7 +350,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				if (log.isDebugEnabled()) {
 					log.debug(sm.getString("http11processor.header.parse"), t);
 				}
-				log.error(sm.getString("http11processor.header.parse"), t);
 				// 400 - Bad Request
 				response.setStatus(400);
 				error = true;

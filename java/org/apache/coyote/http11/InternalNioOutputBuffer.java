@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -51,7 +52,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	/**
 	 * NIO endpoint.
 	 */
-	protected NioEndpoint endpoint = null;
+	protected NioEndpoint endpoint;
 
 	/**
 	 * Create a new instance of {@code InternalNioOutputBuffer}
@@ -80,7 +81,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * 
 	 * @return the channel
 	 */
-	public NioChannel geChannel() {
+	public NioChannel getChannel() {
 		return channel;
 	}
 
@@ -99,7 +100,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param channel
 	 */
 	private static void close(NioChannel channel) {
-		System.out.println(InternalNioOutputBuffer.class.getName() + " --> Closing channel: " + channel);
 		try {
 			channel.close();
 		} catch (IOException e) {
@@ -108,9 +108,16 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	}
 
 	/**
+	 * Perform a blocking write operation
 	 * 
 	 * @param buffer
-	 * @return
+	 *            the buffer containing the data to write
+	 * @param timeout
+	 *            a timeout for the operation
+	 * @param unit
+	 *            The time unit
+	 * 
+	 * @return the number of bytes written, -1 if in case of errors
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
 		try {
@@ -120,19 +127,23 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			return this.channel.write(buffer).get();
 		} catch (TimeoutException te) {
 			close(channel);
-		} catch (Exception e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// NOP
 			log.warn("An error occurs when trying a blocking write");
 			log.error(e.getMessage(), e);
-			e.printStackTrace();
 		}
 		return -1;
 	}
 
 	/**
-	 * PErform a non-blocking write
+	 * Perform a non-blocking write operation
 	 * 
 	 * @param buffer
+	 *            the buffer containing the data to write
+	 * @param timeout
+	 *            a timeout for the operation
+	 * @param unit
+	 *            The time unit
 	 */
 	private void nonBlockingWrite(final ByteBuffer buffer, long timeout, TimeUnit unit) {
 
@@ -152,7 +163,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		 * response.action(ActionCode.ACTION_EVENT_WRITE, null); } } }
 		 */
 
-		this.channel.write(buffer, timeout, unit, channel,
+		final NioChannel ch = this.channel;
+		ch.write(buffer, timeout, unit, ch,
 				new CompletionHandler<Integer, NioChannel>() {
 
 					@Override
@@ -178,6 +190,23 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 						}
 					}
 				});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.coyote.http11.AbstractInternalOutputBuffer#write(java.nio.
+	 * ByteBuffer, long, java.util.concurrent.TimeUnit)
+	 */
+	@Override
+	protected int write(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
+		if (nonBlocking) {
+			nonBlockingWrite(buffer, timeout, unit);
+			return 0;
+		}
+
+		return blockingWrite(buffer, timeout, unit);
 	}
 
 	/**
@@ -248,14 +277,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// Send leftover bytes
 				System.out.println("##### Step - 2 #####");
 
-				ByteBuffer bb = ByteBuffer.allocate(leftover.getLength());
-				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd());
-				bb.rewind();
+				ByteBuffer bb = ByteBuffer.allocateDirect(leftover.getLength());
+				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd()).flip();
 				res = blockingWrite(bb, writeTimeout, TimeUnit.MILLISECONDS);
 				leftover.recycle();
 				// Send current buffer
 				if (res > 0 && bbuf.position() > 0) {
-					bbuf.rewind();
+					bbuf.flip();
 					while (bbuf.hasRemaining()) {
 						res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
 					}
@@ -280,9 +308,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 						break;
 					}
 				}
+				response.setLastWrite(res);
+				bbuf.clear();
 			}
-			response.setLastWrite(res);
-			bbuf.clear();
+
 			if (res < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
@@ -305,9 +334,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		byte[] b = leftover.getBuffer();
 
 		bbuf.clear();
-		bbuf.put(b, leftover.getOffset(), leftover.getLength());
-		bbuf.flip();
+		bbuf.put(b, leftover.getOffset(), leftover.getLength()).flip();
 
+		write(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+		
 		if (nonBlocking) {
 			nonBlockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
 		} else {
