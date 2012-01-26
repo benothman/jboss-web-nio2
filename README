@@ -21,4 +21,20 @@
  */
  
  
+ This fork of the JBoss web project aims to provide a new web connector based on
+ JavaSE 7 NIO2 features(asynchronous channels) . All old connectors remain available
+ for use. To build this project, please refer to the file BUILDING.txt.
  
+ Notes:
+  1) To be able to build this project you need JDK-1.7 since we use Java 7 features.
+  2) To test the new connector (NIO2 connector), you need also to have a fresh build
+  	 of JBoss AS 7. You can download sources from it's github repository.
+  	 Build JBoss AS 7 using JDK-1.6 and run it with JRE-1.7 (required).
+  	 
+  	 https://github.com/jbossas/jboss-as
+  3) Copy the result jars ( $PROJECT_HOME/output/jars/) in the directory
+     « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/ »
+  4) Edit the file « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/module.xml » to
+     add the earlier copied jars as resources as replacement of the old ones
+  5) Refer to the JBoss AS 7 guide to configure and use the new connector.
+     http://docs.jboss.org/jbossweb/7.0.x/config/http.html
