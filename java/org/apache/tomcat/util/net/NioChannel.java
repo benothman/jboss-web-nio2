@@ -159,19 +159,42 @@ public class NioChannel implements AsynchronousByteChannel {
 		return this;
 	}
 
-	
 	/**
+	 * Binds the channel's socket to a local address.
+	 * 
+	 * <p>
+	 * This method is used to establish an association between the socket and a
+	 * local address. Once an association is established then the socket remains
+	 * bound until the channel is closed.
 	 * 
 	 * @param hostname
+	 *            the Host name
 	 * @param port
+	 *            The port number
+	 * 
 	 * @return This channel
+	 * @throws AlreadyBoundException
+	 *             If the socket is already bound
+	 * @throws UnsupportedAddressTypeException
+	 *             If the type of the given address is not supported
+	 * @throws ClosedChannelException
+	 *             If the channel is closed
 	 * @throws IOException
-	 * @see {@link #bind(SocketAddress)}
+	 *             If some other I/O error occurs
+	 * @throws IllegalArgumentException
+	 *             if the port parameter is outside the range of valid port
+	 *             values, or if the hostname parameter is <TT>null</TT>.
+	 * @throws SecurityException
+	 *             If a security manager is installed and it denies an
+	 *             unspecified permission. An implementation of this interface
+	 *             should specify any required permissions.
+	 * 
+	 * @see #bind(SocketAddress)
 	 */
 	public NioChannel bind(String hostname, int port) throws IOException {
 		return bind(new InetSocketAddress(hostname, port));
 	}
-	
+
 	/**
 	 * Reset the flag and the internal buffer
 	 */
@@ -407,10 +430,10 @@ public class NioChannel implements AsynchronousByteChannel {
 
 	/**
 	 * <p>
-	 * Wait for incoming data in a non-blocking mode. The received data will be stored by default in
-	 * the internal buffer (By default, only one byte). The user should retrieve this
-	 * byte first and complete the read operation. This method works like a
-	 * listener for the incoming data on this channel.
+	 * Wait for incoming data in a non-blocking mode. The received data will be
+	 * stored by default in the internal buffer (By default, only one byte). The
+	 * user should retrieve this byte first and complete the read operation.
+	 * This method works like a listener for the incoming data on this channel.
 	 * </p>
 	 * <p>
 	 * Note: The channel is reset (flag, buffer) before the read operation
