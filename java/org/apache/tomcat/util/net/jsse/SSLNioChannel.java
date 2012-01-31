@@ -102,8 +102,10 @@ public class SSLNioChannel extends NioChannel {
 			}
 
 			SSLEngineResult sslEngineResult = sslEngine.unwrap(tmp, dst);
-
-			return sslEngineResult.bytesConsumed();
+			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
+				return sslEngineResult.bytesConsumed();
+			}
+			
 		} catch (SSLException e) {
 			e.printStackTrace();
 		}
