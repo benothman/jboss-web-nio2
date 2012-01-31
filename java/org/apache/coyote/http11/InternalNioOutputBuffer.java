@@ -117,7 +117,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param unit
 	 *            The time unit
 	 * 
-	 * @return the number of bytes written, -1 if in case of errors
+	 * @return the number of bytes written, -1 in case of errors
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
 		try {

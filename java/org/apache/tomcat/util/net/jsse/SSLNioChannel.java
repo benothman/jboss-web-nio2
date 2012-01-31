@@ -21,12 +21,15 @@
  */
 package org.apache.tomcat.util.net.jsse;
 
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
@@ -63,32 +66,49 @@ public class SSLNioChannel extends NioChannel {
 	 */
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
+		throw new RuntimeException("Operation not supported for class " + getClass().getName()
+				+ ". Use method readBytes(java.nio.ByteBuffer) or "
+				+ "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead");
+	}
 
-		// TODO something seems to be wrong here
-
-		ByteBuffer tmp = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
-		Future<Integer> future = super.read(tmp);
-
-		// wait until the future is done
-		while (!future.isDone()) {
-			try {
-				// Sleep 1 MS to wait for the future
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				break;
-			}
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer)
+	 */
+	public int readBytes(ByteBuffer dst) throws InterruptedException, ExecutionException {
+		try {
+			return readBytes(dst, Integer.MAX_VALUE, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			e.printStackTrace();
+			return -1;
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer,
+	 * long, java.util.concurrent.TimeUnit)
+	 */
+	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException {
 
 		try {
-			if (future.isDone()) {
-				dst.flip();
-				tmp.flip();
-				this.sslEngine.unwrap(tmp, dst);
+			ByteBuffer tmp = ByteBuffer.allocateDirect(dst.capacity());
+			int x = super.readBytes(tmp, timeout, unit);
+			if (x < 0) {
+				return x;
 			}
+
+			SSLEngineResult sslEngineResult = sslEngine.unwrap(tmp, dst);
+
+			return sslEngineResult.bytesConsumed();
 		} catch (SSLException e) {
-			// TODO
+			e.printStackTrace();
 		}
-		return future;
+
+		return -1;
 	}
 
 	/*
@@ -98,38 +118,61 @@ public class SSLNioChannel extends NioChannel {
 	 */
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		return write(src, 1);
+		throw new RuntimeException("Operation not supported for class " + getClass().getName()
+				+ ". Use method writeBytes(java.nio.ByteBuffer) or "
+				+ "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead");
 	}
-	
-	/**
+
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param src
-	 * @param n
-	 * @return
+	 * @see
+	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer)
 	 */
-	protected Future<Integer> write(ByteBuffer src, int n) {
-		// TODO something seems to be wrong here
-		SSLSession session = this.sslEngine.getSession();
-		ByteBuffer tmp = ByteBuffer.allocateDirect(n * session.getApplicationBufferSize());
+	public int writeBytes(ByteBuffer src) throws InterruptedException, ExecutionException {
 		try {
-			this.sslEngine.wrap(src, tmp);
-		} catch (SSLException e) {
-			// TODO Auto-generated catch block
-		} catch (BufferOverflowException bofe) {
-			return write(src, 2 * n);
+			return writeBytes(src, Integer.MAX_VALUE, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			e.printStackTrace();
+			return -1;
 		}
-		tmp.flip();
-		return super.write(tmp);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer,
+	 * long, java.util.concurrent.TimeUnit)
+	 */
+	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException {
+		try {
+			SSLEngineResult sslEngineResult = null;
+			ByteBuffer tmp = null;
+			int length = getSSLSession().getPacketBufferSize();
+			int i = 1;
+			do {
+				src.flip();
+				tmp = ByteBuffer.allocateDirect((i++) * length);
+				sslEngineResult = sslEngine.wrap(src, tmp);
+			} while (sslEngineResult.getStatus() == SSLEngineResult.Status.BUFFER_OVERFLOW);
+
+			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
+				while (tmp.hasRemaining()) {
+					int x = super.writeBytes(tmp, timeout, unit);
+					if (x == -1) {
+						return -1;
+					}
+				}
+
+				return sslEngineResult.bytesProduced();
+			}
+		} catch (SSLException e) {
+			e.printStackTrace();
+		}
+
+		return -1;
 	}
 
 	/**
