@@ -170,7 +170,6 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @exception IOException
 	 *                for networking errors
 	 */
-
 	public abstract AsynchronousServerSocketChannel createServerChannel(int port, int backlog)
 			throws IOException;
 
@@ -191,7 +190,6 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @exception IOException
 	 *                for networking errors
 	 */
-
 	public abstract AsynchronousServerSocketChannel createServerChannel(int port, int backlog,
 			InetAddress ifAddress) throws IOException;
 
@@ -225,9 +223,10 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	public abstract void handshake(NioChannel channel) throws IOException;
 
 	/**
-	 * Open an {@link NioChannel}
+	 * Open an {@link java.nio.channels.AsynchronousServerSocketChannel}
 	 * 
-	 * @return an instance of {@link NioChannel}
+	 * @return an instance of
+	 *         {@link java.nio.channels.AsynchronousServerSocketChannel}
 	 * @throws IOException
 	 */
 	protected AsynchronousServerSocketChannel open() throws IOException {

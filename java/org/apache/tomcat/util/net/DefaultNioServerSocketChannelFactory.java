@@ -68,7 +68,7 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createSocket
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createServerChannel
 	 * (int, int)
 	 */
 	@Override
@@ -81,7 +81,7 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createSocket
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createServerChannel
 	 * (int, int, java.net.InetAddress)
 	 */
 	@Override
@@ -94,7 +94,7 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#acceptSocket
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#acceptChannel
 	 * (java.nio.channels.AsynchronousServerSocketChannel)
 	 */
 	@Override
@@ -110,8 +110,8 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#handshake(java
-	 * .nio.channels.AsynchronousSocketChannel)
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#handshake(org
+	 * .apache.tomcat.util.net.NioChannel)
 	 */
 	@Override
 	public void handshake(NioChannel channel) throws IOException {

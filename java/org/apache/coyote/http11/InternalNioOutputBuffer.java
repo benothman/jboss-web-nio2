@@ -122,9 +122,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
 		try {
 			if (timeout > 0) {
-				return this.channel.write(buffer).get(timeout, unit);
+				return this.channel.writeBytes(buffer, timeout, unit);
 			}
-			return this.channel.write(buffer).get();
+			return this.channel.writeBytes(buffer);
 		} catch (TimeoutException te) {
 			close(channel);
 		} catch (InterruptedException | ExecutionException e) {
@@ -145,51 +145,29 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param unit
 	 *            The time unit
 	 */
-	private void nonBlockingWrite(final ByteBuffer buffer, long timeout, TimeUnit unit) {
-
-		/*
-		 * int pos = 0; int end = bbuf.position(); while (pos < end) { res =
-		 * Socket.sendibb(socket, pos, end - pos); if (res > 0) { pos += res; }
-		 * else { break; } } if (pos < end) { if (response.getFlushLeftovers()
-		 * && (Http11AprProcessor.containerThread.get() == Boolean.TRUE)) { //
-		 * Switch to blocking mode and write the data Socket.timeoutSet(socket,
-		 * endpoint.getSoTimeout() * 1000); res = Socket.sendbb(socket, 0, end);
-		 * Socket.timeoutSet(socket, 0); } else { // Put any leftover bytes in
-		 * the leftover byte chunk leftover.allocate(end - pos, -1);
-		 * bbuf.position(pos); bbuf.limit(end); bbuf.get(leftover.getBuffer(),
-		 * 0, end - pos); leftover.setEnd(end - pos); // Call for a write event
-		 * because it is possible that no further write // operations are made
-		 * if (!response.getFlushLeftovers()) {
-		 * response.action(ActionCode.ACTION_EVENT_WRITE, null); } } }
-		 */
-
+	private void nonBlockingWrite(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
 		final NioChannel ch = this.channel;
-		ch.write(buffer, timeout, unit, ch,
-				new CompletionHandler<Integer, NioChannel>() {
+		ch.write(buffer, timeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
 
-					@Override
-					public void completed(Integer nBytes, NioChannel attachment) {
-						// Perform non blocking writes until all data is
-						// written, or the
-						// result
-						// of the write is 0
-						if (nBytes < 0) {
-							close(attachment);
-							return;
-						}
-						// TODO complete implementation
-						if (buffer.hasRemaining()) {
-							attachment.write(buffer, null, this);
-						}
-					}
+			@Override
+			public void completed(Integer nBytes, NioChannel attachment) {
+				if (nBytes < 0) {
+					close(attachment);
+					return;
+				}
 
-					@Override
-					public void failed(Throwable exc, NioChannel attachment) {
-						if (exc instanceof InterruptedByTimeoutException) {
-							close(attachment);
-						}
-					}
-				});
+				if (buffer.hasRemaining()) {
+					attachment.write(buffer, timeout, unit, attachment, this);
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, NioChannel attachment) {
+				if (exc instanceof InterruptedByTimeoutException) {
+					close(attachment);
+				}
+			}
+		});
 	}
 
 	/*
@@ -337,7 +315,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		bbuf.put(b, leftover.getOffset(), leftover.getLength()).flip();
 
 		write(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-		
+
 		if (nonBlocking) {
 			nonBlockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
 		} else {

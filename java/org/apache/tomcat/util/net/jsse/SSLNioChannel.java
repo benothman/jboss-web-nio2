@@ -98,6 +98,16 @@ public class SSLNioChannel extends NioChannel {
 	 */
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		return write(src, 1);
 	}
 	

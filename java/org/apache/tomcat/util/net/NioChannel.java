@@ -40,8 +40,10 @@ import java.nio.channels.UnsupportedAddressTypeException;
 import java.nio.channels.WritePendingException;
 import java.nio.channels.spi.AsynchronousChannelProvider;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -280,6 +282,38 @@ public class NioChannel implements AsynchronousByteChannel {
 		return this.channel.read(dst);
 	}
 
+	/**
+	 * Read a sequence of bytes in blocking mode
+	 * 
+	 * @param dst
+	 *            the buffer containing the read bytes
+	 * @return the number of bytes read
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	public int readBytes(ByteBuffer dst) throws InterruptedException, ExecutionException {
+		return read(dst).get();
+	}
+
+	/**
+	 * Read a sequence of bytes in blocking mode
+	 * 
+	 * @param dst
+	 *            the buffer containing the read bytes
+	 * @param timeout
+	 *            the read timeout
+	 * @param unit
+	 *            the timeout unit
+	 * @return The number of bytes read
+	 * @throws TimeoutException
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException {
+		return read(dst).get(timeout, unit);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -488,6 +522,38 @@ public class NioChannel implements AsynchronousByteChannel {
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
 		return this.channel.write(src);
+	}
+
+	/**
+	 * Write a sequence of bytes in blocking mode
+	 * 
+	 * @param dst
+	 *            the buffer containing the bytes to write
+	 * @return the number of bytes written
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	public int writeBytes(ByteBuffer dst) throws InterruptedException, ExecutionException {
+		return write(dst).get();
+	}
+
+	/**
+	 * Write a sequence of bytes in blocking mode
+	 * 
+	 * @param dst
+	 *            the buffer containing the bytes to write
+	 * @param timeout
+	 *            the read timeout
+	 * @param unit
+	 *            the timeout unit
+	 * @return The number of bytes written
+	 * @throws TimeoutException
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	public int writeBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
+			ExecutionException, TimeoutException {
+		return write(dst).get(timeout, unit);
 	}
 
 	/*

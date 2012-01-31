@@ -513,10 +513,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	private int blockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
 		try {
 			if (timeout > 0) {
-				return this.channel.read(bb).get(timeout, unit);
+				return this.channel.readBytes(bb, timeout, unit);
 			}
 
-			return this.channel.read(bb).get();
+			return this.channel.readBytes(bb);
 		} catch (TimeoutException te) {
 			close(channel);
 		} catch (InterruptedException | ExecutionException e) {
