@@ -51,7 +51,7 @@ public class SSLNioChannel extends NioChannel {
 	/**
 	 * Create a new instance of {@code SSLNioChannel}
 	 * 
-	 * @param channel
+	 * @param channel the {@link java.nio.channels.AsynchronousSocketChannel}
 	 * @param sslEngine
 	 */
 	protected SSLNioChannel(AsynchronousSocketChannel channel, SSLEngine sslEngine) {
