@@ -62,9 +62,9 @@ public class SSLNioChannel extends NioChannel {
 
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
-	 */
+	 * 
+	 *
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
 		throw new RuntimeException("Operation not supported for class " + getClass().getName()
@@ -118,7 +118,7 @@ public class SSLNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer)
-	 */
+	 *
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
 		throw new RuntimeException("Operation not supported for class " + getClass().getName()
