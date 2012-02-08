@@ -40,6 +40,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 
 	private static NioServerSocketChannelFactory theFactory;
 	protected Hashtable<String, Object> attributes = new Hashtable<String, Object>();
+	
 	protected AsynchronousChannelGroup threadGroup;
 
 	/**
@@ -230,7 +231,6 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @throws IOException
 	 */
 	protected AsynchronousServerSocketChannel open() throws IOException {
-		return (threadGroup != null) ? AsynchronousServerSocketChannel.open(threadGroup)
-				: AsynchronousServerSocketChannel.open();
+		return AsynchronousServerSocketChannel.open(threadGroup);
 	}
 }

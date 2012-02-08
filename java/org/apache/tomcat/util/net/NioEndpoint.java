@@ -585,6 +585,8 @@ public class NioEndpoint extends AbstractEndpoint {
 					// set the channel options
 					setChannelOptions(channel);
 
+					serverSocketChannelFactory.initChannel(channel);
+					
 					// Hand this channel off to an appropriate processor
 					if (!processChannel(channel)) {
 						logger.info("Fail processing the channel");

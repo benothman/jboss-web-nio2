@@ -127,7 +127,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected boolean initialized;
 	protected SSLEngine engine;
 	protected String clientAuth = "false";
-	protected SSLServerSocketFactory sslProxy = null;
+	//protected SSLServerSocketFactory sslProxy = null;
 	protected String[] enabledCiphers;
 	protected boolean allowUnsafeLegacyRenegotiation = false;
 
@@ -179,6 +179,15 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.apache.tomcat.util.net.NioServerSocketChannelFactory#initChannel(org.apache.tomcat.util.net.NioChannel)
+	 */
+	public void initChannel(NioChannel channel) {
+	}
+
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -243,7 +252,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			String algorithm = (String) attributes.get("algorithm");
 			if (algorithm == null) {
 				algorithm = KeyManagerFactory.getDefaultAlgorithm();
-				;
 			}
 
 			String keystoreType = (String) attributes.get("keystoreType");
@@ -290,7 +298,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			}
 
 			// create proxy
-			sslProxy = context.getServerSocketFactory();
+			SSLServerSocketFactory sslProxy = context.getServerSocketFactory();
 
 			// Determine which cipher suites to enable
 			String requestedCiphers = (String) attributes.get("ciphers");
@@ -325,7 +333,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected String[] getEnabledCiphers(String requestedCiphers, String[] supportedCiphers) {
 
 		String[] enabledCiphers = null;
-
+		SSLServerSocketFactory sslProxy = context.getServerSocketFactory();
 		if (requestedCiphers != null) {
 			Vector<Object> vec = null;
 			String cipher = requestedCiphers;
@@ -814,6 +822,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	private void checkConfig() throws IOException {
 		// Create an unbound server socket
+		SSLServerSocketFactory sslProxy = context.getServerSocketFactory();
 		ServerSocket socket = sslProxy.createServerSocket();
 		SSLEngine engine = context.createSSLEngine();
 		initSSLEngine(engine);

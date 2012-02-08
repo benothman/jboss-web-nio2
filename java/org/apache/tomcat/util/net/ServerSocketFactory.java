@@ -55,8 +55,9 @@ public abstract class ServerSocketFactory implements Cloneable {
     //
 
     private static ServerSocketFactory theFactory;
-    protected Hashtable attributes=new Hashtable();
-
+    protected Hashtable attributes = new Hashtable();
+    
+    
     /**
      * Constructor is used only by subclasses.
      */

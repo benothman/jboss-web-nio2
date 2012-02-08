@@ -454,7 +454,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	/**
 	 * Return the Keep-Alive policy for the connection.
 	 * 
-	 * @return
+	 * @return keep-alive
 	 */
 	public boolean getKeepAlive() {
 		return ((maxKeepAliveRequests != 0) && (maxKeepAliveRequests != 1));
