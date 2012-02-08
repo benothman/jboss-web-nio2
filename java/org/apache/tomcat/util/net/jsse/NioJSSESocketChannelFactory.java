@@ -127,7 +127,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected boolean initialized;
 	protected SSLEngine engine;
 	protected String clientAuth = "false";
-	//protected SSLServerSocketFactory sslProxy = null;
+	// protected SSLServerSocketFactory sslProxy = null;
 	protected String[] enabledCiphers;
 	protected boolean allowUnsafeLegacyRenegotiation = false;
 
@@ -172,7 +172,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			SSLEngine engine = context.createSSLEngine(addr.getHostString(), addr.getPort());
 			initSSLEngine(engine);
 			engine.setUseClientMode(false);
-			
+
 			return new SSLNioChannel(asyncChannel, engine);
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -181,13 +181,14 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.apache.tomcat.util.net.NioServerSocketChannelFactory#initChannel(org.apache.tomcat.util.net.NioChannel)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#initChannel(
+	 * org.apache.tomcat.util.net.NioChannel)
 	 */
 	public void initChannel(NioChannel channel) {
 	}
 
-	
-	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -221,7 +222,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		engine.beginHandshake();
 	}
 
-	
 	/**
 	 * 
 	 * @param ctx
@@ -229,19 +229,19 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	public static void setSslContext(SSLContext ctx) {
 		context = ctx;
 	}
-	
+
 	/**
 	 * @return the SSLContext
 	 */
 	public static SSLContext getSslContext() {
 		return context;
 	}
-	
-	
+
 	/**
 	 * Reads the keystore and initializes the SSL socket factory.
 	 */
 	void init() throws IOException {
+		System.out.println("Initialize the " + getClass().getName());
 		try {
 
 			String clientAuthStr = (String) attributes.get("clientauth");
