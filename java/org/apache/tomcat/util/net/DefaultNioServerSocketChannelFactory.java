@@ -54,6 +54,15 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.apache.tomcat.util.net.NioServerSocketChannelFactory#init()
+	 */
+	@Override
+	public void init() throws IOException {
+		// Nothing to do
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * 
 	 * @see
 	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createServerChannel

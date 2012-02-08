@@ -59,6 +59,10 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 		this.threadGroup = threadGroup;
 	}
 
+	
+	public abstract void init() throws IOException;
+	
+	
 	/**
 	 * General mechanism to pass attributes from the ServerConnector to the
 	 * socket factory.
@@ -107,7 +111,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 
 			theFactory = new DefaultNioServerSocketChannelFactory(threadGroup);
 		}
-
+		
 		try {
 			return (NioServerSocketChannelFactory) theFactory.clone();
 		} catch (CloneNotSupportedException e) {

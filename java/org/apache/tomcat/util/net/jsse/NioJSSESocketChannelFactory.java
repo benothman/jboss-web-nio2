@@ -239,8 +239,11 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 	/**
 	 * Reads the keystore and initializes the SSL socket factory.
+	 * 
+	 * @throws IOException
 	 */
-	void init() throws IOException {
+	@Override
+	public void init() throws IOException {
 		System.out.println("Initialize the " + getClass().getName());
 		try {
 

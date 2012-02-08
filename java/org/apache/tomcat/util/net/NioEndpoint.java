@@ -215,7 +215,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (this.serverSocketChannelFactory == null) {
 			this.serverSocketChannelFactory = NioServerSocketChannelFactory
 					.createServerSocketChannelFactory(threadGroup, SSLEnabled);
-
+			// Initialize the channel factory
+			this.serverSocketChannelFactory.init();
 			// Initialize the SSL context if the SSL mode is enabled
 			if (SSLEnabled) {
 				System.out.println("********** SSL is enabled **********");
