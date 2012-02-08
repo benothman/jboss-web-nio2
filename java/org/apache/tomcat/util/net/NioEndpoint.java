@@ -217,9 +217,15 @@ public class NioEndpoint extends AbstractEndpoint {
 					.createServerSocketChannelFactory(threadGroup, SSLEnabled);
 
 			// Initialize the SSL context if the SSL mode is enabled
-			if (SSLEnabled && sslContext == null) {
-				sslContext = ((NioJSSESocketChannelFactory) this.serverSocketChannelFactory)
-						.getSslContext();
+			if (SSLEnabled) {
+				System.out.println("********** SSL is enabled **********");
+				if (sslContext == null) {
+					System.out.println("********** SSL context is null **********");
+					sslContext = NioJSSESocketChannelFactory.getSslContext();
+				} else {
+					System.out.println("********** SSL context is not null **********");
+					NioJSSESocketChannelFactory.setSslContext(sslContext);
+				}
 			}
 		}
 
@@ -586,7 +592,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					setChannelOptions(channel);
 
 					serverSocketChannelFactory.initChannel(channel);
-					
+
 					// Hand this channel off to an appropriate processor
 					if (!processChannel(channel)) {
 						logger.info("Fail processing the channel");

@@ -221,10 +221,19 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		engine.beginHandshake();
 	}
 
+	
+	/**
+	 * 
+	 * @param ctx
+	 */
+	public static void setSslContext(SSLContext ctx) {
+		context = ctx;
+	}
+	
 	/**
 	 * @return the SSLContext
 	 */
-	public SSLContext getSslContext() {
+	public static SSLContext getSslContext() {
 		return context;
 	}
 	
