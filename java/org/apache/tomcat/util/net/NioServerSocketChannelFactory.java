@@ -40,7 +40,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 
 	private static NioServerSocketChannelFactory theFactory;
 	protected Hashtable<String, Object> attributes = new Hashtable<String, Object>();
-	
+
 	protected AsynchronousChannelGroup threadGroup;
 
 	/**
@@ -59,10 +59,12 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 		this.threadGroup = threadGroup;
 	}
 
-	
+	/**
+	 * 
+	 * @throws IOException
+	 */
 	public abstract void init() throws IOException;
-	
-	
+
 	/**
 	 * General mechanism to pass attributes from the ServerConnector to the
 	 * socket factory.
@@ -75,6 +77,9 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @param value
 	 */
 	public void setAttribute(String name, Object value) {
+		System.out.println("--> " + getClass().getName()
+				+ " : calling method setAttribute(String, Object) with params : name=" + name
+				+ ", value=" + value);
 		if (name != null && value != null) {
 			attributes.put(name, value);
 		}
@@ -111,7 +116,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 
 			theFactory = new DefaultNioServerSocketChannelFactory(threadGroup);
 		}
-		
+
 		try {
 			return (NioServerSocketChannelFactory) theFactory.clone();
 		} catch (CloneNotSupportedException e) {
