@@ -27,6 +27,7 @@ import java.net.BindException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -216,9 +217,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.serverSocketChannelFactory = NioServerSocketChannelFactory
 					.createServerSocketChannelFactory(threadGroup, SSLEnabled);
 			
-			if(SSLEnabled) {
-				NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
-			}
 			
 			
 			// Initialize the channel factory
@@ -302,6 +300,18 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 	}
 
+	/**
+	 * 
+	 * @param attributes
+	 */
+	public void setSSLAttributes(Map<String, Object> attributes) {
+		NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
+		for(String key: attributes.keySet()) {
+			factory.setAttribute(key, attributes.get(key));
+		}
+	}
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 

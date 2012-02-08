@@ -78,6 +78,11 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	public void init() throws Exception {
 		endpoint.setName(getName());
 		endpoint.setHandler(cHandler);
+		
+		if(this.isSSLEnabled()) {
+			endpoint.setSSLAttributes(attributes);
+		}
+		
 		try {
 			// endpoint.setKeepAliveTimeout(this.timeout);
 			endpoint.init();
