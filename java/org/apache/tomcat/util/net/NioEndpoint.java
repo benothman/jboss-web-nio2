@@ -225,12 +225,9 @@ public class NioEndpoint extends AbstractEndpoint {
 				for (String key : this.attributes.keySet()) {
 					factory.setAttribute(key, this.attributes.get(key));
 				}
-				System.out.println("********** SSL is enabled **********");
 				if (sslContext == null) {
-					System.out.println("********** SSL context is null **********");
 					sslContext = NioJSSESocketChannelFactory.getSslContext();
 				} else {
-					System.out.println("********** SSL context is not null **********");
 					NioJSSESocketChannelFactory.setSslContext(sslContext);
 				}
 			}

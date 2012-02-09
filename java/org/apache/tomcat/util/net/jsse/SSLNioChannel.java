@@ -324,13 +324,17 @@ public class SSLNioChannel extends NioChannel {
 				break;
 
 			// Handle other status: // FINISHED or NOT_HANDSHAKING
-			// TODO
+			case NOT_HANDSHAKING:
+				ok = false;
+			case FINISHED:
+				break;
 			}
+			hs = sslEngine.getHandshakeStatus();
 		}
 
-		if(!ok) {
+		if (!ok) {
 			throw new Exception("Handshake fails");
-		}		
+		}
 	}
 
 	/**
