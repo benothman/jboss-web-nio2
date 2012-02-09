@@ -27,6 +27,7 @@ import java.net.BindException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,6 +61,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	protected AsynchronousServerSocketChannel listener;
 	private ThreadFactory threadFactory;
+	protected Map<String, Object> attributes = new HashMap<String, Object>();
 
 	/**
 	 * Available workers.
@@ -216,13 +218,13 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (this.serverSocketChannelFactory == null) {
 			this.serverSocketChannelFactory = NioServerSocketChannelFactory
 					.createServerSocketChannelFactory(threadGroup, SSLEnabled);
-			
-			
-			
-			// Initialize the channel factory
-			this.serverSocketChannelFactory.init();
+
 			// Initialize the SSL context if the SSL mode is enabled
 			if (SSLEnabled) {
+				NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
+				for (String key : this.attributes.keySet()) {
+					factory.setAttribute(key, this.attributes.get(key));
+				}
 				System.out.println("********** SSL is enabled **********");
 				if (sslContext == null) {
 					System.out.println("********** SSL context is null **********");
@@ -232,6 +234,8 @@ public class NioEndpoint extends AbstractEndpoint {
 					NioJSSESocketChannelFactory.setSslContext(sslContext);
 				}
 			}
+			// Initialize the channel factory
+			this.serverSocketChannelFactory.init();
 		}
 
 		if (listener == null) {
@@ -305,13 +309,18 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param attributes
 	 */
 	public void setSSLAttributes(Map<String, Object> attributes) {
-		NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
-		for(String key: attributes.keySet()) {
-			factory.setAttribute(key, attributes.get(key));
-		}
+		this.attributes = attributes;
 	}
-	
-	
+
+	/**
+	 * 
+	 * @param name
+	 * @param value
+	 */
+	public void setSSLAttribute(String name, Object value) {
+		this.attributes.put(name, value);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

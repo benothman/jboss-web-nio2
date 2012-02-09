@@ -78,11 +78,11 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	public void init() throws Exception {
 		endpoint.setName(getName());
 		endpoint.setHandler(cHandler);
-		
-		if(this.isSSLEnabled()) {
+
+		if (this.isSSLEnabled()) {
 			endpoint.setSSLAttributes(attributes);
 		}
-		
+
 		try {
 			// endpoint.setKeepAliveTimeout(this.timeout);
 			endpoint.init();
@@ -830,7 +830,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 				SocketState state = processor.process(channel);
 				if (processor.keepAlive) {
-					
+
 				}
 				if (state == SocketState.LONG) {
 					// Associate the connection with the processor. The next
