@@ -324,6 +324,12 @@ public class SSLNioChannel extends NioChannel {
 
 			case NEED_TASK:
 				// Handle blocking tasks
+				Runnable task = null;
+				
+				while((task = sslEngine.getDelegatedTask()) != null) {
+					task.run();
+				}
+				
 				break;
 
 			// Handle other status: // FINISHED or NOT_HANDSHAKING
