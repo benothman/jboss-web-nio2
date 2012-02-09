@@ -173,8 +173,11 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			initSSLEngine(engine);
 			engine.setUseClientMode(false);
-
-			return new SSLNioChannel(asyncChannel, engine);
+			
+			SSLNioChannel channel =new SSLNioChannel(asyncChannel, engine); 
+			channel.handshake();
+			
+			return channel;
 		} catch (Exception e) {
 			throw new IOException(e);
 		}
@@ -802,11 +805,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 *            the SSLEngine
 	 */
 	protected void configureClientAuth(SSLEngine engine) {
-		if (wantClientAuth) {
-			engine.setWantClientAuth(wantClientAuth);
-		} else {
-			engine.setNeedClientAuth(requireClientAuth);
-		}
+		engine.setWantClientAuth(wantClientAuth);
+		engine.setNeedClientAuth(requireClientAuth);
 	}
 
 	/**
