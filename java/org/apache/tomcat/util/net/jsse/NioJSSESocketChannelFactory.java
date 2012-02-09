@@ -173,10 +173,10 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			initSSLEngine(engine);
 			engine.setUseClientMode(false);
-			
-			SSLNioChannel channel =new SSLNioChannel(asyncChannel, engine); 
+
+			SSLNioChannel channel = new SSLNioChannel(asyncChannel, engine);
 			channel.handshake();
-			
+
 			return channel;
 		} catch (Exception e) {
 			throw new IOException(e);

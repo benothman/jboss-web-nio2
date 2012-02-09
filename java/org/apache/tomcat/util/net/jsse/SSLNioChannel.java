@@ -246,9 +246,11 @@ public class SSLNioChannel extends NioChannel {
 
 		// Create byte buffers to use for holding application data
 		int appBufferSize = session.getApplicationBufferSize();
+		System.out.println("ApplicationBufferSize : " + appBufferSize);
 		ByteBuffer serverAppData = ByteBuffer.allocate(appBufferSize);
 		ByteBuffer clientAppData = ByteBuffer.allocate(appBufferSize);
 		int packetBufferSize = session.getPacketBufferSize();
+		System.out.println("PacketBufferSize : " + packetBufferSize);
 		ByteBuffer serverNetData = ByteBuffer.allocate(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocate(packetBufferSize);
 
@@ -258,13 +260,29 @@ public class SSLNioChannel extends NioChannel {
 
 		boolean ok = true;
 
-		
+		// client     server     message
+		// ======     ======     =======
+		// wrap()     ...        ClientHello
+		// ...        unwrap()   ClientHello
+		// ...        wrap()     ServerHello/Certificate
+		// unwrap()   ...        ServerHello/Certificate
+		// wrap()     ...        ClientKeyExchange
+		// wrap()     ...        ChangeCipherSpec
+		// wrap()     ...        Finished
+		// ...        unwrap()   ClientKeyExchange
+		// ...        unwrap()   ChangeCipherSpec
+		// ...        unwrap()   Finished
+		// ...        wrap()     ChangeCipherSpec
+		// ...        wrap()     Finished
+		// unwrap()   ...        ChangeCipherSpec
+		// unwrap()   ...        Finished
+
 		// Process handshaking message
 		while (hs != SSLEngineResult.HandshakeStatus.FINISHED
-				&& hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
+				&& hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING && ok) {
 
 			System.out.println("HandshakeStatus -> " + sslEngine.getHandshakeStatus());
-			
+
 			switch (hs) {
 
 			case NEED_UNWRAP:
@@ -325,11 +343,11 @@ public class SSLNioChannel extends NioChannel {
 			case NEED_TASK:
 				// Handle blocking tasks
 				Runnable task = null;
-				
-				while((task = sslEngine.getDelegatedTask()) != null) {
+
+				while ((task = sslEngine.getDelegatedTask()) != null) {
 					task.run();
 				}
-				
+
 				break;
 
 			// Handle other status: // FINISHED or NOT_HANDSHAKING
