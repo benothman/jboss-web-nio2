@@ -61,18 +61,18 @@ public class SSLNioChannel extends NioChannel {
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
 	 * 
-	 *
-	@Override
-	public Future<Integer> read(ByteBuffer dst) {
-		throw new RuntimeException("Operation not supported for class " + getClass().getName()
-				+ ". Use method readBytes(java.nio.ByteBuffer) or "
-				+ "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead");
-	}
-
-	/*
-	 * (non-Javadoc)
+	 * 
+	 * @Override public Future<Integer> read(ByteBuffer dst) { throw new
+	 * RuntimeException("Operation not supported for class " +
+	 * getClass().getName() + ". Use method readBytes(java.nio.ByteBuffer) or "
+	 * +
+	 * "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead"
+	 * ); }
+	 * 
+	 * /* (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer)
 	 */
@@ -117,16 +117,15 @@ public class SSLNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer)
-	 *
-	@Override
-	public Future<Integer> write(ByteBuffer src) {
-		throw new RuntimeException("Operation not supported for class " + getClass().getName()
-				+ ". Use method writeBytes(java.nio.ByteBuffer) or "
-				+ "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead");
-	}
-
-	/*
-	 * (non-Javadoc)
+	 * 
+	 * @Override public Future<Integer> write(ByteBuffer src) { throw new
+	 * RuntimeException("Operation not supported for class " +
+	 * getClass().getName() + ". Use method writeBytes(java.nio.ByteBuffer) or "
+	 * +
+	 * "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead"
+	 * ); }
+	 * 
+	 * /* (non-Javadoc)
 	 * 
 	 * @see
 	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer)
@@ -203,7 +202,7 @@ public class SSLNioChannel extends NioChannel {
 	 * <code>wrap()</code> and <code>unwrap()</code> methods will implicitly
 	 * call this method if handshaking has not already begun.
 	 * <P>
-	 * Note that the peer may also request a session renegotiation with this
+	 * Note that the client may also request a session renegotiation with this
 	 * <code>SSLEngine</code> by sending the appropriate session renegotiate
 	 * handshake message.
 	 * <P>
@@ -230,7 +229,108 @@ public class SSLNioChannel extends NioChannel {
 			return;
 		}
 
-		this.sslEngine.beginHandshake();
+		try {
+			doHandshake();
+		} catch (Exception e) {
+			throw new SSLException(e);
+		}
+	}
+
+	/**
+	 * 
+	 * @throws Exception
+	 */
+	private void doHandshake() throws Exception {
+
+		SSLSession session = getSSLSession();
+
+		// Create byte buffers to use for holding application data
+		int appBufferSize = session.getApplicationBufferSize();
+		ByteBuffer serverAppData = ByteBuffer.allocate(appBufferSize);
+		ByteBuffer clientAppData = ByteBuffer.allocate(appBufferSize);
+		int packetBufferSize = session.getPacketBufferSize();
+		ByteBuffer serverNetData = ByteBuffer.allocate(packetBufferSize);
+		ByteBuffer clientNetData = ByteBuffer.allocate(packetBufferSize);
+
+		// Begin handshake
+		sslEngine.beginHandshake();
+		SSLEngineResult.HandshakeStatus hs = sslEngine.getHandshakeStatus();
+
+		boolean ok = true;
+
+		// Process handshaking message
+		while (hs != SSLEngineResult.HandshakeStatus.FINISHED
+				&& hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
+
+			switch (hs) {
+
+			case NEED_UNWRAP:
+				// Receive handshaking data from client
+				if (this.read(clientNetData).get() < 0) {
+					// Handle closed channel
+					ok = false;
+					this.close();
+				}
+
+				// Process incoming handshaking data
+				clientNetData.flip();
+				SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
+				clientNetData.compact();
+				hs = res.getHandshakeStatus();
+
+				// Check status
+				switch (res.getStatus()) {
+				case OK:
+					// Handle OK status
+					break;
+				// Handle other status: BUFFER_UNDERFLOW, BUFFER_OVERFLOW,
+				// CLOSED
+				default:
+					ok = false;
+				}
+				break;
+
+			case NEED_WRAP:
+				// Empty the local network packet buffer.
+				serverNetData.clear();
+
+				// Generate handshaking data
+				res = sslEngine.wrap(serverAppData, serverNetData);
+				hs = res.getHandshakeStatus();
+
+				// Check status
+				switch (res.getStatus()) {
+				case OK:
+					serverNetData.flip();
+
+					// Send the handshaking data to client
+					while (serverNetData.hasRemaining()) {
+						if (this.write(serverNetData).get() < 0) {
+							// Handle closed channel
+							ok = false;
+							this.close();
+						}
+					}
+					break;
+				// Handle other status: BUFFER_OVERFLOW, BUFFER_UNDERFLOW,
+				// CLOSED
+				default:
+					ok = false;
+				}
+				break;
+
+			case NEED_TASK:
+				// Handle blocking tasks
+				break;
+
+			// Handle other status: // FINISHED or NOT_HANDSHAKING
+			// TODO
+			}
+		}
+
+		if(!ok) {
+			throw new Exception("Handshake fails");
+		}		
 	}
 
 	/**
