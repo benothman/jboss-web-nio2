@@ -21,6 +21,7 @@
  */
 package org.apache.tomcat.util.net.jsse;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
@@ -176,6 +178,18 @@ public class SSLNioChannel extends NioChannel {
 		return -1;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.apache.tomcat.util.net.NioChannel#close()
+	 */
+	@Override
+	public void close() throws IOException {
+		super.close();
+		getSSLSession().invalidate();
+		this.sslEngine.closeInbound();
+		this.sslEngine.closeOutbound();
+	}
+
 	/**
 	 * Getter for sslEngine
 	 * 
@@ -245,14 +259,12 @@ public class SSLNioChannel extends NioChannel {
 		SSLSession session = getSSLSession();
 
 		// Create byte buffers to use for holding application data
-		int appBufferSize = session.getApplicationBufferSize();
-		System.out.println("ApplicationBufferSize : " + appBufferSize);
-		ByteBuffer serverAppData = ByteBuffer.allocate(appBufferSize);
-		ByteBuffer clientAppData = ByteBuffer.allocate(appBufferSize);
-		int packetBufferSize = session.getPacketBufferSize();
-		System.out.println("PacketBufferSize : " + packetBufferSize);
-		ByteBuffer serverNetData = ByteBuffer.allocate(packetBufferSize);
-		ByteBuffer clientNetData = ByteBuffer.allocate(packetBufferSize);
+		int appBufferSize = session.getApplicationBufferSize() * 2;
+		ByteBuffer serverAppData = ByteBuffer.allocateDirect(appBufferSize);
+		ByteBuffer clientAppData = ByteBuffer.allocateDirect(appBufferSize);
+		int packetBufferSize = session.getPacketBufferSize() * 2;
+		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
+		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
 
 		// Begin handshake
 		sslEngine.beginHandshake();
@@ -277,6 +289,119 @@ public class SSLNioChannel extends NioChannel {
 		// unwrap()   ...        ChangeCipherSpec
 		// unwrap()   ...        Finished
 
+		
+		
+		int step = 0;
+		// Process handshaking message
+		while (sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.FINISHED
+					&& sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
+			
+			System.out.println("STEP : " + (++step));
+			switch (sslEngine.getHandshakeStatus()) {
+			case NEED_UNWRAP:
+				if(this.read(clientNetData).get() < 0) {
+					ok = false;
+					this.close();
+				} else {
+					clientNetData.flip();
+					clientAppData.clear();
+					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
+					switch (res.getStatus()) {
+					case BUFFER_UNDERFLOW:
+						// Loop until the status changes
+						while(res.getStatus() == Status.BUFFER_UNDERFLOW) {
+							// 
+							ByteBuffer tmpClientNetData = ByteBuffer.allocateDirect(clientNetData.capacity() * 2);
+							tmpClientNetData.put(clientNetData);
+							clientNetData = tmpClientNetData;
+							this.read(clientNetData).get();
+							res = sslEngine.unwrap(clientNetData, clientAppData);								
+						}
+						
+						break;
+					case BUFFER_OVERFLOW:
+						while(res.getStatus() == Status.BUFFER_OVERFLOW) {
+							clientAppData = ByteBuffer.allocateDirect(clientAppData.capacity() * 2);
+							clientNetData.flip();
+							res = sslEngine.unwrap(clientNetData, clientAppData);							
+						}
+						
+						break;
+					case CLOSED:
+						ok = false;
+					case OK:
+						// NOP
+						break;
+					}
+				}
+				
+				break;
+			case NEED_WRAP:
+				serverNetData.clear();
+				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
+				
+				switch (res.getStatus()) {
+				case OK:
+					// Send the handshaking data to client
+					while (serverNetData.hasRemaining()) {
+						if (this.write(serverNetData).get() < 0) {
+							// Handle closed channel
+							ok = false;
+							this.close();
+							break;
+						}
+					}
+					break;
+				case BUFFER_OVERFLOW:
+					while(res.getStatus() == Status.BUFFER_OVERFLOW) {
+						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
+						serverAppData.flip();
+						res = sslEngine.wrap(serverAppData, serverNetData);	
+					}
+					
+					if(res.getStatus() == Status.OK) {
+						// Send the handshaking data to client
+						while (serverNetData.hasRemaining()) {
+							if (this.write(serverNetData).get() < 0) {
+								// Handle closed channel
+								ok = false;
+								this.close();
+								break;
+							}
+						}
+					}
+					
+					break;
+				case BUFFER_UNDERFLOW:
+					// Should not happens in this case
+					break;
+				case CLOSED:
+					ok = false;
+					break;
+				}
+				
+				break;
+			case NEED_TASK:
+				Runnable task = null;
+				while((task = sslEngine.getDelegatedTask()) != null) {
+					// Run the task in blocking mode
+					task.run();
+				}
+				
+				break;
+			case NOT_HANDSHAKING:
+				ok = false;				
+			case FINISHED:
+				break;
+			}
+			if(!ok) {
+				break;
+			}
+		}
+		
+		
+		
+		/*
 		// Process handshaking message
 		while (hs != SSLEngineResult.HandshakeStatus.FINISHED
 				&& hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING && ok) {
@@ -354,10 +479,12 @@ public class SSLNioChannel extends NioChannel {
 			case NOT_HANDSHAKING:
 				ok = false;
 			case FINISHED:
+				ok = true;
 				break;
 			}
 			hs = sslEngine.getHandshakeStatus();
 		}
+		*/
 
 		if (!ok) {
 			throw new Exception("Handshake fails");

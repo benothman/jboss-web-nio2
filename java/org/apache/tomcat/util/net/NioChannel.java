@@ -268,7 +268,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	public void close(boolean force) throws IOException {
 		if (isOpen() && force) {
-			this.channel.close();
+			this.close();
 		}
 	}
 
