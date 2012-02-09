@@ -258,10 +258,13 @@ public class SSLNioChannel extends NioChannel {
 
 		boolean ok = true;
 
+		
 		// Process handshaking message
 		while (hs != SSLEngineResult.HandshakeStatus.FINISHED
 				&& hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
 
+			System.out.println("HandshakeStatus -> " + sslEngine.getHandshakeStatus());
+			
 			switch (hs) {
 
 			case NEED_UNWRAP:
