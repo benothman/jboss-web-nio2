@@ -126,6 +126,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 	protected boolean initialized;
 	protected SSLEngine engine;
+	private SSLContext sslContext;
 	protected String clientAuth = "false";
 	// protected SSLServerSocketFactory sslProxy = null;
 	protected String[] enabledCiphers;
@@ -169,7 +170,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		try {
 			AsynchronousSocketChannel asyncChannel = listener.accept().get();
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
-			SSLEngine engine = context.createSSLEngine(addr.getHostString(), addr.getPort());
+			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			initSSLEngine(engine);
 			engine.setUseClientMode(false);
 
@@ -279,10 +280,10 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			}
 
 			// Create and init SSLContext
-			SSLContext context = (SSLContext) attributes.get("SSLContext");
-			if (context == null) {
-				context = SSLContext.getInstance(protocol);
-				context.init(
+			sslContext = (SSLContext) attributes.get("SSLContext");
+			if (sslContext == null) {
+				sslContext = SSLContext.getInstance(protocol);
+				sslContext.init(
 						getKeyManagers(keystoreType, keystoreProvider, algorithm,
 								(String) attributes.get("keyAlias")),
 						getTrustManagers(keystoreType, keystoreProvider, trustAlgorithm),
@@ -303,14 +304,14 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			} else {
 				sessionCacheTimeout = defaultSessionTimeout;
 			}
-			SSLSessionContext sessionContext = context.getServerSessionContext();
+			SSLSessionContext sessionContext = sslContext.getServerSessionContext();
 			if (sessionContext != null) {
 				sessionContext.setSessionCacheSize(sessionCacheSize);
 				sessionContext.setSessionTimeout(sessionCacheTimeout);
 			}
 
 			// create proxy
-			SSLServerSocketFactory sslProxy = context.getServerSocketFactory();
+			SSLServerSocketFactory sslProxy = sslContext.getServerSocketFactory();
 
 			// Determine which cipher suites to enable
 			String requestedCiphers = (String) attributes.get("ciphers");
