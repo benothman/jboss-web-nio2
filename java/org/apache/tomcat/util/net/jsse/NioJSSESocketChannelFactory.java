@@ -751,6 +751,13 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected String[] getEnabledProtocols(SSLEngine engine, String requestedProtocols) {
 		String[] supportedProtocols = engine.getSupportedProtocols();
 
+		System.out.print("Engine Supported Protocols :");
+		for(String s: supportedProtocols) {
+			System.out.print(s+", ");
+		}
+		
+		System.out.println();
+		
 		String[] enabledProtocols = null;
 		String reqProtocols = requestedProtocols;
 		if(reqProtocols == null) {
