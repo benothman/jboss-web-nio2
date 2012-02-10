@@ -279,13 +279,14 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			log.info("SSL Parameters [Protocol :" + protocol + ", algorithm : " + algorithm
 					+ ", keystoreType : " + keystoreType + ", keystoreProvider : "
 					+ keystoreProvider + ", trustAlgorithm: " + trustAlgorithm + "]");
-			
-			log.info("Key Managers --> " + getKeyManagers(keystoreType, keystoreProvider, algorithm,
-					(String) attributes.get("keyAlias")));
-			
-			log.info("Trust Managers --> " + getTrustManagers(keystoreType, keystoreProvider, trustAlgorithm));
-			
-			
+
+			log.info("Key Managers --> "
+					+ getKeyManagers(keystoreType, keystoreProvider, algorithm,
+							(String) attributes.get("keyAlias")));
+
+			log.info("Trust Managers --> "
+					+ getTrustManagers(keystoreType, keystoreProvider, trustAlgorithm));
+
 			// Create and init SSLContext
 			sslContext = (SSLContext) attributes.get("SSLContext");
 			if (sslContext == null) {
@@ -326,8 +327,13 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			enabledCiphers = getEnabledCiphers(requestedCiphers,
 					sslProxy.getSupportedCipherSuites());
 
-			log.info("Enabled Ciphers --> " + enabledCiphers);
-			
+			String tmp = "";
+			for (String s : enabledCiphers) {
+				tmp += s + ", ";
+			}
+
+			log.info("Enabled Ciphers --> " + tmp);
+
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
