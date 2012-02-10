@@ -353,7 +353,24 @@ public class SSLNioChannel extends NioChannel {
 				serverNetData.clear();
 				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
 				switch (res.getStatus()) {
+				case BUFFER_OVERFLOW:
+					while(res.getStatus() == Status.BUFFER_OVERFLOW) {
+						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
+						serverAppData.flip();
+						res = sslEngine.wrap(serverAppData, serverNetData);	
+					}
+					
+					break;
+				case BUFFER_UNDERFLOW:
+					// Should not happens in this case
+					break;
+				case CLOSED:
+					ok = false;
 				case OK:
+					break;
+				}
+				
+				if(res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
 					serverNetData.flip();
 					while (serverNetData.hasRemaining()) {
@@ -364,41 +381,17 @@ public class SSLNioChannel extends NioChannel {
 							break;
 						}
 					}
-					break;
-				case BUFFER_OVERFLOW:
-					while(res.getStatus() == Status.BUFFER_OVERFLOW) {
-						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
-						serverAppData.flip();
-						res = sslEngine.wrap(serverAppData, serverNetData);	
-					}
-					
-					if(res.getStatus() == Status.OK) {
-						// Send the handshaking data to client
-						while (serverNetData.hasRemaining()) {
-							if (this.write(serverNetData).get() < 0) {
-								// Handle closed channel
-								ok = false;
-								this.close();
-								break;
-							}
-						}
-					}
-					
-					break;
-				case BUFFER_UNDERFLOW:
-					// Should not happens in this case
-					break;
-				case CLOSED:
-					ok = false;
-					break;
 				}
+				
 				
 				break;
 			case NEED_TASK:
 				Runnable task = null;
 				while((task = sslEngine.getDelegatedTask()) != null) {
 					// Run the task in blocking mode
+					long time = System.currentTimeMillis();
 					task.run();
+					System.out.println("Task time: " + (System.currentTimeMillis() - time));
 				}
 				
 				break;
