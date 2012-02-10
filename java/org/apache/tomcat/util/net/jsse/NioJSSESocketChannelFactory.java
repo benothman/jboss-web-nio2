@@ -276,6 +276,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 				trustAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
 			}
 
+			/*
 			log.info("SSL Parameters [Protocol :" + protocol + ", algorithm : " + algorithm
 					+ ", keystoreType : " + keystoreType + ", keystoreProvider : "
 					+ keystoreProvider + ", trustAlgorithm: " + trustAlgorithm + "]");
@@ -286,7 +287,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 			log.info("Trust Managers --> "
 					+ getTrustManagers(keystoreType, keystoreProvider, trustAlgorithm));
-
+			*/
+			
 			// Create and init SSLContext
 			sslContext = (SSLContext) attributes.get("SSLContext");
 			if (sslContext == null) {
@@ -323,17 +325,18 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 			// Determine which cipher suites to enable
 			String requestedCiphers = (String) attributes.get("ciphers");
-			log.info("Requested Ciphers --> " + requestedCiphers);
+			// log.info("Requested Ciphers --> " + requestedCiphers);
 			enabledCiphers = getEnabledCiphers(requestedCiphers,
 					sslProxy.getSupportedCipherSuites());
 
+			/*
 			String tmp = "";
 			for (String s : enabledCiphers) {
 				tmp += s + ", ";
 			}
 
 			log.info("Enabled Ciphers --> " + tmp);
-
+			 */
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
@@ -772,7 +775,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
 						if (supportedProtocols[i].equals(s)) {
 							System.out.println("Adding new element ----> " + s);
-							vec.addElement(protocol);
+							vec.addElement(s);
 							break;
 						}
 					}
