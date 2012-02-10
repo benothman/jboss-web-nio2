@@ -692,128 +692,129 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	/**
 	 * @return the key store
 	 */
-    public String getKeystore() {
-        return (String) getAttribute("keystore");
-    }
+	public String getKeystore() {
+		return (String) getAttribute("keystore");
+	}
 
-    /**
-     * @param keystore
-     */
-    public void setKeystore( String keystore ) {
-        setAttribute("keystore", keystore);
-    }
+	/**
+	 * @param keystore
+	 */
+	public void setKeystore(String keystore) {
+		setAttribute("keystore", keystore);
+	}
 
-    /**
-     * @return the key pass
-     */
-    public String getKeypass() {
-        return (String) getAttribute("keypass");
-    }
+	/**
+	 * @return the key pass
+	 */
+	public String getKeypass() {
+		return (String) getAttribute("keypass");
+	}
 
-    /**
-     * @param keypass
-     */
-    public void setKeypass( String keypass ) {
-        attributes.put("keypass", keypass);
-    }
+	/**
+	 * @param keypass
+	 */
+	public void setKeypass(String keypass) {
+		attributes.put("keypass", keypass);
+	}
 
-    /**
-     * @return the key store type
-     */
-    public String getKeytype() {
-        return (String) getAttribute("keystoreType");
-    }
+	/**
+	 * @return the key store type
+	 */
+	public String getKeytype() {
+		return (String) getAttribute("keystoreType");
+	}
 
-    /**
-     * @param keyType
-     */
-    public void setKeytype( String keyType ) {
-        setAttribute("keystoreType", keyType);
-    }
+	/**
+	 * @param keyType
+	 */
+	public void setKeytype(String keyType) {
+		setAttribute("keystoreType", keyType);
+	}
 
-    /**
-     * @return the client authentication
-     */
-    public String getClientauth() {
-        return (String) getAttribute("clientauth");
-    }
+	/**
+	 * @return the client authentication
+	 */
+	public String getClientauth() {
+		return (String) getAttribute("clientauth");
+	}
 
-    /**
-     * @param k
-     */
-    public void setClientauth( String k ) {
-        setAttribute("clientauth", k);
-    }
+	/**
+	 * @param k
+	 */
+	public void setClientauth(String k) {
+		setAttribute("clientauth", k);
+	}
 
-    /**
-     * @return the protocols
-     */
-    public String getProtocols() {
-        return (String) getAttribute("protocols");
-    }
+	/**
+	 * @return the protocols
+	 */
+	public String getProtocols() {
+		return (String) getAttribute("protocols");
+	}
 
-    /**
-     * @param k
-     */
-    public void setProtocols(String k) {
-        setAttribute("protocols", k);
-    }
+	/**
+	 * @param protocols the protocols to set
+	 */
+	public void setProtocols(String protocols) {
+		System.out.println("************ "+getClass().getName() + "setProtocols =====> protocols : " + protocols);
+		setAttribute("protocols", protocols);
+	}
 
-    /**
-     * @return the algorithm
-     */
-    public String getAlgorithm() {
-        return (String) getAttribute("algorithm");
-    }
+	/**
+	 * @return the algorithm
+	 */
+	public String getAlgorithm() {
+		return (String) getAttribute("algorithm");
+	}
 
-    /**
-     * @param k
-     */
-    public void setAlgorithm( String k ) {
-        setAttribute("algorithm", k);
-    }
+	/**
+	 * @param k
+	 */
+	public void setAlgorithm(String k) {
+		setAttribute("algorithm", k);
+	}
 
-    /**
-     * @return the ciphers
-     */
-    public String getCiphers() {
-        return (String) getAttribute("ciphers");
-    }
+	/**
+	 * @return the ciphers
+	 */
+	public String getCiphers() {
+		return (String) getAttribute("ciphers");
+	}
 
-    /**
-     * 
-     * @param ciphers
-     */
-    public void setCiphers(String ciphers) {
-        setAttribute("ciphers", ciphers);
-    }
+	/**
+	 * 
+	 * @param ciphers
+	 */
+	public void setCiphers(String ciphers) {
+		setAttribute("ciphers", ciphers);
+	}
 
-    /**
-     * @return the ke alias
-     */
-    public String getKeyAlias() {
-        return (String) getAttribute("keyAlias");
-    }
+	/**
+	 * @return the ke alias
+	 */
+	public String getKeyAlias() {
+		return (String) getAttribute("keyAlias");
+	}
 
-    /**
-     * 
-     * @param keyAlias
-     */
-    public void setKeyAlias(String keyAlias) {
-        setAttribute("keyAlias", keyAlias);
-    }
+	/**
+	 * 
+	 * @param keyAlias
+	 */
+	public void setKeyAlias(String keyAlias) {
+		setAttribute("keyAlias", keyAlias);
+	}
 
-    /**
-     * @return the SSL context
-     */
-    public SSLContext getSSLContext() {
-        return (SSLContext) getAttribute("SSLContext");
-    }
+	/**
+	 * @return the SSL context
+	 */
+	public SSLContext getSSLContext() {
+		return (SSLContext) getAttribute("SSLContext");
+	}
 
-    /**
-     * @param sslContext
-     */
-    public void setSSLContext(SSLContext sslContext) {
-        setAttribute("SSLContext", sslContext);
-    }
+	/**
+	 * @param sslContext
+	 */
+	public void setSSLContext(SSLContext sslContext) {
+		setAttribute("SSLContext", sslContext);
+	}
 }

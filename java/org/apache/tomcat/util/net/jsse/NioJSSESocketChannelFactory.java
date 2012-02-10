@@ -816,17 +816,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		String requestedProtocols = (String) attributes.get("protocols");
 		
 		log.info("Requested Protocols ---> " + requestedProtocols);
-		
-		String array[] = getEnabledProtocols(engine, requestedProtocols);
-		
-		String tmp = "";
-		for(String s: array) {
-			tmp += s+ ", ";
-		}
-		
-		log.info("Engine enabled protocols ----> " + tmp);
-		
-		setEnabledProtocols(engine, array);
+		setEnabledProtocols(engine, getEnabledProtocols(engine, requestedProtocols));
 		
 		// we don't know if client auth is needed -
 		// after parsing the request we may re-handshake
