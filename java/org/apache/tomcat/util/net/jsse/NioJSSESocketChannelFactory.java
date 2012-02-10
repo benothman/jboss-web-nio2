@@ -264,8 +264,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 				algorithm = KeyManagerFactory.getDefaultAlgorithm();
 			}
 
-			log.info("SSL Protocol : " + protocol + ", algorithm : " + algorithm);
-
 			String keystoreType = (String) attributes.get("keystoreType");
 			if (keystoreType == null) {
 				keystoreType = defaultKeystoreType;
@@ -277,6 +275,10 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			if (trustAlgorithm == null) {
 				trustAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
 			}
+
+			log.info("SSL Parameters [Protocol :" + protocol + ", algorithm : " + algorithm
+					+ ", keystoreType : " + keystoreType + ", keystoreProvider : "
+					+ keystoreProvider + ", trustAlgorithm: " + trustAlgorithm + "]");
 
 			// Create and init SSLContext
 			sslContext = (SSLContext) attributes.get("SSLContext");
