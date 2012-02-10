@@ -77,9 +77,6 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @param value
 	 */
 	public void setAttribute(String name, Object value) {
-		System.out.println("--> " + getClass().getName()
-				+ " : calling method setAttribute(String, Object) with params : name=" + name
-				+ ", value=" + value);
 		if (name != null && value != null) {
 			attributes.put(name, value);
 		}

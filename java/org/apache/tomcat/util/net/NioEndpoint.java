@@ -226,9 +226,9 @@ public class NioEndpoint extends AbstractEndpoint {
 					factory.setAttribute(key, this.attributes.get(key));
 				}
 				if (sslContext == null) {
-					sslContext = NioJSSESocketChannelFactory.getSslContext();
+					sslContext = factory.getSslContext();
 				} else {
-					NioJSSESocketChannelFactory.setSslContext(sslContext);
+					factory.setSslContext(sslContext);
 				}
 			}
 			// Initialize the channel factory

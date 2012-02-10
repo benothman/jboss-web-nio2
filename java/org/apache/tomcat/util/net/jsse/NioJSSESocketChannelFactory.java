@@ -90,7 +90,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			.getManager("org.apache.tomcat.util.net.jsse.res");
 	private static final boolean RFC_5746_SUPPORTED;
 	// defaults
-	static String defaultProtocol = "TLS";
+	private static final String defaultProtocol = "TLS";
 	static boolean defaultClientAuth = false;
 	static String defaultKeystoreType = "JKS";
 	private static final String defaultKeystoreFile = System.getProperty("user.home")
@@ -102,11 +102,11 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	static org.jboss.logging.Logger log = org.jboss.logging.Logger
 			.getLogger(NioJSSESocketChannelFactory.class);
 
-	private static SSLContext context;
+	//private static SSLContext context;
 	static {
 		boolean result = false;
 		try {
-			context = SSLContext.getInstance("TLS");
+			SSLContext context = SSLContext.getInstance(defaultProtocol);
 			context.init(null, null, new SecureRandom());
 			SSLServerSocketFactory ssf = context.getServerSocketFactory();
 			String ciphers[] = ssf.getSupportedCipherSuites();
@@ -128,7 +128,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected SSLEngine engine;
 	private SSLContext sslContext;
 	protected String clientAuth = "false";
-	// protected SSLServerSocketFactory sslProxy = null;
 	protected String[] enabledCiphers;
 	protected boolean allowUnsafeLegacyRenegotiation = false;
 
@@ -230,15 +229,15 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 * 
 	 * @param ctx
 	 */
-	public static void setSslContext(SSLContext ctx) {
-		context = ctx;
+	public void setSslContext(SSLContext ctx) {
+		sslContext = ctx;
 	}
 
 	/**
 	 * @return the SSLContext
 	 */
-	public static SSLContext getSslContext() {
-		return context;
+	public SSLContext getSslContext() {
+		return sslContext;
 	}
 
 	/**
@@ -347,7 +346,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected String[] getEnabledCiphers(String requestedCiphers, String[] supportedCiphers) {
 
 		String[] enabledCiphers = null;
-		SSLServerSocketFactory sslProxy = context.getServerSocketFactory();
+		SSLServerSocketFactory sslProxy = sslContext.getServerSocketFactory();
 		if (requestedCiphers != null) {
 			Vector<Object> vec = null;
 			String cipher = requestedCiphers;
@@ -833,9 +832,9 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	private void checkConfig() throws IOException {
 		// Create an unbound server socket
-		SSLServerSocketFactory sslProxy = context.getServerSocketFactory();
+		SSLServerSocketFactory sslProxy = sslContext.getServerSocketFactory();
 		ServerSocket socket = sslProxy.createServerSocket();
-		SSLEngine engine = context.createSSLEngine();
+		SSLEngine engine = sslContext.createSSLEngine();
 		initSSLEngine(engine);
 
 		try {
