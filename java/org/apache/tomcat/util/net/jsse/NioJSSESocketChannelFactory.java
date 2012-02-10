@@ -102,7 +102,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	static org.jboss.logging.Logger log = org.jboss.logging.Logger
 			.getLogger(NioJSSESocketChannelFactory.class);
 
-	//private static SSLContext context;
+	// private static SSLContext context;
 	static {
 		boolean result = false;
 		try {
@@ -171,10 +171,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			initSSLEngine(engine);
-			engine.setUseClientMode(false);
-
 			SSLNioChannel channel = new SSLNioChannel(asyncChannel, engine);
-			channel.handshake();
+			handshake(channel);
 
 			return channel;
 		} catch (Exception e) {
@@ -221,8 +219,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			// Prevent further handshakes by removing all cipher suites
 			engine.setEnabledCipherSuites(new String[0]);
 		}
-
-		engine.beginHandshake();
+		sslChannel.handshake();
 	}
 
 	/**
@@ -267,8 +264,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 				algorithm = KeyManagerFactory.getDefaultAlgorithm();
 			}
 
-			log.info("SSL Protocol : " + protocol+", algorithm : " + algorithm);
-			
+			log.info("SSL Protocol : " + protocol + ", algorithm : " + algorithm);
+
 			String keystoreType = (String) attributes.get("keystoreType");
 			if (keystoreType == null) {
 				keystoreType = defaultKeystoreType;
@@ -794,19 +791,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	}
 
 	/**
-	 * Configure Client authentication for this version of JSSE. The JSSE
-	 * included in Java 1.4 supports the 'want' value. Prior versions of JSSE
-	 * will treat 'want' as 'false'.
-	 * 
-	 * @param engine
-	 *            the SSLEngine
-	 */
-	protected void configureClientAuth(SSLEngine engine) {
-		engine.setWantClientAuth(wantClientAuth);
-		engine.setNeedClientAuth(requireClientAuth);
-	}
-
-	/**
 	 * Configures the given SSL server socket with the requested cipher suites,
 	 * protocol versions, and need for client authentication
 	 * 
@@ -816,13 +800,14 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		if (enabledCiphers != null) {
 			engine.setEnabledCipherSuites(enabledCiphers);
 		}
-
+		engine.setUseClientMode(false);
 		String requestedProtocols = (String) attributes.get("protocols");
 		setEnabledProtocols(engine, getEnabledProtocols(engine, requestedProtocols));
 
 		// we don't know if client auth is needed -
 		// after parsing the request we may re-handshake
-		configureClientAuth(engine);
+		engine.setWantClientAuth(wantClientAuth);
+		engine.setNeedClientAuth(requireClientAuth);
 	}
 
 	/**
