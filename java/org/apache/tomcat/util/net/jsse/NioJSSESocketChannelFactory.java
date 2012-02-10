@@ -270,8 +270,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			}
 
 			String keystoreProvider = (String) attributes.get("keystoreProvider");
-
 			String trustAlgorithm = (String) attributes.get("truststoreAlgorithm");
+			
 			if (trustAlgorithm == null) {
 				trustAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
 			}
@@ -660,7 +660,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		if ("PKIX".equalsIgnoreCase(algorithm)) {
 			PKIXBuilderParameters xparams = new PKIXBuilderParameters(trustStore,
 					new X509CertSelector());
-			Collection crls = getCRLs(crlf);
+			Collection<?> crls = getCRLs(crlf);
 			CertStoreParameters csp = new CollectionCertStoreParameters(crls);
 			CertStore store = CertStore.getInstance("Collection", csp);
 			xparams.addCertStore(store);
@@ -751,7 +751,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		String[] enabledProtocols = null;
 
 		if (requestedProtocols != null) {
-			Vector vec = null;
+			Vector<Object> vec = null;
 			String protocol = requestedProtocols;
 			int index = requestedProtocols.indexOf(',');
 			if (index != -1) {
@@ -766,7 +766,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 						for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
 							if (supportedProtocols[i].equals(protocol)) {
 								if (vec == null) {
-									vec = new Vector();
+									vec = new Vector<Object>();
 								}
 								vec.addElement(protocol);
 								break;
@@ -789,7 +789,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
 						if (supportedProtocols[i].equals(protocol)) {
 							if (vec == null) {
-								vec = new Vector();
+								vec = new Vector<Object>();
 							}
 							vec.addElement(protocol);
 							break;
@@ -819,8 +819,20 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		}
 		engine.setUseClientMode(false);
 		String requestedProtocols = (String) attributes.get("protocols");
-		setEnabledProtocols(engine, getEnabledProtocols(engine, requestedProtocols));
-
+		
+		log.info("Requested Protocols ---> " + requestedProtocols);
+		
+		String array[] = getEnabledProtocols(engine, requestedProtocols);
+		
+		String tmp = "";
+		for(String s: array) {
+			tmp += s+ ", ";
+		}
+		
+		log.info("Engine enabled protocols ----> " + tmp);
+		
+		setEnabledProtocols(engine, array);
+		
 		// we don't know if client auth is needed -
 		// after parsing the request we may re-handshake
 		engine.setWantClientAuth(wantClientAuth);
