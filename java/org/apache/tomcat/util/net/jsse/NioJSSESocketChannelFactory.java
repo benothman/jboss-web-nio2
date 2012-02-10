@@ -280,6 +280,13 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					+ ", keystoreType : " + keystoreType + ", keystoreProvider : "
 					+ keystoreProvider + ", trustAlgorithm: " + trustAlgorithm + "]");
 
+			
+			log.info("Key Managers --> " + getKeyManagers(keystoreType, keystoreProvider, algorithm,
+					(String) attributes.get("keyAlias")));
+			
+			log.info("Trust Managers --> " + getTrustManagers(keystoreType, keystoreProvider, trustAlgorithm));
+			
+			
 			// Create and init SSLContext
 			sslContext = (SSLContext) attributes.get("SSLContext");
 			if (sslContext == null) {
