@@ -753,32 +753,27 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		if (requestedProtocols != null) {
 			Vector<Object> vec = null;
 			String protocol = requestedProtocols;
-			int index = requestedProtocols.indexOf(',');
-			if (index != -1) {
-				int fromIndex = 0;
-				while (index != -1) {
-					protocol = requestedProtocols.substring(fromIndex, index).trim();
-					if (protocol.length() > 0) {
-						/*
-						 * Check to see if the requested protocol is among the
-						 * supported protocols, i.e., may be enabled
-						 */
-						for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
-							if (supportedProtocols[i].equals(protocol)) {
-								if (vec == null) {
-									vec = new Vector<Object>();
-								}
-								vec.addElement(protocol);
-								break;
-							}
+			String tab[] = requestedProtocols.split("\\s*,\\s*");
+			if(tab.length > 0) {
+				vec = new Vector<Object>(tab.length);
+				protocol = null;
+			}
+			for(String s: tab) {
+				System.out.println("------>> " + s);
+				if(s.length() > 0) {
+					/*
+					 * Check to see if the requested protocol is among the
+					 * supported protocols, i.e., may be enabled
+					 */
+					for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
+						if (supportedProtocols[i].equals(protocol)) {
+							vec.addElement(protocol);
+							break;
 						}
 					}
-					fromIndex = index + 1;
-					index = requestedProtocols.indexOf(',', fromIndex);
-				} // while
-				protocol = requestedProtocols.substring(fromIndex);
+				}
 			}
-
+			System.out.println("getEnabledProtocols -----> protocol : " + protocol);
 			if (protocol != null) {
 				protocol = protocol.trim();
 				if (protocol.length() > 0) {
@@ -855,7 +850,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			// Set the timeout to 1ms as all we care about is if it throws an
 			// SSLException on accept.
 			socket.setSoTimeout(1);
-
 			socket.accept();
 			// Will never get here - no client can connect to an unbound port
 		} catch (SSLException ssle) {
