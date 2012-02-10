@@ -750,65 +750,31 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	protected String[] getEnabledProtocols(SSLEngine engine, String requestedProtocols) {
 		String[] supportedProtocols = engine.getSupportedProtocols();
-
-		System.out.print("Engine Supported Protocols :");
-		for(String s: supportedProtocols) {
-			System.out.print(s+", ");
-		}
-		
-		System.out.println();
 		
 		String[] enabledProtocols = null;
-		String reqProtocols = requestedProtocols;
-		if(reqProtocols == null) {
-			reqProtocols = supportedProtocols[0];
-		}
 		
-		if (reqProtocols != null) {
+		if (requestedProtocols != null) {
 			Vector<Object> vec = null;
-			String protocol = reqProtocols;
-			String tab[] = reqProtocols.split("\\s*,\\s*");
+			String tab[] = requestedProtocols.trim().split("\\s*,\\s*");
 			if(tab.length > 0) {
 				vec = new Vector<Object>(tab.length);
-				protocol = null;
 			}
 			for(String s: tab) {
-				System.out.println("------>> " + s);
 				if(s.length() > 0) {
 					/*
 					 * Check to see if the requested protocol is among the
-					 * supported protocols, i.e., may be enabled
+					 * supported protocols, i.e., may be already enabled
 					 */
 					for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
 						if (supportedProtocols[i].equals(s)) {
-							System.out.println("Adding new element ----> " + s);
 							vec.addElement(s);
 							break;
 						}
 					}
 				}
 			}
-			System.out.println("getEnabledProtocols -----> protocol : " + protocol);
-			if (protocol != null) {
-				protocol = protocol.trim();
-				if (protocol.length() > 0) {
-					/*
-					 * Check to see if the requested protocol is among the
-					 * supported protocols, i.e., may be enabled
-					 */
-					for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
-						if (supportedProtocols[i].equals(protocol)) {
-							if (vec == null) {
-								vec = new Vector<Object>();
-							}
-							vec.addElement(protocol);
-							break;
-						}
-					}
-				}
-			}
-
-			if (vec != null) {
+			
+			if (vec != null && !vec.isEmpty()) {
 				enabledProtocols = new String[vec.size()];
 				vec.copyInto(enabledProtocols);
 			}
