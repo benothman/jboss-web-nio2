@@ -319,7 +319,6 @@ public class SSLNioChannel extends NioChannel {
 					clientAppData.clear();
 					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
 					clientNetData.compact();
-					System.out.println("SSLEngineResult status : "+ res.getStatus());
 					switch (res.getStatus()) {
 					case BUFFER_UNDERFLOW:
 						// Loop until the status changes
@@ -342,7 +341,7 @@ public class SSLNioChannel extends NioChannel {
 						
 						break;
 					case CLOSED:
-						// ok = false;
+						ok = false;
 					case OK:
 						// NOP
 						break;
@@ -353,14 +352,9 @@ public class SSLNioChannel extends NioChannel {
 			case NEED_WRAP:
 				serverNetData.clear();
 				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
-				System.out.println("SSLEngineResult status : "+ res.getStatus());
 				switch (res.getStatus()) {
 				case OK:
 					// Send the handshaking data to client
-					serverNetData.flip();
-					byte bytes [] = new byte[serverNetData.limit()];
-					serverNetData.get(bytes);
-					System.out.println("-----> NEED_WRAP : " + new String(bytes));
 					serverNetData.flip();
 					while (serverNetData.hasRemaining()) {
 						if (this.write(serverNetData).get() < 0) {
@@ -395,16 +389,14 @@ public class SSLNioChannel extends NioChannel {
 					// Should not happens in this case
 					break;
 				case CLOSED:
-					// ok = false;
+					ok = false;
 					break;
 				}
 				
 				break;
 			case NEED_TASK:
 				Runnable task = null;
-				int  counter = 1;
 				while((task = sslEngine.getDelegatedTask()) != null) {
-					System.out.println("Running new task #"+ (counter++));
 					// Run the task in blocking mode
 					task.run();
 				}
