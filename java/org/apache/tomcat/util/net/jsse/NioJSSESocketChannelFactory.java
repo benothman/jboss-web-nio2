@@ -329,13 +329,14 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			enabledCiphers = getEnabledCiphers(requestedCiphers,
 					sslProxy.getSupportedCipherSuites());
 
+			/*
 			String tmp = "";
 			for (String s : enabledCiphers) {
 				tmp += s + ", ";
 			}
 
 			log.info("Enabled Ciphers --> " + tmp);
-
+			*/
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 

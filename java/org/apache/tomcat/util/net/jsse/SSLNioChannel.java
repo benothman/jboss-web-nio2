@@ -342,7 +342,7 @@ public class SSLNioChannel extends NioChannel {
 						
 						break;
 					case CLOSED:
-						ok = false;
+						// ok = false;
 					case OK:
 						// NOP
 						break;
@@ -390,7 +390,7 @@ public class SSLNioChannel extends NioChannel {
 					// Should not happens in this case
 					break;
 				case CLOSED:
-					ok = false;
+					// ok = false;
 					break;
 				}
 				
