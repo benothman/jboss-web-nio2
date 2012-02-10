@@ -329,14 +329,13 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			enabledCiphers = getEnabledCiphers(requestedCiphers,
 					sslProxy.getSupportedCipherSuites());
 
-			/*
 			String tmp = "";
 			for (String s : enabledCiphers) {
 				tmp += s + ", ";
 			}
 
 			log.info("Enabled Ciphers --> " + tmp);
-			 */
+
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
@@ -735,6 +734,15 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		if (protocols != null) {
 			engine.setEnabledProtocols(protocols);
 		}
+		
+		String tab[] = engine.getEnabledProtocols();
+		
+		System.out.print(" Engine Enabled Protocols: [");
+		
+		for(String s : tab) {
+			System.out.print(s + ", ");
+		}
+		System.out.println("]");
 	}
 
 	/**
@@ -793,10 +801,11 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		if (enabledCiphers != null) {
 			engine.setEnabledCipherSuites(enabledCiphers);
 		}
+		
+		
 		engine.setUseClientMode(false);
 		String requestedProtocols = (String) attributes.get("protocols");
 		
-		log.info("Requested Protocols ---> " + requestedProtocols);
 		setEnabledProtocols(engine, getEnabledProtocols(engine, requestedProtocols));
 		
 		// we don't know if client auth is needed -
