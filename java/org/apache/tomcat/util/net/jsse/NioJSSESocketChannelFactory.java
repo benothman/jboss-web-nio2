@@ -248,9 +248,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	@Override
 	public void init() throws IOException {
-		System.out.println("Initialize the " + getClass().getName());
 		try {
-
 			String clientAuthStr = (String) attributes.get("clientauth");
 			if ("true".equalsIgnoreCase(clientAuthStr) || "yes".equalsIgnoreCase(clientAuthStr)) {
 				requireClientAuth = true;
@@ -270,6 +268,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 				algorithm = KeyManagerFactory.getDefaultAlgorithm();
 			}
 
+			log.info("SSL Protocol : " + protocol+", algorithm : " + algorithm);
+			
 			String keystoreType = (String) attributes.get("keystoreType");
 			if (keystoreType == null) {
 				keystoreType = defaultKeystoreType;
@@ -324,13 +324,11 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
-			// Check the SSL config is OK
+			// Check that the SSL configuration is OK
 			checkConfig();
 
 		} catch (Exception e) {
-			if (e instanceof IOException)
-				throw (IOException) e;
-			throw new IOException(e.getMessage());
+			throw new IOException(e.getMessage(), e);
 		}
 	}
 

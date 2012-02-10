@@ -47,6 +47,9 @@ import org.apache.tomcat.util.net.NioChannel;
  */
 public class SSLNioChannel extends NioChannel {
 
+	
+	private static final int HANDSHAKE_MIN_BUFFER_SIZE =16 * 1024;
+	
 	protected SSLEngine sslEngine;
 
 	/**
@@ -259,19 +262,27 @@ public class SSLNioChannel extends NioChannel {
 		SSLSession session = getSSLSession();
 
 		// Create byte buffers to use for holding application data
-		int appBufferSize = session.getApplicationBufferSize() * 2;
+		int appBufferSize = Math.max(session.getApplicationBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);		
 		ByteBuffer serverAppData = ByteBuffer.allocateDirect(appBufferSize);
 		ByteBuffer clientAppData = ByteBuffer.allocateDirect(appBufferSize);
-		int packetBufferSize = session.getPacketBufferSize() * 2;
+		
+		int packetBufferSize = Math.max(session.getPacketBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
 		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
 
 		// Begin handshake
 		sslEngine.beginHandshake();
 		SSLEngineResult.HandshakeStatus hs = sslEngine.getHandshakeStatus();
-
 		boolean ok = true;
 
+		
+		
+		
+		
+		
+		
+		
+		
 		// client     server     message
 		// ======     ======     =======
 		// wrap()     ...        ClientHello
@@ -300,6 +311,7 @@ public class SSLNioChannel extends NioChannel {
 			
 			switch (sslEngine.getHandshakeStatus()) {
 			case NEED_UNWRAP:
+				clientNetData.clear();
 				if(this.read(clientNetData).get() < 0) {
 					ok = false;
 					this.close();
