@@ -279,7 +279,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			log.info("SSL Parameters [Protocol :" + protocol + ", algorithm : " + algorithm
 					+ ", keystoreType : " + keystoreType + ", keystoreProvider : "
 					+ keystoreProvider + ", trustAlgorithm: " + trustAlgorithm + "]");
-
 			
 			log.info("Key Managers --> " + getKeyManagers(keystoreType, keystoreProvider, algorithm,
 					(String) attributes.get("keyAlias")));
@@ -323,9 +322,12 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 			// Determine which cipher suites to enable
 			String requestedCiphers = (String) attributes.get("ciphers");
+			log.info("Requested Ciphers --> " + requestedCiphers);
 			enabledCiphers = getEnabledCiphers(requestedCiphers,
 					sslProxy.getSupportedCipherSuites());
 
+			log.info("Enabled Ciphers --> " + enabledCiphers);
+			
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
