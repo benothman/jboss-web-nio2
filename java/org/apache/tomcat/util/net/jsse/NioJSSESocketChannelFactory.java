@@ -749,11 +749,15 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		String[] supportedProtocols = engine.getSupportedProtocols();
 
 		String[] enabledProtocols = null;
-
-		if (requestedProtocols != null) {
+		String reqProtocols = requestedProtocols;
+		if(reqProtocols == null) {
+			reqProtocols = supportedProtocols[0];
+		}
+		
+		if (reqProtocols != null) {
 			Vector<Object> vec = null;
-			String protocol = requestedProtocols;
-			String tab[] = requestedProtocols.split("\\s*,\\s*");
+			String protocol = reqProtocols;
+			String tab[] = reqProtocols.split("\\s*,\\s*");
 			if(tab.length > 0) {
 				vec = new Vector<Object>(tab.length);
 				protocol = null;
