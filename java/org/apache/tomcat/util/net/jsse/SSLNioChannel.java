@@ -311,7 +311,6 @@ public class SSLNioChannel extends NioChannel {
 			
 			switch (sslEngine.getHandshakeStatus()) {
 			case NEED_UNWRAP:
-				clientNetData.clear();
 				if(this.read(clientNetData).get() < 0) {
 					ok = false;
 					this.close();
@@ -319,6 +318,7 @@ public class SSLNioChannel extends NioChannel {
 					clientNetData.flip();
 					clientAppData.clear();
 					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
+					clientNetData.compact();
 					System.out.println("SSLEngineResult status : "+ res.getStatus());
 					switch (res.getStatus()) {
 					case BUFFER_UNDERFLOW:
@@ -357,6 +357,11 @@ public class SSLNioChannel extends NioChannel {
 				switch (res.getStatus()) {
 				case OK:
 					// Send the handshaking data to client
+					serverNetData.flip();
+					byte bytes [] = new byte[serverNetData.limit()];
+					serverNetData.get(bytes);
+					System.out.println("-----> NEED_WRAP : " + new String(bytes));
+					serverNetData.flip();
 					while (serverNetData.hasRemaining()) {
 						if (this.write(serverNetData).get() < 0) {
 							// Handle closed channel
