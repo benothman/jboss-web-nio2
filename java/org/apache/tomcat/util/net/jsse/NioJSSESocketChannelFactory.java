@@ -770,7 +770,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					 * supported protocols, i.e., may be enabled
 					 */
 					for (int i = 0; supportedProtocols != null && i < supportedProtocols.length; i++) {
-						if (supportedProtocols[i].equals(protocol)) {
+						if (supportedProtocols[i].equals(s)) {
+							System.out.println("Adding new element ----> " + s);
 							vec.addElement(protocol);
 							break;
 						}
