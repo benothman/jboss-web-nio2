@@ -324,6 +324,7 @@ public class SSLNioChannel extends NioChannel {
 						// Loop until the status changes
 						while(res.getStatus() == Status.BUFFER_UNDERFLOW) {
 							// 
+							System.out.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_UNDERFLOW");
 							ByteBuffer tmpClientNetData = ByteBuffer.allocateDirect(clientNetData.capacity() * 2);
 							tmpClientNetData.put(clientNetData);
 							clientNetData = tmpClientNetData;
@@ -334,6 +335,7 @@ public class SSLNioChannel extends NioChannel {
 						break;
 					case BUFFER_OVERFLOW:
 						while(res.getStatus() == Status.BUFFER_OVERFLOW) {
+							System.out.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
 							clientAppData = ByteBuffer.allocateDirect(clientAppData.capacity() * 2);
 							clientNetData.flip();
 							res = sslEngine.unwrap(clientNetData, clientAppData);							
@@ -355,6 +357,7 @@ public class SSLNioChannel extends NioChannel {
 				switch (res.getStatus()) {
 				case BUFFER_OVERFLOW:
 					while(res.getStatus() == Status.BUFFER_OVERFLOW) {
+						System.out.println("NEED_WRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
 						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
 						serverAppData.flip();
 						res = sslEngine.wrap(serverAppData, serverNetData);	
@@ -382,7 +385,6 @@ public class SSLNioChannel extends NioChannel {
 						}
 					}
 				}
-				
 				
 				break;
 			case NEED_TASK:
