@@ -306,7 +306,11 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param attributes
 	 */
 	public void setSSLAttributes(Map<String, Object> attributes) {
-		this.attributes = attributes;
+		if (this.attributes == null) {
+			this.attributes = attributes;
+		} else {
+			this.attributes.putAll(attributes);
+		}
 	}
 
 	/**
@@ -315,7 +319,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param value
 	 */
 	public void setSSLAttribute(String name, Object value) {
-		this.attributes.put(name, value);
+		if (name != null && value != null) {
+			this.attributes.put(name, value);
+		}
 	}
 
 	/*
@@ -372,8 +378,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 
 			// 2: SSL handshake
-
-			// TODO complete SSL handshake
+			serverSocketChannelFactory.initChannel(channel);
+			serverSocketChannelFactory.handshake(channel);
 
 			step = 2;
 		} catch (Throwable t) {
@@ -613,8 +619,6 @@ public class NioEndpoint extends AbstractEndpoint {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
 					// set the channel options
 					setChannelOptions(channel);
-
-					serverSocketChannelFactory.initChannel(channel);
 
 					// Hand this channel off to an appropriate processor
 					if (!processChannel(channel)) {

@@ -170,9 +170,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			NioChannel channel = new SSLNioChannel(asyncChannel, engine);
-			initChannel(channel);
-			handshake(channel);
-
+			
 			return channel;
 		} catch (Exception e) {
 			throw new IOException(e);

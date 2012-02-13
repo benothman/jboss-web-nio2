@@ -54,11 +54,35 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.apache.tomcat.util.net.NioServerSocketChannelFactory#init()
 	 */
 	@Override
 	public void init() throws IOException {
-		// Nothing to do
+		// NOOP
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#initChannel(
+	 * org.apache.tomcat.util.net.NioChannel)
+	 */
+	public void initChannel(NioChannel channel) throws Exception {
+		// NOOP
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#handshake(org
+	 * .apache.tomcat.util.net.NioChannel)
+	 */
+	@Override
+	public void handshake(NioChannel channel) throws IOException {
+		// NOOP
 	}
 
 	/*
@@ -114,17 +138,4 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 			throw new IOException(e);
 		}
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#handshake(org
-	 * .apache.tomcat.util.net.NioChannel)
-	 */
-	@Override
-	public void handshake(NioChannel channel) throws IOException {
-		// NOOP
-	}
-
 }

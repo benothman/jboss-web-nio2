@@ -79,7 +79,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	public void setAttribute(String name, Object value) {
 		if (name != null && value != null) {
 			attributes.put(name, value);
-		}
+		}		
 	}
 
 	/**
@@ -206,8 +206,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @param channel
 	 * @throws Exception 
 	 */
-	public void initChannel(NioChannel channel) throws Exception {
-	}
+	public abstract void initChannel(NioChannel channel) throws Exception;
 
 	/**
 	 * Wrapper function for accept(). This allows us to trap and translate
