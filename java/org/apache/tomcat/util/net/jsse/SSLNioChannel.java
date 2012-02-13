@@ -382,7 +382,7 @@ public class SSLNioChannel extends NioChannel {
 				while ((task = sslEngine.getDelegatedTask()) != null) {
 					// Run the task in non-blocking mode
 					System.out.println("New Task started");
-					new Thread(task).start();
+					task.run();
 				}
 
 				break;

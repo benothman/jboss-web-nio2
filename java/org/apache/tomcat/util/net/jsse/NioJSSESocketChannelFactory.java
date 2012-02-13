@@ -782,7 +782,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	}
 
 	/**
-	 * Configures the given SSL server socket with the requested cipher suites,
+	 * Configure the given SSL server socket with the requested cipher suites,
 	 * protocol versions, and need for client authentication
 	 * 
 	 * @param engine
