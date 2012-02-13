@@ -294,7 +294,8 @@ public class SSLNioChannel extends NioChannel {
 					clientNetData.flip();
 					clientAppData.clear();
 					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
-
+					System.out.println(this + " NEED_UNWRAP ----> res.getStatus() = "
+							+ res.getStatus());
 					switch (res.getStatus()) {
 					case BUFFER_UNDERFLOW:
 						// Loop until the status changes
@@ -338,6 +339,8 @@ public class SSLNioChannel extends NioChannel {
 			case NEED_WRAP:
 				serverNetData.clear();
 				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
+				System.out.println(this + " NEED_WRAP ----> res.getStatus() = "
+						+ res.getStatus());
 				switch (res.getStatus()) {
 				case BUFFER_OVERFLOW:
 					while (res.getStatus() == Status.BUFFER_OVERFLOW) {
@@ -383,6 +386,7 @@ public class SSLNioChannel extends NioChannel {
 
 				break;
 			case NOT_HANDSHAKING:
+				System.out.println(this + " ----> NOT_HANDSHAKING");
 				ok = false;
 			case FINISHED:
 				break;
