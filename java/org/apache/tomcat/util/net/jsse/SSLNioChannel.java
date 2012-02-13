@@ -287,6 +287,7 @@ public class SSLNioChannel extends NioChannel {
 			case NEED_UNWRAP:
 				int nBytes = this.channel.read(clientNetData).get();
 				if (nBytes < 0) {
+					System.out.println("NEED_UNWRAP ---> closing channel");
 					ok = false;
 					this.close();
 				} else {
@@ -322,6 +323,7 @@ public class SSLNioChannel extends NioChannel {
 
 						break;
 					case CLOSED:
+						System.out.println("NEED_UNWRAP ---> CLOSED");
 						ok = false;
 					case OK:
 						// NOP
@@ -350,6 +352,7 @@ public class SSLNioChannel extends NioChannel {
 					// Should not happens in this case
 					break;
 				case CLOSED:
+					System.out.println("NEED_WRAP ---> CLOSED");
 					ok = false;
 				case OK:
 					break;
@@ -361,6 +364,7 @@ public class SSLNioChannel extends NioChannel {
 					while (serverNetData.hasRemaining()) {
 						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
+							System.out.println("NEED_WRAP ---> closing channel");
 							ok = false;
 							this.close();
 							break;
