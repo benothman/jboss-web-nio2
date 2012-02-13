@@ -109,8 +109,11 @@ public class SecureNioChannel extends NioChannel {
 			}
 			tmp.flip();
 			SSLEngineResult sslEngineResult = sslEngine.unwrap(tmp, dst);
+			
+			System.out.println(this + " --> readBytes() --> status : " + sslEngineResult.getStatus());
+			
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
-				return sslEngineResult.bytesConsumed();
+				return sslEngineResult.bytesProduced();
 			}
 
 		} catch (SSLException e) {
@@ -192,7 +195,7 @@ public class SecureNioChannel extends NioChannel {
 					}
 				}
 
-				return sslEngineResult.bytesProduced();
+				return sslEngineResult.bytesConsumed();
 			}
 		} catch (SSLException e) {
 			e.printStackTrace();
