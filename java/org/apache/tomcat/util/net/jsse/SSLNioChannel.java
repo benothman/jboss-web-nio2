@@ -188,9 +188,9 @@ public class SSLNioChannel extends NioChannel {
 	@Override
 	public void close() throws IOException {
 		super.close();
-		//getSSLSession().invalidate();
+		// getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
-		//this.sslEngine.closeInbound();
+		// this.sslEngine.closeInbound();
 	}
 
 	/**
@@ -287,21 +287,21 @@ public class SSLNioChannel extends NioChannel {
 			case NEED_UNWRAP:
 				int nBytes = this.channel.read(clientNetData).get();
 				if (nBytes < 0) {
-					System.out.println("NEED_UNWRAP ---> closing channel");
+					System.out.println("NEED_UNWRAP ---> closing channel : " + this);
 					ok = false;
-					//this.close();
+					// this.close();
 				} else {
 					clientNetData.flip();
 					clientAppData.clear();
 					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
-					
+
 					switch (res.getStatus()) {
 					case BUFFER_UNDERFLOW:
 						// Loop until the status changes
 						while (res.getStatus() == Status.BUFFER_UNDERFLOW) {
-							//
 							System.out
-									.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_UNDERFLOW");
+									.println(this
+											+ " NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_UNDERFLOW");
 							ByteBuffer tmpClientNetData = ByteBuffer.allocateDirect(clientNetData
 									.capacity() * 2);
 							clientNetData.flip();
@@ -315,7 +315,8 @@ public class SSLNioChannel extends NioChannel {
 					case BUFFER_OVERFLOW:
 						while (res.getStatus() == Status.BUFFER_OVERFLOW) {
 							System.out
-									.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
+									.println(this
+											+ "NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
 							clientAppData = ByteBuffer.allocateDirect(clientAppData.capacity() * 2);
 							clientNetData.flip();
 							res = sslEngine.unwrap(clientNetData, clientAppData);
@@ -323,7 +324,7 @@ public class SSLNioChannel extends NioChannel {
 
 						break;
 					case CLOSED:
-						System.out.println("NEED_UNWRAP ---> CLOSED");
+						System.out.println(this + "NEED_UNWRAP ---> CLOSED");
 						ok = false;
 					case OK:
 						// NOP
@@ -340,8 +341,8 @@ public class SSLNioChannel extends NioChannel {
 				switch (res.getStatus()) {
 				case BUFFER_OVERFLOW:
 					while (res.getStatus() == Status.BUFFER_OVERFLOW) {
-						System.out
-								.println("NEED_WRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
+						System.out.println(this
+								+ "NEED_WRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
 						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
 						serverAppData.flip();
 						res = sslEngine.wrap(serverAppData, serverNetData);
@@ -352,7 +353,7 @@ public class SSLNioChannel extends NioChannel {
 					// Should not happens in this case
 					break;
 				case CLOSED:
-					System.out.println("NEED_WRAP ---> CLOSED");
+					System.out.println(this + "NEED_WRAP ---> CLOSED");
 					ok = false;
 				case OK:
 					break;
@@ -364,9 +365,9 @@ public class SSLNioChannel extends NioChannel {
 					while (serverNetData.hasRemaining()) {
 						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
-							System.out.println("NEED_WRAP ---> closing channel");
+							System.out.println(this + "NEED_WRAP ---> closing channel");
 							ok = false;
-							//this.close();
+							// this.close();
 							break;
 						}
 					}
@@ -387,11 +388,12 @@ public class SSLNioChannel extends NioChannel {
 				break;
 			}
 		}
-		
-		System.out.println("END OF HANDSHAKE PROCESS -> ok : " + ok +", HANDSHAKE STATUS : " + sslEngine.getHandshakeStatus());
-		
+
+		System.out.println(this + "END OF HANDSHAKE PROCESS -> ok : " + ok
+				+ ", HANDSHAKE STATUS : " + sslEngine.getHandshakeStatus());
+
 		if (!ok) {
-			throw new Exception("Handshake fails");
+			throw new Exception("Handshake fails for channel " + this);
 		}
 	}
 
