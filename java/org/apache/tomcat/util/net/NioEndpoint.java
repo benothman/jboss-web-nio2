@@ -618,13 +618,16 @@ public class NioEndpoint extends AbstractEndpoint {
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
 					// set the channel options
-					setChannelOptions(channel);
-
-					// Hand this channel off to an appropriate processor
-					if (!processChannel(channel)) {
-						logger.info("Fail processing the channel");
-						// Close channel right away
-						close(channel);
+					if (!setChannelOptions(channel)) {
+						channel.close();
+					}
+					if (channel.isOpen()) {
+						// Hand this channel off to an appropriate processor
+						if (!processChannel(channel)) {
+							logger.info("Fail processing the channel");
+							// Close channel right away
+							close(channel);
+						}
 					}
 				} catch (Exception x) {
 					if (running) {

@@ -289,7 +289,7 @@ public class SSLNioChannel extends NioChannel {
 				if (nBytes < 0) {
 					System.out.println("NEED_UNWRAP ---> closing channel");
 					ok = false;
-					this.close();
+					//this.close();
 				} else {
 					clientNetData.flip();
 					clientAppData.clear();
@@ -366,7 +366,7 @@ public class SSLNioChannel extends NioChannel {
 							// Handle closed channel
 							System.out.println("NEED_WRAP ---> closing channel");
 							ok = false;
-							this.close();
+							//this.close();
 							break;
 						}
 					}
