@@ -188,9 +188,9 @@ public class SSLNioChannel extends NioChannel {
 	@Override
 	public void close() throws IOException {
 		super.close();
-		getSSLSession().invalidate();
+		//getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
-		this.sslEngine.closeInbound();
+		//this.sslEngine.closeInbound();
 	}
 
 	/**
