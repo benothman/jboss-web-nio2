@@ -37,6 +37,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 import org.apache.tomcat.util.net.NioChannel;
+import org.eclipse.jdt.internal.compiler.ast.ThisReference;
 
 /**
  * {@code SSLNioChannel}
@@ -99,6 +100,7 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
 			ExecutionException, TimeoutException {
+		System.out.println(this + " ---> readBytes()");
 		try {
 			ByteBuffer tmp = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());			
 			int x = super.readBytes(tmp, timeout, unit);
@@ -155,17 +157,19 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws InterruptedException,
 			ExecutionException, TimeoutException {
+		System.out.println(this + " ---> writeBytes()");
 		try {
 			SSLEngineResult sslEngineResult = null;
 			ByteBuffer tmp = null;
 			int length = getSSLSession().getPacketBufferSize();
 			int i = 1;
+			
 			do {
 				src.flip();
 				tmp = ByteBuffer.allocateDirect((i++) * length);
 				sslEngineResult = sslEngine.wrap(src, tmp);
 			} while (sslEngineResult.getStatus() == SSLEngineResult.Status.BUFFER_OVERFLOW);
-
+			tmp.flip();
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
 				while (tmp.hasRemaining()) {
 					int x = super.writeBytes(tmp, timeout, unit);
