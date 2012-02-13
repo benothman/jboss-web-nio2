@@ -169,7 +169,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			AsynchronousSocketChannel asyncChannel = listener.accept().get();
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
-			NioChannel channel = new SSLNioChannel(asyncChannel, engine);
+			NioChannel channel = new SecureNioChannel(asyncChannel, engine);
 			
 			return channel;
 		} catch (Exception e) {
@@ -185,7 +185,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 * org.apache.tomcat.util.net.NioChannel)
 	 */
 	public void initChannel(NioChannel channel) throws Exception {
-		SSLNioChannel sslChannel = (SSLNioChannel) channel;
+		SecureNioChannel sslChannel = (SecureNioChannel) channel;
 		initSSLEngine(sslChannel.getSslEngine());
 	}
 
@@ -200,7 +200,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	public void handshake(NioChannel channel) throws IOException {
 		// We do getSession instead of startHandshake() so we can call this
 		// multiple times
-		SSLNioChannel sslChannel = (SSLNioChannel) channel;
+		SecureNioChannel sslChannel = (SecureNioChannel) channel;
 
 		if (sslChannel.handshakeDone()) {
 			// The handshake was already done

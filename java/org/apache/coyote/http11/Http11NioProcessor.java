@@ -49,7 +49,7 @@ import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.SocketStatus;
-import org.apache.tomcat.util.net.jsse.SSLNioChannel;
+import org.apache.tomcat.util.net.jsse.SecureNioChannel;
 
 /**
  * Processes HTTP requests.
@@ -666,7 +666,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		if (sslEnabled && (channel != null)) {
 			try {
 
-				SSLNioChannel sslChannel = (SSLNioChannel) channel;
+				SecureNioChannel sslChannel = (SecureNioChannel) channel;
 				// Cipher suite
 				// Object sslO = SSLSocket.getInfoS(socket,
 				// SSL.SSL_INFO_CIPHER);

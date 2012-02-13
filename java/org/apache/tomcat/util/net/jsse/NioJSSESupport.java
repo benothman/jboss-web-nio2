@@ -45,7 +45,7 @@ class NioJSSESupport implements SSLSupport {
 	private static org.jboss.logging.Logger log = org.jboss.logging.Logger
 			.getLogger(JSSESupport.class);
 
-	protected SSLNioChannel channel;
+	protected SecureNioChannel channel;
 	protected SSLSession session;
 
 	/**
@@ -53,7 +53,7 @@ class NioJSSESupport implements SSLSupport {
 	 * 
 	 * @param channel
 	 */
-	NioJSSESupport(SSLNioChannel channel) {
+	NioJSSESupport(SecureNioChannel channel) {
 		this.channel = channel;
 		session = channel.getSSLSession();
 		// channel.sslEngine.addHandshakeCompletedListener(listener);
