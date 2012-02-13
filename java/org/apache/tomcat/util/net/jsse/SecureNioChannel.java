@@ -158,6 +158,14 @@ public class SecureNioChannel extends NioChannel {
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws InterruptedException,
 			ExecutionException, TimeoutException {
 		System.out.println(this + " ---> writeBytes()");
+		
+		
+		src.flip();
+		byte bytes[]= new byte[src.limit()];
+		src.get(bytes);
+		System.out.println("Server response content ---->>");
+		System.out.println(new String(bytes));
+		
 		try {
 			SSLEngineResult sslEngineResult = null;
 			ByteBuffer tmp = null;
@@ -170,10 +178,16 @@ public class SecureNioChannel extends NioChannel {
 				sslEngineResult = sslEngine.wrap(src, tmp);
 			} while (sslEngineResult.getStatus() == SSLEngineResult.Status.BUFFER_OVERFLOW);
 			tmp.flip();
+			
+			System.out.println("tmp.limit() ---> " + tmp.limit());
+			
+			
+			
+			
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
 				while (tmp.hasRemaining()) {
 					int x = super.writeBytes(tmp, timeout, unit);
-					if (x == -1) {
+					if (x < 0) {
 						return -1;
 					}
 				}
