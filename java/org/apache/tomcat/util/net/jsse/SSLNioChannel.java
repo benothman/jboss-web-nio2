@@ -388,6 +388,8 @@ public class SSLNioChannel extends NioChannel {
 			}
 		}
 		
+		System.out.println("END OF HANDSHAKE PROCESS -> ok : " + ok +", HANDSHAKE STATUS : " + sslEngine.getHandshakeStatus());
+		
 		if (!ok) {
 			throw new Exception("Handshake fails");
 		}
