@@ -204,8 +204,9 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * Initialize the specified {@code NioChannel}
 	 * 
 	 * @param channel
+	 * @throws Exception 
 	 */
-	public void initChannel(NioChannel channel) {
+	public void initChannel(NioChannel channel) throws Exception {
 	}
 
 	/**

@@ -56,15 +56,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NioChannel implements AsynchronousByteChannel {
 
 	private static final AtomicLong counter = new AtomicLong();
-	private AsynchronousSocketChannel channel;
+	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
 	private boolean flag;
+	private String name;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
 	 * 
 	 * @param channel
+	 *            The {@link java.nio.channels.AsynchronousSocketChannel}
+	 *            attached to this channel
 	 */
 	protected NioChannel(AsynchronousSocketChannel channel) {
 		if (channel == null) {
@@ -73,6 +76,7 @@ public class NioChannel implements AsynchronousByteChannel {
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
 		this.buffer = ByteBuffer.allocateDirect(1);
+		this.name = getClass().getName() + "[" + getId() + "]";
 	}
 
 	/**
@@ -231,6 +235,15 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	public long getId() {
 		return this.id;
+	}
+
+	/**
+	 * Getter for name
+	 * 
+	 * @return the name
+	 */
+	public String getName() {
+		return this.name;
 	}
 
 	/**
@@ -792,6 +805,6 @@ public class NioChannel implements AsynchronousByteChannel {
 
 	@Override
 	public String toString() {
-		return getClass().getName() + "[" + getId() + "]";
+		return getName();
 	}
 }

@@ -47,9 +47,8 @@ import org.apache.tomcat.util.net.NioChannel;
  */
 public class SSLNioChannel extends NioChannel {
 
-	
-	private static final int HANDSHAKE_MIN_BUFFER_SIZE =16 * 1024;
-	
+	private static final int HANDSHAKE_MIN_BUFFER_SIZE = 16 * 1024;
+
 	protected SSLEngine sslEngine;
 
 	/**
@@ -183,14 +182,15 @@ public class SSLNioChannel extends NioChannel {
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#close()
 	 */
 	@Override
 	public void close() throws IOException {
 		super.close();
 		getSSLSession().invalidate();
+		// The closeOutbound method will be called automatically
 		this.sslEngine.closeInbound();
-		this.sslEngine.closeOutbound();
 	}
 
 	/**
@@ -262,85 +262,64 @@ public class SSLNioChannel extends NioChannel {
 		SSLSession session = getSSLSession();
 
 		// Create byte buffers to use for holding application data
-		int appBufferSize = Math.max(session.getApplicationBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);		
+		int appBufferSize = Math.max(session.getApplicationBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
 		ByteBuffer serverAppData = ByteBuffer.allocateDirect(appBufferSize);
 		ByteBuffer clientAppData = ByteBuffer.allocateDirect(appBufferSize);
-		
+
 		int packetBufferSize = Math.max(session.getPacketBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
 		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
 
 		// Begin handshake
 		sslEngine.beginHandshake();
-		SSLEngineResult.HandshakeStatus hs = sslEngine.getHandshakeStatus();
 		boolean ok = true;
 
-		
-		
-		
-		
-		
-		
-		
-		
-		// client     server     message
-		// ======     ======     =======
-		// wrap()     ...        ClientHello
-		// ...        unwrap()   ClientHello
-		// ...        wrap()     ServerHello/Certificate
-		// unwrap()   ...        ServerHello/Certificate
-		// wrap()     ...        ClientKeyExchange
-		// wrap()     ...        ChangeCipherSpec
-		// wrap()     ...        Finished
-		// ...        unwrap()   ClientKeyExchange
-		// ...        unwrap()   ChangeCipherSpec
-		// ...        unwrap()   Finished
-		// ...        wrap()     ChangeCipherSpec
-		// ...        wrap()     Finished
-		// unwrap()   ...        ChangeCipherSpec
-		// unwrap()   ...        Finished
-
-		
-		
 		int step = 0;
 		// Process handshaking message
 		while (sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.FINISHED
-					&& sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
-			
-			System.out.println("STEP : " + (++step) +", Handshake status : " + sslEngine.getHandshakeStatus());
-			
+				&& sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING
+				&& ok) {
+
+			System.out.println("STEP : " + (++step) + ", Handshake status : "
+					+ sslEngine.getHandshakeStatus());
+
 			switch (sslEngine.getHandshakeStatus()) {
 			case NEED_UNWRAP:
-				if(this.read(clientNetData).get() < 0) {
+				int nBytes = this.channel.read(clientNetData).get();
+				if (nBytes < 0) {
 					ok = false;
 					this.close();
 				} else {
 					clientNetData.flip();
 					clientAppData.clear();
 					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
-					clientNetData.compact();
+					
 					switch (res.getStatus()) {
 					case BUFFER_UNDERFLOW:
 						// Loop until the status changes
-						while(res.getStatus() == Status.BUFFER_UNDERFLOW) {
-							// 
-							System.out.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_UNDERFLOW");
-							ByteBuffer tmpClientNetData = ByteBuffer.allocateDirect(clientNetData.capacity() * 2);
+						while (res.getStatus() == Status.BUFFER_UNDERFLOW) {
+							//
+							System.out
+									.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_UNDERFLOW");
+							ByteBuffer tmpClientNetData = ByteBuffer.allocateDirect(clientNetData
+									.capacity() * 2);
+							clientNetData.flip();
 							tmpClientNetData.put(clientNetData);
 							clientNetData = tmpClientNetData;
-							this.read(clientNetData).get();
-							res = sslEngine.unwrap(clientNetData, clientAppData);								
+							this.channel.read(clientNetData).get();
+							res = sslEngine.unwrap(clientNetData, clientAppData);
 						}
-						
+
 						break;
 					case BUFFER_OVERFLOW:
-						while(res.getStatus() == Status.BUFFER_OVERFLOW) {
-							System.out.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
+						while (res.getStatus() == Status.BUFFER_OVERFLOW) {
+							System.out
+									.println("NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
 							clientAppData = ByteBuffer.allocateDirect(clientAppData.capacity() * 2);
 							clientNetData.flip();
-							res = sslEngine.unwrap(clientNetData, clientAppData);							
+							res = sslEngine.unwrap(clientNetData, clientAppData);
 						}
-						
+
 						break;
 					case CLOSED:
 						ok = false;
@@ -348,21 +327,24 @@ public class SSLNioChannel extends NioChannel {
 						// NOP
 						break;
 					}
+					// compact the buffer
+					clientNetData.compact();
 				}
-				
+
 				break;
 			case NEED_WRAP:
 				serverNetData.clear();
 				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
 				switch (res.getStatus()) {
 				case BUFFER_OVERFLOW:
-					while(res.getStatus() == Status.BUFFER_OVERFLOW) {
-						System.out.println("NEED_WRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
+					while (res.getStatus() == Status.BUFFER_OVERFLOW) {
+						System.out
+								.println("NEED_WRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
 						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
 						serverAppData.flip();
-						res = sslEngine.wrap(serverAppData, serverNetData);	
+						res = sslEngine.wrap(serverAppData, serverNetData);
 					}
-					
+
 					break;
 				case BUFFER_UNDERFLOW:
 					// Should not happens in this case
@@ -372,12 +354,12 @@ public class SSLNioChannel extends NioChannel {
 				case OK:
 					break;
 				}
-				
-				if(res.getStatus() == Status.OK) {
+
+				if (res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
 					serverNetData.flip();
 					while (serverNetData.hasRemaining()) {
-						if (this.write(serverNetData).get() < 0) {
+						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
 							ok = false;
 							this.close();
@@ -385,115 +367,23 @@ public class SSLNioChannel extends NioChannel {
 						}
 					}
 				}
-				
+
 				break;
 			case NEED_TASK:
 				Runnable task = null;
-				while((task = sslEngine.getDelegatedTask()) != null) {
-					// Run the task in blocking mode
-					long time = System.currentTimeMillis();
-					task.run();
-					System.out.println("Task time: " + (System.currentTimeMillis() - time));
-				}
-				
-				break;
-			case NOT_HANDSHAKING:
-				ok = false;				
-			case FINISHED:
-				break;
-			}
-			if(!ok) {
-				break;
-			}
-		}
-		
-		
-		
-		/*
-		// Process handshaking message
-		while (hs != SSLEngineResult.HandshakeStatus.FINISHED
-				&& hs != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING && ok) {
-
-			System.out.println("HandshakeStatus -> " + sslEngine.getHandshakeStatus());
-
-			switch (hs) {
-
-			case NEED_UNWRAP:
-				// Receive handshaking data from client
-				if (this.read(clientNetData).get() < 0) {
-					// Handle closed channel
-					ok = false;
-					this.close();
-				}
-
-				// Process incoming handshaking data
-				clientNetData.flip();
-				SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
-				clientNetData.compact();
-				hs = res.getHandshakeStatus();
-
-				// Check status
-				switch (res.getStatus()) {
-				case OK:
-					// Handle OK status
-					break;
-				// Handle other status: BUFFER_UNDERFLOW, BUFFER_OVERFLOW,
-				// CLOSED
-				default:
-					ok = false;
-				}
-				break;
-
-			case NEED_WRAP:
-				// Empty the local network packet buffer.
-				serverNetData.clear();
-
-				// Generate handshaking data
-				res = sslEngine.wrap(serverAppData, serverNetData);
-				hs = res.getHandshakeStatus();
-
-				// Check status
-				switch (res.getStatus()) {
-				case OK:
-					serverNetData.flip();
-
-					// Send the handshaking data to client
-					while (serverNetData.hasRemaining()) {
-						if (this.write(serverNetData).get() < 0) {
-							// Handle closed channel
-							ok = false;
-							this.close();
-						}
-					}
-					break;
-				// Handle other status: BUFFER_OVERFLOW, BUFFER_UNDERFLOW,
-				// CLOSED
-				default:
-					ok = false;
-				}
-				break;
-
-			case NEED_TASK:
-				// Handle blocking tasks
-				Runnable task = null;
-
 				while ((task = sslEngine.getDelegatedTask()) != null) {
-					task.run();
+					// Run the task in non-blocking mode
+					new Thread(task).start();
 				}
 
 				break;
-
-			// Handle other status: // FINISHED or NOT_HANDSHAKING
 			case NOT_HANDSHAKING:
 				ok = false;
 			case FINISHED:
-				ok = true;
 				break;
 			}
-			hs = sslEngine.getHandshakeStatus();
 		}
-		*/
-
+		
 		if (!ok) {
 			throw new Exception("Handshake fails");
 		}

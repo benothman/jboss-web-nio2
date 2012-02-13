@@ -125,7 +125,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	}
 
 	protected boolean initialized;
-	protected SSLEngine engine;
 	private SSLContext sslContext;
 	protected String clientAuth = "false";
 	protected String[] enabledCiphers;
@@ -170,8 +169,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			AsynchronousSocketChannel asyncChannel = listener.accept().get();
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
-			initSSLEngine(engine);
-			SSLNioChannel channel = new SSLNioChannel(asyncChannel, engine);
+			NioChannel channel = new SSLNioChannel(asyncChannel, engine);
+			initChannel(channel);
 			handshake(channel);
 
 			return channel;
@@ -187,7 +186,9 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#initChannel(
 	 * org.apache.tomcat.util.net.NioChannel)
 	 */
-	public void initChannel(NioChannel channel) {
+	public void initChannel(NioChannel channel) throws Exception {
+		SSLNioChannel sslChannel = (SSLNioChannel) channel;
+		initSSLEngine(sslChannel.getSslEngine());
 	}
 
 	/*
@@ -210,16 +211,16 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 		SSLEngine engine = sslChannel.getSslEngine();
 		SSLSession session = sslChannel.getSSLSession();
-		
+
 		if (!allowUnsafeLegacyRenegotiation && !RFC_5746_SUPPORTED) {
 			// Prevent further handshakes by removing all cipher suites
 			engine.setEnabledCipherSuites(new String[0]);
 		}
 		sslChannel.handshake();
-		
+
 		if (session.getCipherSuite().equals("SSL_NULL_WITH_NULL_NULL"))
 			throw new IOException(
-					"SSL handshake failed. Ciper suite in SSL Session is SSL_NULL_WITH_NULL_NULL");		
+					"SSL handshake failed. Ciper suite in SSL Session is SSL_NULL_WITH_NULL_NULL");
 	}
 
 	/**
@@ -271,24 +272,25 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 			String keystoreProvider = (String) attributes.get("keystoreProvider");
 			String trustAlgorithm = (String) attributes.get("truststoreAlgorithm");
-			
+
 			if (trustAlgorithm == null) {
 				trustAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
 			}
 
 			/*
-			log.info("SSL Parameters [Protocol :" + protocol + ", algorithm : " + algorithm
-					+ ", keystoreType : " + keystoreType + ", keystoreProvider : "
-					+ keystoreProvider + ", trustAlgorithm: " + trustAlgorithm + "]");
+			 * log.info("SSL Parameters [Protocol :" + protocol +
+			 * ", algorithm : " + algorithm + ", keystoreType : " + keystoreType
+			 * + ", keystoreProvider : " + keystoreProvider +
+			 * ", trustAlgorithm: " + trustAlgorithm + "]");
+			 * 
+			 * log.info("Key Managers --> " + getKeyManagers(keystoreType,
+			 * keystoreProvider, algorithm, (String)
+			 * attributes.get("keyAlias")));
+			 * 
+			 * log.info("Trust Managers --> " + getTrustManagers(keystoreType,
+			 * keystoreProvider, trustAlgorithm));
+			 */
 
-			log.info("Key Managers --> "
-					+ getKeyManagers(keystoreType, keystoreProvider, algorithm,
-							(String) attributes.get("keyAlias")));
-
-			log.info("Trust Managers --> "
-					+ getTrustManagers(keystoreType, keystoreProvider, trustAlgorithm));
-			*/
-			
 			// Create and init SSLContext
 			sslContext = (SSLContext) attributes.get("SSLContext");
 			if (sslContext == null) {
@@ -330,13 +332,11 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					sslProxy.getSupportedCipherSuites());
 
 			/*
-			String tmp = "";
-			for (String s : enabledCiphers) {
-				tmp += s + ", ";
-			}
-
-			log.info("Enabled Ciphers --> " + tmp);
-			*/
+			 * String tmp = ""; for (String s : enabledCiphers) { tmp += s +
+			 * ", "; }
+			 * 
+			 * log.info("Enabled Ciphers --> " + tmp);
+			 */
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
@@ -734,7 +734,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	protected void setEnabledProtocols(SSLEngine engine, String[] protocols) {
 		if (protocols != null) {
 			engine.setEnabledProtocols(protocols);
-		}		
+		}
 	}
 
 	/**
@@ -750,17 +750,17 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	protected String[] getEnabledProtocols(SSLEngine engine, String requestedProtocols) {
 		String[] supportedProtocols = engine.getSupportedProtocols();
-		
+
 		String[] enabledProtocols = null;
-		
+
 		if (requestedProtocols != null) {
 			Vector<Object> vec = null;
 			String tab[] = requestedProtocols.trim().split("\\s*,\\s*");
-			if(tab.length > 0) {
+			if (tab.length > 0) {
 				vec = new Vector<Object>(tab.length);
 			}
-			for(String s: tab) {
-				if(s.length() > 0) {
+			for (String s : tab) {
+				if (s.length() > 0) {
 					/*
 					 * Check to see if the requested protocol is among the
 					 * supported protocols, i.e., may be already enabled
@@ -773,7 +773,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					}
 				}
 			}
-			
+
 			if (vec != null && !vec.isEmpty()) {
 				enabledProtocols = new String[vec.size()];
 				vec.copyInto(enabledProtocols);
@@ -793,13 +793,13 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		if (enabledCiphers != null) {
 			engine.setEnabledCipherSuites(enabledCiphers);
 		}
-		
+
 		engine.setUseClientMode(false);
 		String requestedProtocols = (String) attributes.get("protocols");
-		
+
 		setEnabledProtocols(engine, getEnabledProtocols(engine, requestedProtocols));
-		
-		// we don't know if client auth is needed -
+
+		// we don't know if client authentication is needed -
 		// after parsing the request we may re-handshake
 		engine.setWantClientAuth(wantClientAuth);
 		engine.setNeedClientAuth(requireClientAuth);
