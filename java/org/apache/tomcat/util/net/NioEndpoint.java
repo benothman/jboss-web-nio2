@@ -384,7 +384,11 @@ public class NioEndpoint extends AbstractEndpoint {
 			step = 2;
 		} catch (Throwable t) {
 			logger.error(t.getMessage(), t);
-			
+			try {
+				channel.close();
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
+			}
 			if (logger.isDebugEnabled()) {
 				if (step == 2) {
 					logger.debug(sm.getString("endpoint.err.handshake"), t);
