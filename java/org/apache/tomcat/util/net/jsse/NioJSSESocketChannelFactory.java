@@ -170,7 +170,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			NioChannel channel = new SecureNioChannel(asyncChannel, engine);
-			
+
 			return channel;
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -214,6 +214,10 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			engine.setEnabledCipherSuites(new String[0]);
 		}
 		sslChannel.handshake();
+
+		System.out.println(getClass().getName() + " ------>> "
+				+ sslChannel.getSSLSession().getCipherSuite());
+
 		if (sslChannel.getSSLSession().getCipherSuite().equals("SSL_NULL_WITH_NULL_NULL"))
 			throw new IOException(
 					"SSL handshake failed. Ciper suite in SSL Session is SSL_NULL_WITH_NULL_NULL");
