@@ -75,8 +75,10 @@ public class SecureNioChannel extends NioChannel {
 	 * +
 	 * "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead"
 	 * ); }
-	 * 
-	 * /* (non-Javadoc)
+	 */
+
+	/*
+	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer)
 	 */
@@ -97,14 +99,13 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
 			ExecutionException, TimeoutException {
-
 		try {
-			ByteBuffer tmp = ByteBuffer.allocateDirect(dst.capacity());
+			ByteBuffer tmp = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());			
 			int x = super.readBytes(tmp, timeout, unit);
 			if (x < 0) {
 				return x;
 			}
-
+			tmp.flip();
 			SSLEngineResult sslEngineResult = sslEngine.unwrap(tmp, dst);
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
 				return sslEngineResult.bytesConsumed();
@@ -113,7 +114,7 @@ public class SecureNioChannel extends NioChannel {
 		} catch (SSLException e) {
 			e.printStackTrace();
 		}
-
+		
 		return -1;
 	}
 
@@ -128,8 +129,10 @@ public class SecureNioChannel extends NioChannel {
 	 * +
 	 * "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead"
 	 * ); }
-	 * 
-	 * /* (non-Javadoc)
+	 */
+
+	/*
+	 * (non-Javadoc)
 	 * 
 	 * @see
 	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer)
