@@ -313,91 +313,27 @@ public class SecureNioChannel extends NioChannel {
 						cont = result.getStatus() == SSLEngineResult.Status.OK
 								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP;
 					} while (cont);
-
-					/*
-					clientNetData.flip();
-					clientAppData.clear();
-					SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
-					System.out.println(this + " NEED_UNWRAP ----> res.getStatus() = "
-							+ res.getStatus());
-					// compact the buffer
-					clientNetData.compact();
-
-					if (res.getStatus() == Status.OK
-							&& sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
-						tasks();
-					}
-
-					switch (res.getStatus()) {
-					case BUFFER_UNDERFLOW:
-						// Loop until the status changes
-						while (res.getStatus() == Status.BUFFER_UNDERFLOW) {
-							System.out
-									.println(this
-											+ " NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_UNDERFLOW");
-							this.channel.read(clientNetData).get();
-							res = sslEngine.unwrap(clientNetData, clientAppData);
-						}
-
-						break;
-					case BUFFER_OVERFLOW:
-						while (res.getStatus() == Status.BUFFER_OVERFLOW) {
-							System.out
-									.println(this
-											+ "NEED_UNWRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
-							clientAppData = ByteBuffer.allocateDirect(clientAppData.capacity() * 2);
-							clientNetData.flip();
-							res = sslEngine.unwrap(clientNetData, clientAppData);
-						}
-
-						break;
-					case CLOSED:
-						System.out.println(this + "NEED_UNWRAP ---> CLOSED");
-					case OK:
-						// NOP
-						break;
-					}
-					*/
 				}
 
 				break;
 			case NEED_WRAP:
 				serverNetData.clear();
 				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
+				serverNetData.flip();
 				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
-				switch (res.getStatus()) {
-				case BUFFER_OVERFLOW:
-					while (res.getStatus() == Status.BUFFER_OVERFLOW) {
-						System.out.println(this
-								+ "NEED_WRAP ----> res.getStatus() == Status.BUFFER_OVERFLOW");
-						serverNetData = ByteBuffer.allocateDirect(serverNetData.capacity() * 2);
-						serverAppData.flip();
-						res = sslEngine.wrap(serverAppData, serverNetData);
-					}
-
-					break;
-				case BUFFER_UNDERFLOW:
-					// Should not happens in this case
-					break;
-				case CLOSED:
-					System.out.println(this + "NEED_WRAP ---> CLOSED");
-				case OK:
-					break;
-				}
 
 				if (res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
-					serverNetData.flip();
 					while (serverNetData.hasRemaining()) {
 						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
 							throw new IOException("NEED_WRAP : EOF encountered during handshake.");
-							// System.out.println(this +
-							// "NEED_WRAP ---> closing channel");
-							// ok = false;
-							// break;
 						}
 					}
+				} else {
+					// wrap should always work with our buffers
+					throw new IOException("Unexpected status:" + res.getStatus()
+							+ " during handshake WRAP.");
 				}
 
 				break;
@@ -407,8 +343,6 @@ public class SecureNioChannel extends NioChannel {
 				break;
 			case NOT_HANDSHAKING:
 				throw new IOException("NOT_HANDSHAKING during handshake");
-				// System.out.println(this + " ----> NOT_HANDSHAKING");
-				// ok = false;
 			case FINISHED:
 				break;
 			}
