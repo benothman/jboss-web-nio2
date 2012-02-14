@@ -24,6 +24,7 @@ package org.apache.tomcat.util.net.jsse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.util.Formatter;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -112,7 +113,7 @@ public class SecureNioChannel extends NioChannel {
 		this.internalInBuffer.flip();
 		byte b[] = new byte[this.internalInBuffer.limit()];
 		this.internalInBuffer.get(b);
-		System.out.println("--------->>>>>>>> " + new String(b));
+		System.out.println("--------->>>>>>>> " + bytesToHexString(b));
 		
 		
 		// the data read
@@ -158,6 +159,19 @@ public class SecureNioChannel extends NioChannel {
 		return read;
 	}
 
+	public static String bytesToHexString(byte[] bytes) {  
+	    StringBuilder sb = new StringBuilder(bytes.length * 2);  
+	  
+	    Formatter formatter = new Formatter(sb);  
+	    for (byte b : bytes) {  
+	        formatter.format("%02x", b);  
+	    }  
+	  
+	    return sb.toString();  
+	}  
+	
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 
