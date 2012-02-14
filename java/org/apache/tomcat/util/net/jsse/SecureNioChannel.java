@@ -196,11 +196,9 @@ public class SecureNioChannel extends NioChannel {
 		// the number of bytes written
 		int written = 0;
 
-		/*
-		 * The data buffer is empty, we can reuse the entire buffer.
-		 */
+		// Clear the internal buffer
 		this.internalByteBuffer.clear();
-
+		// Wrap the source data into the internal buffer
 		SSLEngineResult result = sslEngine.wrap(src, this.internalByteBuffer);
 		written = result.bytesConsumed();
 		this.internalByteBuffer.flip();
