@@ -112,14 +112,17 @@ public class SecureNioChannel extends NioChannel {
 		int read = 0;
 		// the SSL engine result
 		SSLEngineResult unwrapResultStatus;
+		int round = 1;
 		do {
+			System.out.println("------->>> round = " + round);
+			
 			// prepare the buffer
 			this.internalInBuffer.flip();
 			// unwrap the data
 			unwrapResultStatus = sslEngine.unwrap(this.internalInBuffer, dst);
 			// compact the buffer
 			this.internalInBuffer.compact();
-
+			
 			if (unwrapResultStatus.getStatus() == Status.OK
 					|| unwrapResultStatus.getStatus() == Status.BUFFER_UNDERFLOW) {
 				// we did receive some data, add it to our total
@@ -145,6 +148,8 @@ public class SecureNioChannel extends NioChannel {
 			// continue to unwrapping as long as the input buffer has stuff
 		} while ((this.internalInBuffer.position() != 0));
 
+		System.out.println(" ------------>> read = " + read);
+		
 		return read;
 	}
 
