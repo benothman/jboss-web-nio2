@@ -301,6 +301,8 @@ public class SecureNioChannel extends NioChannel {
 		// Create byte buffers to use for holding application data
 		this.internalInBuffer = ByteBuffer.allocateDirect(packetBufferSize);
 		this.internalOutByteBuffer = ByteBuffer.allocateDirect(packetBufferSize);
+		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
+		ByteBuffer serverAppData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientAppData = ByteBuffer.allocateDirect(packetBufferSize);
 
@@ -351,15 +353,16 @@ public class SecureNioChannel extends NioChannel {
 
 				break;
 			case NEED_WRAP:
-				this.internalInBuffer.clear();
-				SSLEngineResult res = sslEngine.wrap(internalOutByteBuffer, this.internalInBuffer);
-				this.internalInBuffer.flip();
+				serverAppData.clear();
+				serverNetData.clear();
+				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
+				serverNetData.flip();
 				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
 
 				if (res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
-					while (this.internalInBuffer.hasRemaining()) {
-						if (this.channel.write(this.internalInBuffer).get() < 0) {
+					while (serverNetData.hasRemaining()) {
+						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
 							throw new IOException("NEED_WRAP : EOF encountered during handshake.");
 						}
