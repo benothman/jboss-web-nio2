@@ -144,34 +144,15 @@ public class SecureNioChannel extends NioChannel {
 			}
 			// continue to unwrapping as long as the input buffer has stuff
 		} while ((this.internalByteBuffer.position() != 0));
-		
+
 		int pos = dst.position();
 		dst.flip();
 		byte bytes[] = new byte[dst.limit()];
 		dst.get(bytes);
 		System.out.println("Received from client -> " + new String(bytes));
 		dst.position(pos);
-		
+
 		return read;
-		/*
-		this.internalByteBuffer.flip();
-		SSLEngineResult sslEngineResult = sslEngine.unwrap(this.internalByteBuffer, dst);
-
-		this.internalByteBuffer.flip();
-		ByteBuffer tmp = ByteBuffer.allocateDirect(dst.capacity());
-		SSLEngineResult sslEngineRslt = sslEngine.unwrap(this.internalByteBuffer, tmp);
-		tmp.flip();
-		System.out.println(this + " --> readBytes() --> status : " + sslEngineResult.getStatus());
-
-		byte bytes[] = new byte[tmp.limit()];
-		System.out.println("Byte received from client -> " + new String(bytes));
-
-		if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
-			return sslEngineResult.bytesProduced();
-		}
-
-		return -1;
-		*/
 	}
 
 	/*
@@ -193,7 +174,7 @@ public class SecureNioChannel extends NioChannel {
 	 * @see
 	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer)
 	 */
-	public int writeBytes(ByteBuffer src) throws InterruptedException, ExecutionException {
+	public int writeBytes(ByteBuffer src) throws Exception {
 		try {
 			return writeBytes(src, Integer.MAX_VALUE, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
@@ -209,44 +190,39 @@ public class SecureNioChannel extends NioChannel {
 	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer,
 	 * long, java.util.concurrent.TimeUnit)
 	 */
-	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws InterruptedException,
-			ExecutionException, TimeoutException {
+	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> writeBytes()");
 
-		src.flip();
-		byte bytes[] = new byte[src.limit()];
-		src.get(bytes);
-		System.out.println("Server response content ---->>" + new String(bytes));
+		// the number of bytes written
+		int written = 0;
 
-		try {
-			SSLEngineResult sslEngineResult = null;
-			int length = getSSLSession().getPacketBufferSize();
-			int i = 1;
-			do {
-				src.flip();
-				this.internalByteBuffer = ByteBuffer.allocateDirect((i++) * length);
-				sslEngineResult = sslEngine.wrap(src, this.internalByteBuffer);
-			} while (sslEngineResult.getStatus() == SSLEngineResult.Status.BUFFER_OVERFLOW);
-			this.internalByteBuffer.flip();
+		/*
+		 * The data buffer is empty, we can reuse the entire buffer.
+		 */
+		this.internalByteBuffer.clear();
 
-			System.out.println("tmp.limit() ---> " + this.internalByteBuffer.limit()
-					+ ", STATUS : " + sslEngineResult.getStatus());
+		SSLEngineResult result = sslEngine.wrap(src, this.internalByteBuffer);
+		written = result.bytesConsumed();
+		this.internalByteBuffer.flip();
 
-			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
-				while (this.internalByteBuffer.hasRemaining()) {
-					int x = super.writeBytes(this.internalByteBuffer, timeout, unit);
-					if (x < 0) {
-						return -1;
-					}
-				}
-
-				return sslEngineResult.bytesConsumed();
+		if (result.getStatus() == Status.OK) {
+			if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+				tasks();
 			}
-		} catch (SSLException e) {
-			e.printStackTrace();
+		} else {
+			throw new IOException("Unable to wrap data, invalid engine state: "
+					+ result.getStatus());
 		}
 
-		return -1;
+		// write bytes to the channel
+		while (this.internalByteBuffer.hasRemaining()) {
+			int x = super.writeBytes(this.internalByteBuffer, timeout, unit);
+			if (x < 0) {
+				return -1;
+			}
+		}
+
+		return written;
 	}
 
 	/*

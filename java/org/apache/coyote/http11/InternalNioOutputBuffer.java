@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -121,16 +120,15 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
 		try {
-			if (timeout > 0) {
-				return this.channel.writeBytes(buffer, timeout, unit);
-			}
-			return this.channel.writeBytes(buffer);
-		} catch (TimeoutException te) {
-			close(channel);
-		} catch (InterruptedException | ExecutionException e) {
-			// NOP
+			final long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
+			return this.channel.writeBytes(buffer, writeTimeout, unit);
+		} catch (Exception e) {
 			log.warn("An error occurs when trying a blocking write");
 			log.error(e.getMessage(), e);
+
+			if (e instanceof TimeoutException) {
+				close(channel);
+			}
 		}
 		return -1;
 	}
@@ -146,8 +144,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 *            The time unit
 	 */
 	private void nonBlockingWrite(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
+
 		final NioChannel ch = this.channel;
-		ch.write(buffer, timeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
+		final long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
+
+		ch.write(buffer, writeTimeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
 
 			@Override
 			public void completed(Integer nBytes, NioChannel attachment) {
@@ -157,7 +158,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				}
 
 				if (buffer.hasRemaining()) {
-					attachment.write(buffer, timeout, unit, attachment, this);
+					attachment.write(buffer, writeTimeout, unit, attachment, this);
 				}
 			}
 

@@ -544,10 +544,11 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param dst
 	 *            the buffer containing the bytes to write
 	 * @return the number of bytes written
+	 * @throws Exception 
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public int writeBytes(ByteBuffer dst) throws InterruptedException, ExecutionException {
+	public int writeBytes(ByteBuffer dst) throws Exception {
 		return write(dst).get();
 	}
 
@@ -561,12 +562,12 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param unit
 	 *            the timeout unit
 	 * @return The number of bytes written
+	 * @throws Exception 
 	 * @throws TimeoutException
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public int writeBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
-			ExecutionException, TimeoutException {
+	public int writeBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		return write(dst).get(timeout, unit);
 	}
 
