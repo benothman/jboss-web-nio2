@@ -37,7 +37,6 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 import org.apache.tomcat.util.net.NioChannel;
-import org.eclipse.jdt.internal.compiler.ast.ThisReference;
 
 /**
  * {@code SSLNioChannel}
@@ -51,6 +50,7 @@ public class SecureNioChannel extends NioChannel {
 	private static final int HANDSHAKE_MIN_BUFFER_SIZE = 16 * 1024;
 
 	protected SSLEngine sslEngine;
+	private ByteBuffer internalByteBuffer;
 
 	/**
 	 * Create a new instance of {@code SSLNioChannel}
@@ -102,16 +102,20 @@ public class SecureNioChannel extends NioChannel {
 			ExecutionException, TimeoutException {
 		System.out.println(this + " ---> readBytes()");
 		try {
-			ByteBuffer tmp = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());			
-			int x = super.readBytes(tmp, timeout, unit);
+
+			this.internalByteBuffer.clear();
+
+			int x = super.readBytes(this.internalByteBuffer, timeout, unit);
+			System.out.println("*** x = " + x + " ***");
 			if (x < 0) {
 				return x;
 			}
-			tmp.flip();
-			SSLEngineResult sslEngineResult = sslEngine.unwrap(tmp, dst);
-			
-			System.out.println(this + " --> readBytes() --> status : " + sslEngineResult.getStatus());
-			
+			this.internalByteBuffer.flip();
+			SSLEngineResult sslEngineResult = sslEngine.unwrap(this.internalByteBuffer, dst);
+
+			System.out.println(this + " --> readBytes() --> status : "
+					+ sslEngineResult.getStatus());
+
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
 				return sslEngineResult.bytesProduced();
 			}
@@ -119,7 +123,7 @@ public class SecureNioChannel extends NioChannel {
 		} catch (SSLException e) {
 			e.printStackTrace();
 		}
-		
+
 		return -1;
 	}
 
@@ -161,35 +165,29 @@ public class SecureNioChannel extends NioChannel {
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws InterruptedException,
 			ExecutionException, TimeoutException {
 		System.out.println(this + " ---> writeBytes()");
-		
-		
+
 		src.flip();
-		byte bytes[]= new byte[src.limit()];
+		byte bytes[] = new byte[src.limit()];
 		src.get(bytes);
-		System.out.println("Server response content ---->>");
-		System.out.println(new String(bytes));
-		
+		System.out.println("Server response content ---->>" + new String(bytes));
+
 		try {
 			SSLEngineResult sslEngineResult = null;
-			ByteBuffer tmp = null;
 			int length = getSSLSession().getPacketBufferSize();
 			int i = 1;
-			
 			do {
 				src.flip();
-				tmp = ByteBuffer.allocateDirect((i++) * length);
-				sslEngineResult = sslEngine.wrap(src, tmp);
+				this.internalByteBuffer = ByteBuffer.allocateDirect((i++) * length);
+				sslEngineResult = sslEngine.wrap(src, this.internalByteBuffer);
 			} while (sslEngineResult.getStatus() == SSLEngineResult.Status.BUFFER_OVERFLOW);
-			tmp.flip();
-			
-			System.out.println("tmp.limit() ---> " + tmp.limit());
-			
-			
-			
-			
+			this.internalByteBuffer.flip();
+
+			System.out.println("tmp.limit() ---> " + this.internalByteBuffer.limit()
+					+ ", STATUS : " + sslEngineResult.getStatus());
+
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
-				while (tmp.hasRemaining()) {
-					int x = super.writeBytes(tmp, timeout, unit);
+				while (this.internalByteBuffer.hasRemaining()) {
+					int x = super.writeBytes(this.internalByteBuffer, timeout, unit);
 					if (x < 0) {
 						return -1;
 					}
@@ -291,7 +289,7 @@ public class SecureNioChannel extends NioChannel {
 		ByteBuffer clientAppData = ByteBuffer.allocateDirect(appBufferSize);
 
 		int packetBufferSize = Math.max(session.getPacketBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
-		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
+		this.internalByteBuffer = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
 
 		// Begin handshake
@@ -341,15 +339,15 @@ public class SecureNioChannel extends NioChannel {
 
 				break;
 			case NEED_WRAP:
-				serverNetData.clear();
-				SSLEngineResult res = sslEngine.wrap(serverAppData, serverNetData);
-				serverNetData.flip();
+				this.internalByteBuffer.clear();
+				SSLEngineResult res = sslEngine.wrap(serverAppData, this.internalByteBuffer);
+				this.internalByteBuffer.flip();
 				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
 
 				if (res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
-					while (serverNetData.hasRemaining()) {
-						if (this.channel.write(serverNetData).get() < 0) {
+					while (this.internalByteBuffer.hasRemaining()) {
+						if (this.channel.write(this.internalByteBuffer).get() < 0) {
 							// Handle closed channel
 							throw new IOException("NEED_WRAP : EOF encountered during handshake.");
 						}

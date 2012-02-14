@@ -215,9 +215,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		}
 		sslChannel.handshake();
 
-		System.out.println(getClass().getName() + " ------>> "
-				+ sslChannel.getSSLSession().getCipherSuite());
-
 		if (sslChannel.getSSLSession().getCipherSuite().equals("SSL_NULL_WITH_NULL_NULL"))
 			throw new IOException(
 					"SSL handshake failed. Ciper suite in SSL Session is SSL_NULL_WITH_NULL_NULL");
