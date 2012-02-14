@@ -367,8 +367,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		bbuf.clear();
 
 		if (channel.flag()) {
-			channel.getBuffer().flip();
-			tmp = channel.getBuffer().remaining();
+			tmp = channel.getBuffer().flip().remaining();
 			bbuf.put(channel.getBuffer());
 			channel.reset();
 		}

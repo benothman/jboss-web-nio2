@@ -186,11 +186,6 @@ public class SecureNioChannel extends NioChannel {
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> writeBytes()");
 
-		byte b[] = new byte[src.limit()];
-		src.get(b);
-		System.out.println("Server Response -> \n" + new String(b));
-		src.flip();
-
 		// the number of bytes written
 		int written = 0;
 		// Clear the internal output buffer
