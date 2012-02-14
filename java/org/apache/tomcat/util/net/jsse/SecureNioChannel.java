@@ -83,7 +83,7 @@ public class SecureNioChannel extends NioChannel {
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer)
 	 */
-	public int readBytes(ByteBuffer dst) throws InterruptedException, ExecutionException {
+	public int readBytes(ByteBuffer dst) throws Exception {
 		try {
 			return readBytes(dst, Integer.MAX_VALUE, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
@@ -98,40 +98,73 @@ public class SecureNioChannel extends NioChannel {
 	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer,
 	 * long, java.util.concurrent.TimeUnit)
 	 */
-	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
-			ExecutionException, TimeoutException {
+	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
-		try {
+		this.internalByteBuffer.clear();
 
-			this.internalByteBuffer.clear();
+		int x = super.readBytes(this.internalByteBuffer, timeout, unit);
+		System.out.println("*** x = " + x + " ***");
+		if (x < 0) {
+			return -1;
+		}
 
-			int x = super.readBytes(this.internalByteBuffer, timeout, unit);
-			System.out.println("*** x = " + x + " ***");
-			if (x < 0) {
-				return x;
-			}
+		// the data read
+		int read = 0;
+		// the SSL engine result
+		SSLEngineResult unwrapResultStatus;
+		do {
+			// prepare the buffer
 			this.internalByteBuffer.flip();
-			SSLEngineResult sslEngineResult = sslEngine.unwrap(this.internalByteBuffer, dst);
+			// unwrap the data
+			unwrapResultStatus = sslEngine.unwrap(this.internalByteBuffer, dst);
+			// compact the buffer
+			this.internalByteBuffer.compact();
 
-			this.internalByteBuffer.flip();
-			ByteBuffer tmp = ByteBuffer.allocateDirect(dst.capacity());
-			SSLEngineResult sslEngineRslt = sslEngine.unwrap(this.internalByteBuffer, tmp);
-			tmp.flip();
-			System.out.println(this + " --> readBytes() --> status : "
-					+ sslEngineResult.getStatus());
-
-			byte bytes[] = new byte[tmp.limit()];
-			System.out.println("Byte received from client -> " + new String(bytes));
-
-			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
-				return sslEngineResult.bytesProduced();
+			if (unwrapResultStatus.getStatus() == Status.OK
+					|| unwrapResultStatus.getStatus() == Status.BUFFER_UNDERFLOW) {
+				// we did receive some data, add it to our total
+				read += unwrapResultStatus.bytesProduced();
+				// perform any tasks if needed
+				if (unwrapResultStatus.getHandshakeStatus() == HandshakeStatus.NEED_TASK)
+					tasks();
+				// if we need more network data, then bail out for now.
+				if (unwrapResultStatus.getStatus() == Status.BUFFER_UNDERFLOW)
+					break;
+			} else if (unwrapResultStatus.getStatus() == Status.BUFFER_OVERFLOW && read > 0) {
+				// buffer overflow can happen, if we have read data, then
+				// empty out the dst buffer before we do another read
+				break;
+			} else {
+				// here we should trap BUFFER_OVERFLOW and call expand on the
+				// buffer
+				// for now, throw an exception, as we initialized the buffers
+				// in the constructor
+				throw new IOException("Unable to unwrap data, invalid status: "
+						+ unwrapResultStatus.getStatus());
 			}
+			// continue to unwrapping as long as the input buffer has stuff
+		} while ((this.internalByteBuffer.position() != 0));
+		
+		return read;
+		/*
+		this.internalByteBuffer.flip();
+		SSLEngineResult sslEngineResult = sslEngine.unwrap(this.internalByteBuffer, dst);
 
-		} catch (SSLException e) {
-			e.printStackTrace();
+		this.internalByteBuffer.flip();
+		ByteBuffer tmp = ByteBuffer.allocateDirect(dst.capacity());
+		SSLEngineResult sslEngineRslt = sslEngine.unwrap(this.internalByteBuffer, tmp);
+		tmp.flip();
+		System.out.println(this + " --> readBytes() --> status : " + sslEngineResult.getStatus());
+
+		byte bytes[] = new byte[tmp.limit()];
+		System.out.println("Byte received from client -> " + new String(bytes));
+
+		if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
+			return sslEngineResult.bytesProduced();
 		}
 
 		return -1;
+		*/
 	}
 
 	/*

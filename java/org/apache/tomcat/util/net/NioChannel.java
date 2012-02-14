@@ -301,10 +301,11 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param dst
 	 *            the buffer containing the read bytes
 	 * @return the number of bytes read
+	 * @throws Exception 
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public int readBytes(ByteBuffer dst) throws InterruptedException, ExecutionException {
+	public int readBytes(ByteBuffer dst) throws Exception {
 		return read(dst).get();
 	}
 
@@ -318,12 +319,12 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param unit
 	 *            the timeout unit
 	 * @return The number of bytes read
-	 * @throws TimeoutException
+	 * @throws Exception 
+	 * @throws TimeoutException if the read operation is timed out
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws InterruptedException,
-			ExecutionException, TimeoutException {
+	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		return read(dst).get(timeout, unit);
 	}
 
