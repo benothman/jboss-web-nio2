@@ -101,36 +101,44 @@ public class SecureNioChannel extends NioChannel {
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
 		// Prepare the internal buffer for reading
-		//this.internalInBuffer.clear();
+		// this.internalInBuffer.clear();
 		int x = super.readBytes(this.internalInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
 		}
 
+		
+		this.internalInBuffer.flip();
+		byte b[] = new byte[this.internalInBuffer.limit()];
+		this.internalInBuffer.get(b);
+		System.out.println("--------->>>>>>>> " + new String(b));
+		
+		
 		// the data read
 		int read = 0;
 		// the SSL engine result
-		SSLEngineResult unwrapResultStatus;
-		do {			
+		SSLEngineResult result;
+		do {
 			// prepare the buffer
 			this.internalInBuffer.flip();
 			// unwrap the data
-			unwrapResultStatus = sslEngine.unwrap(this.internalInBuffer, dst);
+			result = sslEngine.unwrap(this.internalInBuffer, dst);
 			// compact the buffer
 			this.internalInBuffer.compact();
-			
-			if (unwrapResultStatus.getStatus() == Status.OK
-					|| unwrapResultStatus.getStatus() == Status.BUFFER_UNDERFLOW) {
+
+			if (result.getStatus() == Status.OK || result.getStatus() == Status.BUFFER_UNDERFLOW) {
 				// we did receive some data, add it to our total
-				read += unwrapResultStatus.bytesProduced();
+				read += result.bytesProduced();
 				// perform any tasks if needed
-				if (unwrapResultStatus.getHandshakeStatus() == HandshakeStatus.NEED_TASK)
+				if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
 					tasks();
+				}
 				// if we need more network data, then bail out for now.
-				if (unwrapResultStatus.getStatus() == Status.BUFFER_UNDERFLOW)
+				if (result.getStatus() == Status.BUFFER_UNDERFLOW) {
 					break;
-			} else if (unwrapResultStatus.getStatus() == Status.BUFFER_OVERFLOW && read > 0) {
+				}
+			} else if (result.getStatus() == Status.BUFFER_OVERFLOW && read > 0) {
 				// buffer overflow can happen, if we have read data, then
 				// empty out the dst buffer before we do another read
 				break;
@@ -140,13 +148,13 @@ public class SecureNioChannel extends NioChannel {
 				// for now, throw an exception, as we initialized the buffers
 				// in the constructor
 				throw new IOException("Unable to unwrap data, invalid status: "
-						+ unwrapResultStatus.getStatus());
+						+ result.getStatus());
 			}
 			// continue to unwrapping as long as the input buffer has stuff
 		} while (this.internalInBuffer.position() != 0);
 
 		System.out.println(" ------------>> read = " + read);
-		
+
 		return read;
 	}
 
@@ -401,6 +409,15 @@ public class SecureNioChannel extends NioChannel {
 			task.run();
 		}
 		return sslEngine.getHandshakeStatus();
+	}
+
+	/**
+	 * Try to run tasks if any.
+	 */
+	private void tryTasks() {
+		if (sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+			tasks();
+		}
 	}
 
 	/**
