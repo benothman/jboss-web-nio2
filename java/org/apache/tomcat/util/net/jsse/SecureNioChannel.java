@@ -113,8 +113,15 @@ public class SecureNioChannel extends NioChannel {
 			this.internalByteBuffer.flip();
 			SSLEngineResult sslEngineResult = sslEngine.unwrap(this.internalByteBuffer, dst);
 
+			this.internalByteBuffer.flip();
+			ByteBuffer tmp = ByteBuffer.allocateDirect(dst.capacity());
+			SSLEngineResult sslEngineRslt = sslEngine.unwrap(this.internalByteBuffer, tmp);
+			tmp.flip();
 			System.out.println(this + " --> readBytes() --> status : "
 					+ sslEngineResult.getStatus());
+
+			byte bytes[] = new byte[tmp.limit()];
+			System.out.println("Byte received from client -> " + new String(bytes));
 
 			if (sslEngineResult.getStatus() == SSLEngineResult.Status.OK) {
 				return sslEngineResult.bytesProduced();
