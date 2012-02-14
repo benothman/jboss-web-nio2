@@ -100,8 +100,8 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
+		// Prepare the internal buffer for reading
 		this.internalByteBuffer.clear();
-
 		int x = super.readBytes(this.internalByteBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
@@ -145,13 +145,6 @@ public class SecureNioChannel extends NioChannel {
 			// continue to unwrapping as long as the input buffer has stuff
 		} while ((this.internalByteBuffer.position() != 0));
 
-		int pos = dst.position();
-		dst.flip();
-		byte bytes[] = new byte[dst.limit()];
-		dst.get(bytes);
-		System.out.println("Received from client -> " + new String(bytes));
-		dst.position(pos);
-
 		return read;
 	}
 
@@ -176,7 +169,7 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int writeBytes(ByteBuffer src) throws Exception {
 		try {
-			return writeBytes(src, Integer.MAX_VALUE, TimeUnit.SECONDS);
+			return writeBytes(src, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
 		} catch (TimeoutException e) {
 			e.printStackTrace();
 			return -1;
