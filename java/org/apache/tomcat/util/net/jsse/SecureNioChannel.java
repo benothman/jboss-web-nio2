@@ -300,18 +300,12 @@ public class SecureNioChannel extends NioChannel {
 	private void doHandshake() throws Exception {
 
 		SSLSession session = getSSLSession();
-
-		// Create byte buffers to use for holding application data
-		int appBufferSize = Math.max(session.getApplicationBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
-		this.internalOutByteBuffer = ByteBuffer.allocateDirect(appBufferSize);
-		ByteBuffer clientAppData = ByteBuffer.allocateDirect(appBufferSize);
-
 		int packetBufferSize = Math.max(session.getPacketBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
+		// Create byte buffers to use for holding application data
 		this.internalInBuffer = ByteBuffer.allocateDirect(packetBufferSize);
+		this.internalOutByteBuffer = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
-
-		System.out.println("appBufferSize = " + appBufferSize + ", packetBufferSize = "
-				+ packetBufferSize);
+		ByteBuffer clientAppData = ByteBuffer.allocateDirect(packetBufferSize);
 
 		// Begin handshake
 		sslEngine.beginHandshake();
