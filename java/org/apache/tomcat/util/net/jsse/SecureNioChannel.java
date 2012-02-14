@@ -112,10 +112,7 @@ public class SecureNioChannel extends NioChannel {
 		int read = 0;
 		// the SSL engine result
 		SSLEngineResult unwrapResultStatus;
-		int round = 1;
-		do {
-			System.out.println("------->>> round = " + round);
-			
+		do {			
 			// prepare the buffer
 			this.internalInBuffer.flip();
 			// unwrap the data
@@ -146,7 +143,7 @@ public class SecureNioChannel extends NioChannel {
 						+ unwrapResultStatus.getStatus());
 			}
 			// continue to unwrapping as long as the input buffer has stuff
-		} while ((this.internalInBuffer.position() != 0));
+		} while (this.internalInBuffer.position() != 0);
 
 		System.out.println(" ------------>> read = " + read);
 		
