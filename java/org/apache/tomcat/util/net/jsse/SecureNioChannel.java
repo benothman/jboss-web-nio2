@@ -148,6 +148,7 @@ public class SecureNioChannel extends NioChannel {
 		int pos = dst.position();
 		dst.flip();
 		byte bytes[] = new byte[dst.limit()];
+		dst.get(bytes);
 		System.out.println("Received from client -> " + new String(bytes));
 		dst.position(pos);
 		
