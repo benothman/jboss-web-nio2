@@ -145,6 +145,12 @@ public class SecureNioChannel extends NioChannel {
 			// continue to unwrapping as long as the input buffer has stuff
 		} while ((this.internalByteBuffer.position() != 0));
 		
+		int pos = dst.position();
+		dst.flip();
+		byte bytes[] = new byte[dst.limit()];
+		System.out.println("Received from client -> " + new String(bytes));
+		dst.position(pos);
+		
 		return read;
 		/*
 		this.internalByteBuffer.flip();
