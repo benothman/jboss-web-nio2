@@ -112,7 +112,7 @@ public class SecureNioChannel extends NioChannel {
 		this.netInBuffer.flip();
 		byte b[] = new byte[this.netInBuffer.limit()];
 		this.netInBuffer.get(b);
-		System.out.println("--------->>>>>> " + bytesToHexString(b) +" <<<<<<<---------");
+		System.out.println("###--------->>>>>> " + bytesToHexString(b) +" <<<<<<<---------###");
 
 		// the data read
 		int read = 0;
