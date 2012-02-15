@@ -39,7 +39,7 @@ import javax.net.ssl.SSLSocket;
 import org.apache.tomcat.util.net.NioChannel;
 
 /**
- * {@code SSLNioChannel}
+ * {@code SecureNioChannel}
  * 
  * Created on Jan 3, 2012 at 3:43:44 PM
  * 
@@ -47,14 +47,14 @@ import org.apache.tomcat.util.net.NioChannel;
  */
 public class SecureNioChannel extends NioChannel {
 
-	private static final int HANDSHAKE_MIN_BUFFER_SIZE = 16 * 1024;
+	private static final int MIN_BUFFER_SIZE = 16 * 1024;
 
 	protected SSLEngine sslEngine;
-	private ByteBuffer internalInBuffer;
-	private ByteBuffer internalOutByteBuffer;
+	private ByteBuffer netInBuffer;
+	private ByteBuffer netOutBuffer;
 
 	/**
-	 * Create a new instance of {@code SSLNioChannel}
+	 * Create a new instance of {@code SecureNioChannel}
 	 * 
 	 * @param channel
 	 *            the {@link java.nio.channels.AsynchronousSocketChannel}
@@ -102,31 +102,29 @@ public class SecureNioChannel extends NioChannel {
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
 		// Prepare the internal buffer for reading
-		// this.internalInBuffer.clear();
-		int x = super.readBytes(this.internalInBuffer, timeout, unit);
+		this.netInBuffer.compact();
+		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
 		}
 
-		
-		this.internalInBuffer.flip();
-		byte b[] = new byte[this.internalInBuffer.limit()];
-		this.internalInBuffer.get(b);
+		this.netInBuffer.flip();
+		byte b[] = new byte[this.netInBuffer.limit()];
+		this.netInBuffer.get(b);
 		System.out.println("--------->>>>>>>> " + bytesToHexString(b));
-		
-		
+
 		// the data read
 		int read = 0;
 		// the SSL engine result
 		SSLEngineResult result;
 		do {
 			// prepare the buffer
-			this.internalInBuffer.flip();
+			this.netInBuffer.flip();
 			// unwrap the data
-			result = sslEngine.unwrap(this.internalInBuffer, dst);
+			result = sslEngine.unwrap(this.netInBuffer, dst);
 			// compact the buffer
-			this.internalInBuffer.compact();
+			this.netInBuffer.compact();
 
 			if (result.getStatus() == Status.OK || result.getStatus() == Status.BUFFER_UNDERFLOW) {
 				// we did receive some data, add it to our total
@@ -152,26 +150,28 @@ public class SecureNioChannel extends NioChannel {
 						+ result.getStatus());
 			}
 			// continue to unwrapping as long as the input buffer has stuff
-		} while (this.internalInBuffer.position() != 0);
+		} while (this.netInBuffer.position() != 0);
 
 		System.out.println(" ------------>> read = " + read);
 
 		return read;
 	}
 
-	public static String bytesToHexString(byte[] bytes) {  
-	    StringBuilder sb = new StringBuilder(bytes.length * 2);  
-	  
-	    Formatter formatter = new Formatter(sb);  
-	    for (byte b : bytes) {  
-	        formatter.format("%02x", b);  
-	    }  
-	  
-	    return sb.toString();  
-	}  
-	
-	
-	
+	/**
+	 * 
+	 * @param bytes
+	 * @return a String representation of the hexadecimal value
+	 */
+	public static String bytesToHexString(byte[] bytes) {
+		StringBuilder sb = new StringBuilder(bytes.length * 2);
+		Formatter formatter = new Formatter(sb);
+		for (byte b : bytes) {
+			formatter.format("%02x", b);
+		}
+
+		return sb.toString();
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -212,12 +212,12 @@ public class SecureNioChannel extends NioChannel {
 
 		// the number of bytes written
 		int written = 0;
-		// Clear the internal output buffer
-		this.internalOutByteBuffer.clear();
+		// Compact the output buffer
+		this.netOutBuffer.compact();
 		// Wrap the source data into the internal buffer
-		SSLEngineResult result = sslEngine.wrap(src, this.internalOutByteBuffer);
+		SSLEngineResult result = sslEngine.wrap(src, this.netOutBuffer);
 		written = result.bytesConsumed();
-		this.internalOutByteBuffer.flip();
+		this.netOutBuffer.flip();
 
 		if (result.getStatus() == Status.OK) {
 			if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
@@ -229,8 +229,8 @@ public class SecureNioChannel extends NioChannel {
 		}
 
 		// write bytes to the channel
-		while (this.internalOutByteBuffer.hasRemaining()) {
-			int x = super.writeBytes(this.internalOutByteBuffer, timeout, unit);
+		while (this.netOutBuffer.hasRemaining()) {
+			int x = super.writeBytes(this.netOutBuffer, timeout, unit);
 			if (x < 0) {
 				return -1;
 			}
@@ -249,7 +249,7 @@ public class SecureNioChannel extends NioChannel {
 		super.close();
 		// getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
-		// this.sslEngine.closeInbound();
+		this.sslEngine.closeInbound();
 	}
 
 	/**
@@ -319,10 +319,10 @@ public class SecureNioChannel extends NioChannel {
 	private void doHandshake() throws Exception {
 
 		SSLSession session = getSSLSession();
-		int packetBufferSize = Math.max(session.getPacketBufferSize(), HANDSHAKE_MIN_BUFFER_SIZE);
+		int packetBufferSize = Math.max(session.getPacketBufferSize(), MIN_BUFFER_SIZE);
 		// Create byte buffers to use for holding application data
-		this.internalInBuffer = ByteBuffer.allocateDirect(packetBufferSize);
-		this.internalOutByteBuffer = ByteBuffer.allocateDirect(packetBufferSize);
+		this.netInBuffer = ByteBuffer.allocateDirect(packetBufferSize);
+		this.netOutBuffer = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer serverAppData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
