@@ -213,7 +213,7 @@ public class SecureNioChannel extends NioChannel {
 		// the number of bytes written
 		int written = 0;
 		// Compact the output buffer
-		this.netOutBuffer.compact();
+		this.netOutBuffer.clear();
 		// Wrap the source data into the internal buffer
 		SSLEngineResult result = sslEngine.wrap(src, this.netOutBuffer);
 		written = result.bytesConsumed();
