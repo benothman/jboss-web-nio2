@@ -24,6 +24,7 @@ package org.apache.tomcat.util.net.jsse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
 import java.util.Formatter;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -102,17 +103,12 @@ public class SecureNioChannel extends NioChannel {
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
 		// Prepare the internal buffer for reading
-		//this.netInBuffer.compact();
+		// this.netInBuffer.compact();
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
 		}
-
-		this.netInBuffer.flip();
-		byte b[] = new byte[this.netInBuffer.limit()];
-		this.netInBuffer.get(b);
-		System.out.println("###--------->>>>>> " + bytesToHexString(b) +" <<<<<<<---------###");
 
 		// the data read
 		int read = 0;
@@ -252,6 +248,217 @@ public class SecureNioChannel extends NioChannel {
 		this.sslEngine.closeInbound();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#awaitRead(long,
+	 * java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+		System.out.println("**** " + this + ".awaitRead(...) ****");
+
+		// reset the flag and the buffer
+		reset();
+		if (handler == null) {
+			throw new NullPointerException("null handler parameter");
+		}
+		// Perform an asynchronous read operation using the internal buffer
+		this.read(this.getBuffer(), timeout, unit, attachment, new CompletionHandler<Integer, A>() {
+
+			@Override
+			public void completed(Integer result, A attach) {
+				// Set the flag to true
+				setFlag();
+				handler.completed(result, attach);
+			}
+
+			@Override
+			public void failed(Throwable exc, A attach) {
+				handler.failed(exc, attach);
+			}
+		});
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer,
+	 * java.lang.Object, java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void read(final ByteBuffer dst, A attachment,
+			CompletionHandler<Integer, ? super A> handler) {
+		this.read(dst, Integer.MAX_VALUE, TimeUnit.MILLISECONDS, attachment, handler);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer,
+	 * long, java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+		super.read(this.netInBuffer, timeout, unit, attachment,
+				new CompletionHandler<Integer, A>() {
+
+					@Override
+					public void completed(Integer nBytes, A attachment) {
+						try {
+							int read = 0;
+							// the SSL engine result
+							SSLEngineResult result;
+							do {
+								// prepare the buffer
+								netInBuffer.flip();
+								// unwrap the data
+								result = sslEngine.unwrap(netInBuffer, dst);
+								// compact the buffer
+								netInBuffer.compact();
+
+								if (result.getStatus() == Status.OK
+										|| result.getStatus() == Status.BUFFER_UNDERFLOW) {
+									// we did receive some data, add it to our
+									// total
+									read += result.bytesProduced();
+									// perform any tasks if needed
+									if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+										tasks();
+									}
+									// if we need more network data, then bail
+									// out for now.
+									if (result.getStatus() == Status.BUFFER_UNDERFLOW) {
+										break;
+									}
+								} else if (result.getStatus() == Status.BUFFER_OVERFLOW && read > 0) {
+									// buffer overflow can happen, if we have
+									// read data, then
+									// empty out the dst buffer before we do
+									// another read
+									break;
+								} else {
+									// here we should trap BUFFER_OVERFLOW and
+									// call expand on the
+									// buffer
+									// for now, throw an exception, as we
+									// initialized the buffers
+									// in the constructor
+									throw new IOException("Unable to unwrap data, invalid status: "
+											+ result.getStatus());
+								}
+								// continue to unwrapping as long as the input
+								// buffer has stuff
+							} while (netInBuffer.position() != 0);
+
+							// If everything is OK, so complete
+							handler.completed(read, attachment);
+						} catch (Exception e) {
+							// The operation must fails
+							handler.failed(e, attachment);
+						}
+					}
+
+					@Override
+					public void failed(Throwable exc, A attachment) {
+						handler.failed(exc, attachment);
+					}
+				});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer[],
+	 * int, int, long, java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void read(final ByteBuffer[] dsts, int offset, int length, long timeout,
+			TimeUnit unit, A attachment, CompletionHandler<Long, ? super A> handler) {
+		// TODO
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer,
+	 * java.lang.Object, java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void write(ByteBuffer src, A attachment,
+			CompletionHandler<Integer, ? super A> handler) {
+		this.write(src, Integer.MAX_VALUE, TimeUnit.MILLISECONDS, attachment, handler);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer,
+	 * long, java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void write(final ByteBuffer src, long timeout, TimeUnit unit, A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+
+		try {
+			// Prepare the output buffer
+			this.netOutBuffer.clear();
+			// Wrap the source data into the internal buffer
+			SSLEngineResult result = sslEngine.wrap(src, this.netOutBuffer);
+			// the number of bytes written
+			final int written = result.bytesConsumed();
+			this.netOutBuffer.flip();
+
+			if (result.getStatus() == Status.OK) {
+				if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+					tasks();
+				}
+			} else {
+				throw new Exception("Unable to wrap data, invalid engine state: "
+						+ result.getStatus());
+			}
+
+			super.write(this.netOutBuffer, timeout, unit, attachment,
+					new CompletionHandler<Integer, A>() {
+
+						@Override
+						public void completed(Integer nBytes, A attachment) {
+							// Call the handler completed method with the
+							// consumed bytes number
+							handler.completed(written, attachment);
+						}
+
+						@Override
+						public void failed(Throwable exc, A attachment) {
+							handler.failed(exc, attachment);
+						}
+					});
+
+		} catch (Throwable exp) {
+			handler.failed(exp, attachment);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer[],
+	 * int, int, long, java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void write(ByteBuffer[] srcs, int offset, int length, long timeout, TimeUnit unit,
+			A attachment, CompletionHandler<Long, ? super A> handler) {
+		// TODO
+	}
+
 	/**
 	 * Getter for sslEngine
 	 * 
@@ -323,6 +530,7 @@ public class SecureNioChannel extends NioChannel {
 		// Create byte buffers to use for holding application data
 		this.netInBuffer = ByteBuffer.allocateDirect(packetBufferSize);
 		this.netOutBuffer = ByteBuffer.allocateDirect(packetBufferSize);
+		setBuffer(ByteBuffer.allocateDirect(packetBufferSize));
 		ByteBuffer serverNetData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer serverAppData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);

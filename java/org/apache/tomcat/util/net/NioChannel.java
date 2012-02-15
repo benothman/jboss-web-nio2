@@ -212,7 +212,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	/**
 	 * Set the flag to true
 	 */
-	private void setFlag() {
+	protected void setFlag() {
 		this.flag = true;
 	}
 
@@ -230,6 +230,13 @@ public class NioChannel implements AsynchronousByteChannel {
 		return this.buffer;
 	}
 
+	/**
+	 * @param buffer
+	 */
+	protected void setBuffer(ByteBuffer buffer) {
+		this.buffer = buffer;
+	}
+	
 	/**
 	 * @return the channel id
 	 */
