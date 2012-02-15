@@ -102,7 +102,7 @@ public class SecureNioChannel extends NioChannel {
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
 		// Prepare the internal buffer for reading
-		this.netInBuffer.compact();
+		//this.netInBuffer.compact();
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
