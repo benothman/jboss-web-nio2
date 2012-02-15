@@ -301,7 +301,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param dst
 	 *            the buffer containing the read bytes
 	 * @return the number of bytes read
-	 * @throws Exception 
+	 * @throws Exception
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
@@ -319,8 +319,9 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param unit
 	 *            the timeout unit
 	 * @return The number of bytes read
-	 * @throws Exception 
-	 * @throws TimeoutException if the read operation is timed out
+	 * @throws Exception
+	 * @throws TimeoutException
+	 *             if the read operation is timed out
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
@@ -505,6 +506,8 @@ public class NioChannel implements AsynchronousByteChannel {
 	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
+		System.out.println("**** " + this + ".awaitRead(...) ****");
+
 		// reset the flag and the buffer
 		reset();
 		if (handler == null) {
@@ -544,7 +547,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param dst
 	 *            the buffer containing the bytes to write
 	 * @return the number of bytes written
-	 * @throws Exception 
+	 * @throws Exception
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
@@ -562,7 +565,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param unit
 	 *            the timeout unit
 	 * @return The number of bytes written
-	 * @throws Exception 
+	 * @throws Exception
 	 * @throws TimeoutException
 	 * @throws ExecutionException
 	 * @throws InterruptedException
