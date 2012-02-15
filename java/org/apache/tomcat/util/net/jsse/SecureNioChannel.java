@@ -53,6 +53,8 @@ public class SecureNioChannel extends NioChannel {
 	protected SSLEngine sslEngine;
 	private ByteBuffer netInBuffer;
 	private ByteBuffer netOutBuffer;
+	protected boolean handshakeComplete = false;
+	protected HandshakeStatus handshakeStatus; // gets set by handshake
 
 	/**
 	 * Create a new instance of {@code SecureNioChannel}
@@ -381,7 +383,7 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public <A> void read(final ByteBuffer[] dsts, int offset, int length, long timeout,
 			TimeUnit unit, A attachment, CompletionHandler<Long, ? super A> handler) {
-		// TODO
+		
 	}
 
 	/*
@@ -570,7 +572,7 @@ public class SecureNioChannel extends NioChannel {
 						clientNetData.compact();
 						// read in the status
 						HandshakeStatus handshakeStatus = result.getHandshakeStatus();
-						System.out.println("NEED_UNWRAP ---> handshakeStatus = "+ handshakeStatus);
+						System.out.println("NEED_UNWRAP ---> handshakeStatus = " + handshakeStatus);
 						if (result.getStatus() == SSLEngineResult.Status.OK
 								&& result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
 							// execute tasks if we need to
@@ -590,8 +592,14 @@ public class SecureNioChannel extends NioChannel {
 				serverNetData.flip();
 				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
 
+				
+				HandshakeStatus handshakeStatus = res.getHandshakeStatus();
+				System.out.println("----> NEED_WRAP-1 : HandshakeStatus = " + handshakeStatus);
 				if (res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
+					if(handshakeStatus == HandshakeStatus.NEED_TASK) {
+						handshakeStatus = tasks();
+					}
 					while (serverNetData.hasRemaining()) {
 						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
@@ -604,6 +612,8 @@ public class SecureNioChannel extends NioChannel {
 							+ " during handshake WRAP.");
 				}
 
+				System.out.println("----> NEED_WRAP-2 : HandshakeStatus = " + handshakeStatus);
+								
 				break;
 			case NEED_TASK:
 				tasks();
@@ -631,9 +641,9 @@ public class SecureNioChannel extends NioChannel {
 			System.out.println("New Task started");
 			task.run();
 		}
-		
+
 		System.out.println("----->> task() : handshakeStatus = " + sslEngine.getHandshakeStatus());
-		
+
 		return sslEngine.getHandshakeStatus();
 	}
 
