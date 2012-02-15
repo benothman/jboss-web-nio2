@@ -558,7 +558,7 @@ public class SecureNioChannel extends NioChannel {
 
 				int nBytes = this.channel.read(clientNetData).get();
 				if (nBytes < 0) {
-					throw new IOException("NEED_UNWRAP : EOF encountered during handshake.");
+					throw new IOException(this +" NEED_UNWRAP : EOF encountered during handshake.");
 				} else {
 
 					boolean cont = false;
@@ -603,7 +603,7 @@ public class SecureNioChannel extends NioChannel {
 					while (serverNetData.hasRemaining()) {
 						if (this.channel.write(serverNetData).get() < 0) {
 							// Handle closed channel
-							throw new IOException("NEED_WRAP : EOF encountered during handshake.");
+							throw new IOException(this + " NEED_WRAP : EOF encountered during handshake.");
 						}
 					}
 				} else {
