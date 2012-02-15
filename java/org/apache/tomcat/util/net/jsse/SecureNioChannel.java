@@ -269,10 +269,10 @@ public class SecureNioChannel extends NioChannel {
 		this.read(this.getBuffer(), timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
 			@Override
-			public void completed(Integer result, A attach) {
+			public void completed(Integer nBytes, A attach) {
 				// Set the flag to true
 				setFlag();
-				handler.completed(result, attach);
+				handler.completed(nBytes, attach);
 			}
 
 			@Override
@@ -315,7 +315,7 @@ public class SecureNioChannel extends NioChannel {
 							// the SSL engine result
 							SSLEngineResult result;
 							do {
-								// prepare the buffer
+								// prepare the input buffer
 								netInBuffer.flip();
 								// unwrap the data
 								result = sslEngine.unwrap(netInBuffer, dst);
@@ -570,6 +570,7 @@ public class SecureNioChannel extends NioChannel {
 						clientNetData.compact();
 						// read in the status
 						HandshakeStatus handshakeStatus = result.getHandshakeStatus();
+						System.out.println("NEED_UNWRAP ---> handshakeStatus = "+ handshakeStatus);
 						if (result.getStatus() == SSLEngineResult.Status.OK
 								&& result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
 							// execute tasks if we need to
@@ -630,6 +631,9 @@ public class SecureNioChannel extends NioChannel {
 			System.out.println("New Task started");
 			task.run();
 		}
+		
+		System.out.println("----->> task() : handshakeStatus = " + sslEngine.getHandshakeStatus());
+		
 		return sslEngine.getHandshakeStatus();
 	}
 
