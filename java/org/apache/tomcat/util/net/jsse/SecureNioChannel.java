@@ -383,7 +383,7 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public <A> void read(final ByteBuffer[] dsts, int offset, int length, long timeout,
 			TimeUnit unit, A attachment, CompletionHandler<Long, ? super A> handler) {
-		
+
 	}
 
 	/*
@@ -540,16 +540,17 @@ public class SecureNioChannel extends NioChannel {
 
 		// Begin handshake
 		sslEngine.beginHandshake();
+		handshakeStatus = sslEngine.getHandshakeStatus();
 
 		int step = 0;
 		// Process handshaking message
-		while (sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.FINISHED
-				&& sslEngine.getHandshakeStatus() != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
+		while (handshakeStatus != SSLEngineResult.HandshakeStatus.FINISHED
+				&& handshakeStatus != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
 
 			System.out.println("STEP : " + (++step) + ", Handshake status : "
 					+ sslEngine.getHandshakeStatus());
 
-			switch (sslEngine.getHandshakeStatus()) {
+			switch (handshakeStatus) {
 			case NEED_UNWRAP:
 				if (!clientNetData.hasRemaining()) {
 					clientNetData.clear();
@@ -566,20 +567,20 @@ public class SecureNioChannel extends NioChannel {
 						// prepare the buffer with the incoming data
 						clientNetData.flip();
 						// call unwrap
-						SSLEngineResult result = sslEngine.unwrap(clientNetData, clientAppData);
+						SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
 						// compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
 						clientNetData.compact();
 						// read in the status
-						HandshakeStatus handshakeStatus = result.getHandshakeStatus();
+						handshakeStatus = res.getHandshakeStatus();
 						System.out.println("NEED_UNWRAP ---> handshakeStatus = " + handshakeStatus);
-						if (result.getStatus() == SSLEngineResult.Status.OK
-								&& result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+						if (res.getStatus() == SSLEngineResult.Status.OK
+								&& handshakeStatus == HandshakeStatus.NEED_TASK) {
 							// execute tasks if we need to
 							handshakeStatus = tasks();
 						}
 						// perform another unwrap?
-						cont = result.getStatus() == SSLEngineResult.Status.OK
+						cont = res.getStatus() == SSLEngineResult.Status.OK
 								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP;
 					} while (cont);
 				}
@@ -592,12 +593,11 @@ public class SecureNioChannel extends NioChannel {
 				serverNetData.flip();
 				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
 
-				
-				HandshakeStatus handshakeStatus = res.getHandshakeStatus();
+				handshakeStatus = res.getHandshakeStatus();
 				System.out.println("----> NEED_WRAP-1 : HandshakeStatus = " + handshakeStatus);
 				if (res.getStatus() == Status.OK) {
 					// Send the handshaking data to client
-					if(handshakeStatus == HandshakeStatus.NEED_TASK) {
+					if (handshakeStatus == HandshakeStatus.NEED_TASK) {
 						handshakeStatus = tasks();
 					}
 					while (serverNetData.hasRemaining()) {
@@ -613,10 +613,10 @@ public class SecureNioChannel extends NioChannel {
 				}
 
 				System.out.println("----> NEED_WRAP-2 : HandshakeStatus = " + handshakeStatus);
-								
+
 				break;
 			case NEED_TASK:
-				tasks();
+				handshakeStatus = tasks();
 
 				break;
 			case NOT_HANDSHAKING:
@@ -626,8 +626,8 @@ public class SecureNioChannel extends NioChannel {
 			}
 		}
 
-		System.out.println(this + "END OF HANDSHAKE PROCESS, HANDSHAKE STATUS : "
-				+ sslEngine.getHandshakeStatus());
+		System.out
+				.println(this + " END OF HANDSHAKE PROCESS, HANDSHAKE STATUS : " + handshakeStatus);
 	}
 
 	/**
@@ -652,7 +652,7 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	private void tryTasks() {
 		if (sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
-			tasks();
+			handshakeStatus = tasks();
 		}
 	}
 
