@@ -365,11 +365,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		int nRead = 0, tmp = 0;
 
 		bbuf.clear();
-		int i = 1;
-		System.out.println("FILL - STEP " + (i++));
-		if (channel.flag()) {
-			System.out.println("FILL - STEP " + (i++));
-			tmp = channel.getBuffer().flip().remaining();
+		System.out.println("FILL - STEP 1");
+		if (channel.getBuffer().hasRemaining()) {
+			System.out.println("FILL - STEP 1.1");
+			tmp = channel.getBuffer().flip().limit();
 
 			byte data[] = new byte[tmp];
 			channel.getBuffer().get(data);
@@ -383,21 +382,23 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			bbuf.put(channel.getBuffer());
 			channel.reset();
 		}
+		
+		System.out.println("FILL - STEP 2");
 
 		if (parsingHeader) {
-			System.out.println("FILL - STEP " + (i++));
+			System.out.println("FILL - STEP 2.1");
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-			System.out.println("FILL - STEP " + (i++) +", TMP = " + tmp);
+			System.out.println("FILL - STEP 2.1.1, TMP = " + tmp);
 			if (tmp <= 1) {
-				System.out.println("FILL - STEP " + (i++));
+				System.out.println("FILL - STEP 2.1.1.1");
 
 				if (nonBlocking) {
-					System.out.println("FILL - STEP " + (i++) +" - NON_BLOCKING");
+					System.out.println("FILL - STEP 2.1.1.2 - NON_BLOCKING");
 					nonBlockingRead(bbuf, readTimeout, unit);
 				} else {
-					System.out.println("FILL - STEP " + (i++) +" - BLOCKING");
+					System.out.println("FILL - STEP 2.1.1.2 - BLOCKING");
 					nRead = blockingRead(bbuf, readTimeout, unit);
 					if (nRead > 0) {
 						nRead += tmp;
