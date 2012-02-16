@@ -614,8 +614,7 @@ public class SecureNioChannel extends NioChannel {
 		// Process handshaking message
 		while (!handshakeComplete) {
 
-			System.out.println("STEP : " + (++step) + ", Handshake status : "
-					+ sslEngine.getHandshakeStatus());
+			System.out.println("STEP : " + (++step) + ", Handshake status : " + handshakeStatus);
 
 			switch (handshakeStatus) {
 			case NEED_UNWRAP:
