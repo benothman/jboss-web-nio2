@@ -81,6 +81,15 @@ public class SecureNioChannel extends NioChannel {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#isSecure()
+	 */
+	public boolean isSecure() {
+		return true;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
 	 */
 	@Override

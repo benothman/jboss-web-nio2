@@ -368,7 +368,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 		if (channel.flag()) {
 			tmp = channel.getBuffer().flip().remaining();
-			
+
 			byte data[] = new byte[tmp];
 			channel.getBuffer().get(data);
 			channel.getBuffer().flip();
@@ -377,7 +377,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			System.out.println("--> CRLF : " + str.endsWith("\r\n"));
 			System.out.println("--> CR : " + str.endsWith("\r"));
 			System.out.println("--> LF : " + str.endsWith("\n"));
-			
+
 			bbuf.put(channel.getBuffer());
 			channel.reset();
 		}
@@ -387,20 +387,22 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
 
-			if (nonBlocking) {
-				nonBlockingRead(bbuf, readTimeout, unit);
-			} else {
-				nRead = blockingRead(bbuf, readTimeout, unit);
-				if (nRead > 0) {
-					nRead += tmp;
-					bbuf.flip();
-					bbuf.get(buf, pos, nRead);
-					lastValid = pos + nRead;
+			if (tmp <= 1) {
+				if (nonBlocking) {
+					nonBlockingRead(bbuf, readTimeout, unit);
 				} else {
-					if ((-nRead) == Status.EAGAIN) {
-						return false;
+					nRead = blockingRead(bbuf, readTimeout, unit);
+					if (nRead > 0) {
+						nRead += tmp;
+						bbuf.flip();
+						bbuf.get(buf, pos, nRead);
+						lastValid = pos + nRead;
 					} else {
-						throw new IOException(sm.getString("iib.failedread"));
+						if ((-nRead) == Status.EAGAIN) {
+							return false;
+						} else {
+							throw new IOException(sm.getString("iib.failedread"));
+						}
 					}
 				}
 			}
@@ -416,7 +418,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 			pos = end;
 			lastValid = pos;
-
+			
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {

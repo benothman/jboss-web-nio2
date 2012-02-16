@@ -68,7 +68,8 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param channel
 	 *            The {@link java.nio.channels.AsynchronousSocketChannel}
 	 *            attached to this channel
-	 * @throws NullPointerException if the channel parameter is null
+	 * @throws NullPointerException
+	 *             if the channel parameter is null
 	 */
 	protected NioChannel(AsynchronousSocketChannel channel) {
 		if (channel == null) {
@@ -211,6 +212,14 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * @return <tt>TRUE</tt> if the channel is secure (i.e., use SSL), else
+	 *         <tt>FALSE</tt>
+	 */
+	public boolean isSecure() {
+		return false;
+	}
+
+	/**
 	 * Set the flag to true
 	 */
 	protected void setFlag() {
@@ -237,7 +246,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	protected void setBuffer(ByteBuffer buffer) {
 		this.buffer = buffer;
 	}
-	
+
 	/**
 	 * @return the channel id
 	 */
