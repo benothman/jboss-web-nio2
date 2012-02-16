@@ -368,15 +368,16 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		System.out.println("FILL - STEP 1");
 		if (channel.getBuffer().hasRemaining()) {
 			System.out.println("FILL - STEP 1.1");
-			tmp = channel.getBuffer().flip().remaining();
-
-			byte data[] = new byte[tmp];
-			channel.getBuffer().get(data);
 			channel.getBuffer().flip();
+			byte data[] = new byte[channel.getBuffer().limit()];
+			channel.getBuffer().get(data);
+			tmp = data.length;
+						
 			String str = new String(data);
 			System.out.println("special data (tmp = " + tmp + ")-> " + str);
-
-			bbuf.put(channel.getBuffer());
+			
+			
+			bbuf.put(data);
 			channel.reset();
 		}
 		
