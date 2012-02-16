@@ -185,7 +185,7 @@ public class SecureNioChannel extends NioChannel {
 
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
-			int x = this.channel.write(netOutBuffer).get(timeout, unit);			
+			int x = this.channel.write(netOutBuffer).get(timeout, unit);
 			if (x < 0) {
 				return -1;
 			}
@@ -225,21 +225,31 @@ public class SecureNioChannel extends NioChannel {
 			throw new NullPointerException("null handler parameter");
 		}
 		// Perform an asynchronous read operation using the internal buffer
-		this.read(this.getBuffer(), timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
-			@Override
-			public void completed(Integer nBytes, A attach) {
-				// Set the flag to true
-				setFlag();
-				handler.completed(nBytes, attach);
-			}
+		this.channel.read(this.netInBuffer, timeout, unit, attachment,
+				new CompletionHandler<Integer, A>() {
 
-			@Override
-			public void failed(Throwable exc, A attach) {
-				handler.failed(exc, attach);
-			}
-		});
+					@Override
+					public void completed(Integer nBytes, A attach) {
+						try {
+							// unwrap the data
+							int read = unwrap(netInBuffer, getBuffer());
+							// Set the flag to true
+							setFlag();
+							// If everything is OK, so complete
+							handler.completed(read, attachment);
+						} catch (Exception e) {
+							// The operation must fails
+							handler.failed(e, attachment);
+						}
 
+					}
+
+					@Override
+					public void failed(Throwable exc, A attach) {
+						handler.failed(exc, attach);
+					}
+				});
 	}
 
 	/*
@@ -264,7 +274,7 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		
+
 		this.channel.read(this.netInBuffer, timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
