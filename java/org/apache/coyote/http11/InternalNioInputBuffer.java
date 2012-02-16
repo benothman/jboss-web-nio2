@@ -365,8 +365,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		int nRead = 0, tmp = 0;
 
 		bbuf.clear();
-
+		int i = 1;
+		System.out.println("FILL - STEP " + (i++));
 		if (channel.flag()) {
+			System.out.println("FILL - STEP " + (i++));
 			tmp = channel.getBuffer().flip().remaining();
 
 			byte data[] = new byte[tmp];
@@ -383,14 +385,19 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		}
 
 		if (parsingHeader) {
+			System.out.println("FILL - STEP " + (i++));
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-
+			System.out.println("FILL - STEP " + (i++) +", TMP = " + tmp);
 			if (tmp <= 1) {
+				System.out.println("FILL - STEP " + (i++));
+
 				if (nonBlocking) {
+					System.out.println("FILL - STEP " + (i++) +" - NON_BLOCKING");
 					nonBlockingRead(bbuf, readTimeout, unit);
 				} else {
+					System.out.println("FILL - STEP " + (i++) +" - BLOCKING");
 					nRead = blockingRead(bbuf, readTimeout, unit);
 					if (nRead > 0) {
 						nRead += tmp;
