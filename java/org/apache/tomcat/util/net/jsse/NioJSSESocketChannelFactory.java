@@ -202,7 +202,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		// multiple times
 		SecureNioChannel sslChannel = (SecureNioChannel) channel;
 
-		if (sslChannel.handshakeDone()) {
+		if (sslChannel.handshakeComplete()) {
 			// The handshake was already done
 			return;
 		}

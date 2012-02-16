@@ -242,13 +242,13 @@ class NioJSSESupport implements SSLSupport {
 				log.info("SSL Error getting client Certs", sslex);
 				throw new IOException(sslex);
 			}
-			if(channel.handshakeDone()) {
+			if(channel.handshakeComplete()) {
 				break;
 			}
 		}
 		// ssl.setSoTimeout(oldTimeout);
 		
-		if(!channel.handshakeDone()) {
+		if(!channel.handshakeComplete()) {
 			throw new SocketException("SSL Cert handshake timeout");
 		}
 	}
