@@ -641,10 +641,9 @@ public class SecureNioChannel extends NioChannel {
 						// read in the status
 						handshakeStatus = res.getHandshakeStatus();
 						System.out.println("NEED_UNWRAP ---> handshakeStatus = " + handshakeStatus);
-						if (res.getStatus() == SSLEngineResult.Status.OK
-								&& handshakeStatus == HandshakeStatus.NEED_TASK) {
+						if (res.getStatus() == SSLEngineResult.Status.OK) {
 							// execute tasks if we need to
-							handshakeStatus = tasks();
+							tryTasks();
 						}
 						// perform another unwrap?
 						cont = res.getStatus() == SSLEngineResult.Status.OK
@@ -663,9 +662,8 @@ public class SecureNioChannel extends NioChannel {
 
 				System.out.println("----> NEED_WRAP-1 : HandshakeStatus = " + handshakeStatus);
 				if (res.getStatus() == Status.OK) {
-					if (handshakeStatus == HandshakeStatus.NEED_TASK) {
-						handshakeStatus = tasks();
-					}
+					// execute tasks if we need to
+					tryTasks();
 					// Send the handshaking data to client
 					while (this.netOutBuffer.hasRemaining()) {
 						if (this.channel.write(this.netOutBuffer).get() < 0) {
@@ -690,6 +688,8 @@ public class SecureNioChannel extends NioChannel {
 			case NOT_HANDSHAKING:
 				throw new IOException("NOT_HANDSHAKING during handshake");
 			case FINISHED:
+				System.out.println("######### Handshake complete #########");
+				handshakeComplete = true;
 				break;
 			}
 		}
