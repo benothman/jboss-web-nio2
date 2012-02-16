@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 
 import org.apache.tomcat.jni.File;
 import org.apache.tomcat.util.net.AprEndpoint.Sendfile;
@@ -360,13 +361,12 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * Configure the channel options
+	 * Configure the channel options before being processed
 	 */
 	protected boolean setChannelOptions(NioChannel channel) {
 		// Process the connection
-		int step = 1;
 		try {
-			// 1: Set socket options: timeout, linger, etc
+			// Set channel options: timeout, linger, etc
 			if (keepAliveTimeout > 0) {
 				channel.setOption(StandardSocketOptions.SO_KEEPALIVE, Boolean.TRUE);
 			}
@@ -377,29 +377,23 @@ public class NioEndpoint extends AbstractEndpoint {
 				channel.setOption(StandardSocketOptions.TCP_NODELAY, tcpNoDelay);
 			}
 
-			// 2: SSL handshake
+			// Initialize the channel
 			serverSocketChannelFactory.initChannel(channel);
+			// Start SSL handshake if SSL is enabled
 			serverSocketChannelFactory.handshake(channel);
-
-			step = 2;
+			return true;
 		} catch (Throwable t) {
 			logger.error(t.getMessage(), t);
-			try {
-				channel.close();
-			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
-			}
 			if (logger.isDebugEnabled()) {
-				if (step == 2) {
+				if (t instanceof SSLHandshakeException) {
 					logger.debug(sm.getString("endpoint.err.handshake"), t);
 				} else {
 					logger.debug(sm.getString("endpoint.err.unexpected"), t);
 				}
 			}
-			// Tell to close the socket
+			// Tell to close the channel
 			return false;
 		}
-		return true;
 	}
 
 	/**
@@ -590,6 +584,20 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * Close the specified channel
+	 * 
+	 * @param channel
+	 *            the channel to be closed
+	 */
+	private static void closeChannel(NioChannel channel) {
+		try {
+			channel.close();
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
+
+	/**
 	 * List of channel counters.
 	 */
 	class ListChannel {
@@ -623,16 +631,16 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					// set the channel options
+					// Set the channel options
 					if (!setChannelOptions(channel)) {
-						channel.close();
+						closeChannel(channel);
 					}
 					if (channel.isOpen()) {
 						// Hand this channel off to an appropriate processor
 						if (!processChannel(channel)) {
 							logger.info("Fail processing the channel");
 							// Close channel right away
-							close(channel);
+							closeChannel(channel);
 						}
 					}
 				} catch (Exception x) {
@@ -642,18 +650,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				} catch (Throwable t) {
 					logger.error(sm.getString("endpoint.accept.fail"), t);
 				}
-			}
-		}
-
-		/**
-		 * 
-		 * @param channel
-		 */
-		private void close(NioChannel channel) {
-			try {
-				channel.close();
-			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
 			}
 		}
 	}

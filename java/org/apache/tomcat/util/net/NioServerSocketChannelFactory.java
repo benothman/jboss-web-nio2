@@ -79,7 +79,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	public void setAttribute(String name, Object value) {
 		if (name != null && value != null) {
 			attributes.put(name, value);
-		}		
+		}
 	}
 
 	/**
@@ -204,7 +204,8 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * Initialize the specified {@code NioChannel}
 	 * 
 	 * @param channel
-	 * @throws Exception 
+	 *            The channel to be initialized
+	 * @throws Exception
 	 */
 	public abstract void initChannel(NioChannel channel) throws Exception;
 
@@ -213,7 +214,9 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * exceptions if necessary
 	 * 
 	 * @param listener
-	 * @return an instance of {@link NioChannel}
+	 *            The Asynchronous Server Socket channel that will accept a new
+	 *            connection
+	 * @return an instance of {@link NioChannel} representing the new connection
 	 * 
 	 * @exception IOException
 	 */
