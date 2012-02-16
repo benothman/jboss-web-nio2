@@ -31,7 +31,6 @@ import javax.net.ssl.SSLContext;
 
 import org.apache.coyote.Adapter;
 import org.apache.coyote.ProtocolHandler;
-import org.apache.tomcat.util.net.SSLImplementation;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -60,8 +59,6 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	protected ObjectName tpOname = null;
 	// *
 	protected ObjectName rgOname = null;
-
-	//protected SSLImplementation sslImplementation = null;
 
 	/**
 	 * The adapter, used to call the connector.
@@ -307,25 +304,6 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	 */
 	public void setRgOname(ObjectName rgOname) {
 		this.rgOname = rgOname;
-	}
-
-	/**
-	 * Getter for sslImplementation
-	 * 
-	 * @return the sslImplementation
-	 *
-	public SSLImplementation getSslImplementation() {
-		return this.sslImplementation;
-	}
-
-	/**
-	 * Setter for the sslImplementation
-	 * 
-	 * @param sslImplementation
-	 *            the sslImplementation to set
-	 *
-	public void setSslImplementation(SSLImplementation sslImplementation) {
-		this.sslImplementation = sslImplementation;
 	}
 
 	/**
@@ -753,10 +731,12 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	}
 
 	/**
-	 * @param protocols the protocols to set
+	 * @param protocols
+	 *            the protocols to set
 	 */
 	public void setProtocols(String protocols) {
-		System.out.println("************ "+getClass().getName() + "setProtocols =====> protocols : " + protocols);
+		System.out.println("************ " + getClass().getName()
+				+ "setProtocols =====> protocols : " + protocols);
 		setAttribute("protocols", protocols);
 	}
 
