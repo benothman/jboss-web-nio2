@@ -177,7 +177,7 @@ public class SecureNioChannel extends NioChannel {
 		// the number of bytes written
 		int written = wrap(src, this.netOutBuffer);
 		this.netOutBuffer.flip();
-	
+
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
 			int x = super.writeBytes(this.netOutBuffer, timeout, unit);
@@ -304,40 +304,41 @@ public class SecureNioChannel extends NioChannel {
 		if ((offset < 0) || (length < 0) || (offset > dsts.length - length)) {
 			throw new IndexOutOfBoundsException();
 		}
-		
-		
+
 		final ByteBuffer netInBuffers[] = new ByteBuffer[length];
-		for(int i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
 		}
-		
-		this.channel.read(netInBuffers, 0, length, timeout, unit, attachment, new CompletionHandler<Long, A>(){
 
-			@Override
-			public void completed(Long nBytes, A attach) {
-				if(nBytes < 0) {
-					handler.failed(new ClosedChannelException(), attach);
-					return;
-				}
-				
-				long read = 0;
-				for(int i = 0; i < length; i++) {
-					try {
-						read += unwrap(netInBuffers[i], dsts[offset+i]);
-					} catch (Exception e) {
-						handler.failed(e, attach);
-						return;
+		this.channel.read(netInBuffers, 0, length, timeout, unit, attachment,
+				new CompletionHandler<Long, A>() {
+
+					@Override
+					public void completed(Long nBytes, A attach) {
+						if (nBytes < 0) {
+							handler.failed(new ClosedChannelException(), attach);
+							return;
+						}
+
+						long read = 0;
+						for (int i = 0; i < length; i++) {
+							try {
+								read += unwrap(netInBuffers[i], dsts[offset + i]);
+							} catch (Exception e) {
+								handler.failed(e, attach);
+								return;
+							}
+						}
+
+						handler.completed(read, attach);
 					}
-				}
-				
-				handler.completed(read, attach);
-			}
 
-			@Override
-			public void failed(Throwable exc, A attach) {
-				handler.failed(exc, attach);
-			}});
-		
+					@Override
+					public void failed(Throwable exc, A attach) {
+						handler.failed(exc, attach);
+					}
+				});
+
 	}
 
 	/*
@@ -611,8 +612,7 @@ public class SecureNioChannel extends NioChannel {
 
 		int step = 0;
 		// Process handshaking message
-		while (handshakeStatus != SSLEngineResult.HandshakeStatus.FINISHED
-				&& handshakeStatus != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
+		while (!handshakeComplete) {
 
 			System.out.println("STEP : " + (++step) + ", Handshake status : "
 					+ sslEngine.getHandshakeStatus());
@@ -693,9 +693,9 @@ public class SecureNioChannel extends NioChannel {
 				break;
 			}
 		}
-		
+
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
-		
+
 		System.out.println(this + " END OF HANDSHAKE PROCESS, HANDSHAKE STATUS : "
 				+ handshakeStatus);
 	}
