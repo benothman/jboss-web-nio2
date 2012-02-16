@@ -61,7 +61,7 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	// *
 	protected ObjectName rgOname = null;
 
-	protected SSLImplementation sslImplementation = null;
+	//protected SSLImplementation sslImplementation = null;
 
 	/**
 	 * The adapter, used to call the connector.
@@ -313,7 +313,7 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	 * Getter for sslImplementation
 	 * 
 	 * @return the sslImplementation
-	 */
+	 *
 	public SSLImplementation getSslImplementation() {
 		return this.sslImplementation;
 	}
@@ -323,7 +323,7 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	 * 
 	 * @param sslImplementation
 	 *            the sslImplementation to set
-	 */
+	 *
 	public void setSslImplementation(SSLImplementation sslImplementation) {
 		this.sslImplementation = sslImplementation;
 	}

@@ -63,11 +63,18 @@ public class SecureNioChannel extends NioChannel {
 	 * 
 	 * @param channel
 	 *            the {@link java.nio.channels.AsynchronousSocketChannel}
-	 * @param sslEngine
+	 * @param engine
+	 *            The {@link javax.net.ssl.SSLEngine} linked to this channel
+	 * @throws NullPointerException
+	 *             if the one at least one of the parameters is null
 	 */
-	protected SecureNioChannel(AsynchronousSocketChannel channel, SSLEngine sslEngine) {
+	protected SecureNioChannel(AsynchronousSocketChannel channel, SSLEngine engine) {
 		super(channel);
-		this.sslEngine = sslEngine;
+		if (engine == null) {
+			throw new NullPointerException("null SSLEngine parameter");
+		}
+
+		this.sslEngine = engine;
 	}
 
 	/*
@@ -311,7 +318,7 @@ public class SecureNioChannel extends NioChannel {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
 		}
 
-		this.channel.read(netInBuffers, 0, length, timeout, unit, attachment,
+		super.read(netInBuffers, 0, length, timeout, unit, attachment,
 				new CompletionHandler<Long, A>() {
 
 					@Override
@@ -593,6 +600,20 @@ public class SecureNioChannel extends NioChannel {
 	}
 
 	/**
+	 * 
+	 * @throws SSLException
+	 */
+	protected void reHandshake() throws SSLException {
+		handshakeComplete = false;
+		handshakeStatus = sslEngine.getHandshakeStatus();
+		try {
+			doHandshake();
+		} catch (Exception e) {
+			throw new SSLException(e);
+		}
+	}
+
+	/**
 	 * Execute a handshake with the client socket channel
 	 * 
 	 * @throws Exception
@@ -602,9 +623,8 @@ public class SecureNioChannel extends NioChannel {
 		SSLSession session = getSSLSession();
 		int packetBufferSize = Math.max(session.getPacketBufferSize(), MIN_BUFFER_SIZE);
 		// Create byte buffers to use for holding application data
-		this.netInBuffer = ByteBuffer.allocateDirect(packetBufferSize);
-		this.netOutBuffer = ByteBuffer.allocateDirect(packetBufferSize);
-		setBuffer(ByteBuffer.allocateDirect(packetBufferSize));
+		initBuffers(packetBufferSize);
+
 		ByteBuffer clientNetData = ByteBuffer.allocateDirect(packetBufferSize);
 		ByteBuffer clientAppData = ByteBuffer.allocateDirect(packetBufferSize);
 
@@ -727,6 +747,29 @@ public class SecureNioChannel extends NioChannel {
 		}
 	}
 
+	/**
+	 * 
+	 * @param capacity
+	 */
+	private void initBuffers(int capacity) {
+		if(this.netInBuffer == null) {
+			this.netInBuffer = ByteBuffer.allocateDirect(capacity);
+		} else {
+			this.netInBuffer.clear();
+		}
+		if(this.netOutBuffer == null) {
+			this.netOutBuffer = ByteBuffer.allocateDirect(capacity);
+		} else {
+			this.netOutBuffer.clear();
+		}
+		if(getBuffer() == null || getBuffer().capacity() < capacity) {
+			setBuffer(ByteBuffer.allocateDirect(capacity));
+		} else {
+			getBuffer().clear();
+		}
+	}
+	
+	
 	/**
 	 * Check if the handshake was done or not yet
 	 * 

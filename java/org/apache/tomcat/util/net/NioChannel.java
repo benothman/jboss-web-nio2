@@ -68,6 +68,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @param channel
 	 *            The {@link java.nio.channels.AsynchronousSocketChannel}
 	 *            attached to this channel
+	 * @throws NullPointerException if the channel parameter is null
 	 */
 	protected NioChannel(AsynchronousSocketChannel channel) {
 		if (channel == null) {

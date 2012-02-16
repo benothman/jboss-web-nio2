@@ -56,7 +56,6 @@ class NioJSSESupport implements SSLSupport {
 	NioJSSESupport(SecureNioChannel channel) {
 		this.channel = channel;
 		session = channel.getSSLSession();
-		// channel.sslEngine.addHandshakeCompletedListener(listener);
 	}
 
 	/**
@@ -226,18 +225,12 @@ class NioJSSESupport implements SSLSupport {
 			return;
 		}
 
-		channel.getSslEngine().beginHandshake();
 		int maxTries = 60; // 60 * 1000 = example 1 minute time out
 		for (int i = 0; i < maxTries; i++) {
 			if (log.isTraceEnabled())
 				log.trace("Reading for try #" + i);
 			try {
-
-				ByteBuffer buffer = ByteBuffer.allocateDirect(0);
-				int x = channel.read(buffer).get();
-				
-				// TODO
-				
+				channel.handshake();				
 			} catch (Exception sslex) {
 				log.info("SSL Error getting client Certs", sslex);
 				throw new IOException(sslex);
@@ -246,7 +239,6 @@ class NioJSSESupport implements SSLSupport {
 				break;
 			}
 		}
-		// ssl.setSoTimeout(oldTimeout);
 		
 		if(!channel.handshakeComplete()) {
 			throw new SocketException("SSL Cert handshake timeout");
