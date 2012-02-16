@@ -27,6 +27,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.util.Formatter;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -81,15 +82,12 @@ public class SecureNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
-	 * 
-	 * 
-	 * @Override public Future<Integer> read(ByteBuffer dst) { throw new
-	 * RuntimeException("Operation not supported for class " +
-	 * getClass().getName() + ". Use method readBytes(java.nio.ByteBuffer) or "
-	 * +
-	 * "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead"
-	 * ); }
 	 */
+	@Override
+	public Future<Integer> read(ByteBuffer dst) {
+		throw new RuntimeException("Operation not supported for class " + getClass().getName()
+				+ ". Use method readBytes(...) instead");
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -115,7 +113,8 @@ public class SecureNioChannel extends NioChannel {
 		System.out.println(this + " ---> readBytes()");
 		// Prepare the internal buffer for reading
 		// this.netInBuffer.compact();
-		int x = super.readBytes(this.netInBuffer, timeout, unit);
+		int x = this.channel.read(this.netInBuffer).get(timeout, unit);
+
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
@@ -147,14 +146,12 @@ public class SecureNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer)
-	 * 
-	 * @Override public Future<Integer> write(ByteBuffer src) { throw new
-	 * RuntimeException("Operation not supported for class " +
-	 * getClass().getName() + ". Use method writeBytes(java.nio.ByteBuffer) or "
-	 * +
-	 * "readBytes(java.nio.ByteBuffer, long, java.util.concurrent.TimeUnit) instead"
-	 * ); }
 	 */
+	@Override
+	public Future<Integer> write(ByteBuffer src) {
+		throw new RuntimeException("Operation not supported for class " + getClass().getName()
+				+ ". Use method writeBytes(...) instead");
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -181,14 +178,14 @@ public class SecureNioChannel extends NioChannel {
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> writeBytes()");
 		// Clear the output buffer
-		this.netOutBuffer.clear();
+		this.netOutBuffer.compact();
 		// the number of bytes written
 		int written = wrap(src, this.netOutBuffer);
 		this.netOutBuffer.flip();
 
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
-			int x = super.writeBytes(this.netOutBuffer, timeout, unit);
+			int x = this.channel.write(netOutBuffer).get(timeout, unit);			
 			if (x < 0) {
 				return -1;
 			}
@@ -267,7 +264,8 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		super.read(this.netInBuffer, timeout, unit, attachment,
+		
+		this.channel.read(this.netInBuffer, timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
 					@Override
@@ -380,7 +378,7 @@ public class SecureNioChannel extends NioChannel {
 			this.netOutBuffer.flip();
 
 			// Write data to the channel
-			super.write(this.netOutBuffer, timeout, unit, attachment,
+			this.channel.write(this.netOutBuffer, timeout, unit, attachment,
 					new CompletionHandler<Integer, A>() {
 
 						@Override
@@ -681,7 +679,7 @@ public class SecureNioChannel extends NioChannel {
 				handshakeStatus = res.getHandshakeStatus();
 				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
 				System.out.println("----> NEED_WRAP-1 : HandshakeStatus = " + handshakeStatus);
-				
+
 				if (res.getStatus() == Status.OK) {
 					// Execute tasks if we need to
 					tryTasks();
@@ -752,24 +750,23 @@ public class SecureNioChannel extends NioChannel {
 	 * @param capacity
 	 */
 	private void initBuffers(int capacity) {
-		if(this.netInBuffer == null) {
+		if (this.netInBuffer == null) {
 			this.netInBuffer = ByteBuffer.allocateDirect(capacity);
 		} else {
 			this.netInBuffer.clear();
 		}
-		if(this.netOutBuffer == null) {
+		if (this.netOutBuffer == null) {
 			this.netOutBuffer = ByteBuffer.allocateDirect(capacity);
 		} else {
 			this.netOutBuffer.clear();
 		}
-		if(getBuffer() == null || getBuffer().capacity() < capacity) {
+		if (getBuffer() == null || getBuffer().capacity() < capacity) {
 			setBuffer(ByteBuffer.allocateDirect(capacity));
 		} else {
 			getBuffer().clear();
 		}
 	}
-	
-	
+
 	/**
 	 * Check if the handshake was done or not yet
 	 * 
