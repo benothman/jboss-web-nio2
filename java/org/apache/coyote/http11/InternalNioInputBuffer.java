@@ -368,20 +368,19 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		System.out.println("FILL - STEP 1");
 		if (channel.getBuffer().hasRemaining()) {
 			System.out.println("FILL - STEP 1.1");
-			tmp = channel.getBuffer().flip().limit();
+			tmp = channel.getBuffer().flip().remaining();
 
 			byte data[] = new byte[tmp];
 			channel.getBuffer().get(data);
 			channel.getBuffer().flip();
 			String str = new String(data);
 			System.out.println("special data (tmp = " + tmp + ")-> " + str);
-			System.out.println("--> CRLF : " + str.endsWith("\r\n"));
-			System.out.println("--> CR : " + str.endsWith("\r"));
-			System.out.println("--> LF : " + str.endsWith("\n"));
 
 			bbuf.put(channel.getBuffer());
 			channel.reset();
 		}
+		
+		int x = bbuf.position();
 		
 		System.out.println("FILL - STEP 2");
 
@@ -390,7 +389,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-			System.out.println("FILL - STEP 2.1.1, TMP = " + tmp);
+			System.out.println("FILL - STEP 2.1.1, TMP = " + tmp+", x = " + x);
 			if (tmp <= 1) {
 				System.out.println("FILL - STEP 2.1.1.1");
 
