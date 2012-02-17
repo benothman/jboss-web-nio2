@@ -250,7 +250,7 @@ public class SecureNioChannel extends NioChannel {
 		}
 		// Perform an asynchronous read operation using the internal buffer
 
-		this.channel.read(this.netInBuffer, timeout, unit, attachment,
+		this.channel.read(getBuffer(), timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
 					@Override
@@ -793,11 +793,6 @@ public class SecureNioChannel extends NioChannel {
 			this.netOutBuffer = ByteBuffer.allocateDirect(capacity);
 		} else {
 			this.netOutBuffer.clear();
-		}
-		if (getBuffer() == null || getBuffer().capacity() < capacity) {
-			setBuffer(ByteBuffer.allocateDirect(capacity));
-		} else {
-			getBuffer().clear();
 		}
 	}
 
