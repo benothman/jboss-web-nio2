@@ -27,17 +27,20 @@ import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.AlreadyBoundException;
+import java.nio.channels.AlreadyConnectedException;
 import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.ConnectionPendingException;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
 import java.nio.channels.ShutdownChannelGroupException;
+import java.nio.channels.UnresolvedAddressException;
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.nio.channels.WritePendingException;
 import java.nio.channels.spi.AsynchronousChannelProvider;
@@ -51,28 +54,98 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * {@code NioChannel}
  * 
- * An asynchronous channel that can read and write bytes.
- * 
  * <p>
- * Some channels may not allow more than one read or write to be outstanding at
- * any given time. If a thread invokes a read method before a previous read
- * operation has completed then a {@link ReadPendingException} will be thrown.
- * Similarly, if a write method is invoked before a previous write has completed
- * then {@link WritePendingException} is thrown. Whether or not other kinds of
- * I/O operations may proceed concurrently with a read operation depends upon
- * the type of the channel.
+ * An asynchronous channel for stream-oriented connecting sockets.
  * </p>
  * <p>
- * Note that {@link java.nio.ByteBuffer ByteBuffers} are not safe for use by
- * multiple concurrent threads. When a read or write operation is initiated then
- * care must be taken to ensure that the buffer is not accessed until the
- * operation completes.
+ * NIO Asynchronous socket channels are created in one of two ways. A
+ * newly-created {@code NioChannel} is created by invoking one of the
+ * {@link #open open} methods defined by this class. A newly-created channel is
+ * open but not yet connected. A connected {@code NioChannel} is created when a
+ * connection is made to the socket of an
+ * {@link AsynchronousServerSocketChannel}. It is not possible to create an
+ * asynchronous socket channel for an arbitrary, pre-existing
+ * {@link java.net.Socket socket}.
+ * </p>
+ * <p>
+ * A newly-created channel is connected by invoking its {@link #connect connect}
+ * method; once connected, a channel remains connected until it is closed.
+ * Whether or not a socket channel is connected may be determined by invoking
+ * its {@link #getRemoteAddress getRemoteAddress} method. An attempt to invoke
+ * an I/O operation upon an unconnected channel will cause a
+ * {@link NotYetConnectedException} to be thrown.
+ * </p>
+ * <p>
+ * Channels of this type are safe for use by multiple concurrent threads. They
+ * support concurrent reading and writing, though at most one read operation and
+ * one write operation can be outstanding at any time. If a thread initiates a
+ * read operation before a previous read operation has completed then a
+ * {@link ReadPendingException} will be thrown. Similarly, an attempt to
+ * initiate a write operation before a previous write has completed will throw a
+ * {@link WritePendingException}.
+ * </p>
+ * <p>
+ * Socket options are configured using the
+ * {@link #setOption(SocketOption,Object) setOption} method. NIO Asynchronous
+ * socket channels support the following options:
+ * </p>
+ * <blockquote>
+ * <table border>
+ * <tr>
+ * <th>Option Name</th>
+ * <th>Description</th>
+ * </tr>
+ * <tr>
+ * <td> {@link java.net.StandardSocketOptions#SO_SNDBUF SO_SNDBUF}</td>
+ * <td>The size of the socket send buffer</td>
+ * </tr>
+ * <tr>
+ * <td> {@link java.net.StandardSocketOptions#SO_RCVBUF SO_RCVBUF}</td>
+ * <td>The size of the socket receive buffer</td>
+ * </tr>
+ * <tr>
+ * <td> {@link java.net.StandardSocketOptions#SO_KEEPALIVE SO_KEEPALIVE}</td>
+ * <td>Keep connection alive</td>
+ * </tr>
+ * <tr>
+ * <td> {@link java.net.StandardSocketOptions#SO_REUSEADDR SO_REUSEADDR}</td>
+ * <td>Re-use address</td>
+ * </tr>
+ * <tr>
+ * <td> {@link java.net.StandardSocketOptions#TCP_NODELAY TCP_NODELAY}</td>
+ * <td>Disable the Nagle algorithm</td>
+ * </tr>
+ * </table>
+ * </blockquote> Additional (implementation specific) options may also be
+ * supported.
+ * 
+ * <h4>Timeouts</h4>
+ * 
+ * <p>
+ * The {@link #read(ByteBuffer,long,TimeUnit,Object,CompletionHandler) read} and
+ * {@link #write(ByteBuffer,long,TimeUnit,Object,CompletionHandler) write}
+ * methods defined by this class allow a timeout to be specified when initiating
+ * a read or write operation. If the timeout elapses before an operation
+ * completes then the operation completes with the exception
+ * {@link java.nio.channels.InterruptedByTimeoutException}. A timeout may leave
+ * the channel, or the underlying connection, in an inconsistent state. Where
+ * the implementation cannot guarantee that bytes have not been read from the
+ * channel then it puts the channel into an implementation specific
+ * <em>error state</em>. A subsequent attempt to initiate a {@code read}
+ * operation causes an unspecified runtime exception to be thrown. Similarly if
+ * a {@code write} operation times out and the implementation cannot guarantee
+ * bytes have not been written to the channel then further attempts to
+ * {@code write} to the channel cause an unspecified runtime exception to be
+ * thrown. When a timeout elapses then the state of the
+ * {@link java.nio.ByteBuffer}, or the sequence of buffers, for the I/O
+ * operation is not defined. Buffers should be discarded or at least care must
+ * be taken to ensure that the buffers are not accessed while the channel
+ * remains open. All methods that accept timeout parameters treat values less
+ * than or equal to zero to mean that the I/O operation does not timeout.
  * </p>
  * 
  * Created on Dec 19, 2011 at 11:40:18 AM
  * 
- * @see Channels#newInputStream(AsynchronousByteChannel)
- * @see Channels#newOutputStream(AsynchronousByteChannel)
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 public class NioChannel implements AsynchronousByteChannel {
@@ -223,6 +296,87 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * Connects this channel.
+	 * 
+	 * <p>
+	 * This method initiates an operation to connect this channel. The
+	 * {@code handler} parameter is a completion handler that is invoked when
+	 * the connection is successfully established or connection cannot be
+	 * established. If the connection cannot be established then the channel is
+	 * closed.
+	 * 
+	 * <p>
+	 * This method performs exactly the same security checks as the
+	 * {@link java.net.Socket} class. That is, if a security manager has been
+	 * installed then this method verifies that its
+	 * {@link java.lang.SecurityManager#checkConnect checkConnect} method
+	 * permits connecting to the address and port number of the given remote
+	 * endpoint.
+	 * 
+	 * @param remote
+	 *            The remote address to which this channel is to be connected
+	 * @param attachment
+	 *            The object to attach to the I/O operation; can be {@code null}
+	 * @param handler
+	 *            The handler for consuming the result
+	 * 
+	 * @throws UnresolvedAddressException
+	 *             If the given remote address is not fully resolved
+	 * @throws UnsupportedAddressTypeException
+	 *             If the type of the given remote address is not supported
+	 * @throws AlreadyConnectedException
+	 *             If this channel is already connected
+	 * @throws ConnectionPendingException
+	 *             If a connection operation is already in progress on this
+	 *             channel
+	 * @throws ShutdownChannelGroupException
+	 *             If the channel group has terminated
+	 * @throws SecurityException
+	 *             If a security manager has been installed and it does not
+	 *             permit access to the given remote endpoint
+	 * 
+	 * @see #getRemoteAddress
+	 */
+	public <A> void connect(SocketAddress remote, A attachment,
+			CompletionHandler<Void, ? super A> handler) {
+		this.channel.connect(remote, attachment, handler);
+	}
+
+	/**
+	 * Connects this channel.
+	 * 
+	 * <p>
+	 * This method initiates an operation to connect this channel. This method
+	 * behaves in exactly the same manner as the
+	 * {@link #connect(SocketAddress, Object, CompletionHandler)} method except
+	 * that instead of specifying a completion handler, this method returns a
+	 * {@code Future} representing the pending result. The {@code Future}'s
+	 * {@link Future#get() get} method returns {@code null} on successful
+	 * completion.
+	 * 
+	 * @param remote
+	 *            The remote address to which this channel is to be connected
+	 * 
+	 * @return A {@code Future} object representing the pending result
+	 * 
+	 * @throws UnresolvedAddressException
+	 *             If the given remote address is not fully resolved
+	 * @throws UnsupportedAddressTypeException
+	 *             If the type of the given remote address is not supported
+	 * @throws AlreadyConnectedException
+	 *             If this channel is already connected
+	 * @throws ConnectionPendingException
+	 *             If a connection operation is already in progress on this
+	 *             channel
+	 * @throws SecurityException
+	 *             If a security manager has been installed and it does not
+	 *             permit access to the given remote endpoint
+	 */
+	public Future<Void> connect(SocketAddress remote) {
+		return this.channel.connect(remote);
+	}
+
+	/**
 	 * Reset the internal buffer
 	 */
 	protected void reset() {
@@ -329,6 +483,8 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see java.nio.channels.AsynchronousByteChannel#read(java.nio.ByteBuffer)
+	 * 
+	 * @deprecated (use readBytes(...) instead)
 	 */
 	@Deprecated
 	@Override
@@ -582,16 +738,21 @@ public class NioChannel implements AsynchronousByteChannel {
 			final CompletionHandler<Integer, ? super A> handler) {
 
 		System.out.println("**** " + this + ".awaitRead(...) ****");
-		// reset the flag and the buffer
-		reset();
+		// Clear the internal buffer
+		this.buffer.clear();
 		// Perform an asynchronous read operation using the internal buffer
 		this.channel.read(this.buffer, timeout, unit, attachment, handler);
 	}
 
-	/*
-	 * (non-Javadoc)
+	/**
+	 * Write a sequence of bytes to this channel from the given buffer.
 	 * 
+	 * @param src
+	 *            The buffer from which bytes are to be retrieved
+	 * @return an instance of {@link java.util.concurrent.Future} containing the
+	 *         number of bytes written
 	 * @see java.nio.channels.AsynchronousByteChannel#write(java.nio.ByteBuffer)
+	 * @deprecated (use writeBytes(...) instead)
 	 */
 	@Deprecated
 	@Override

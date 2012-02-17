@@ -94,6 +94,7 @@ public class SecureNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
+	 * @deprecated (use readBytes(...) instead)
 	 */
 	@Deprecated
 	@Override
@@ -124,16 +125,13 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
-		// Prepare the internal buffer for reading
-		// this.netInBuffer.compact();
-
 		int x = super.readBytes(this.netInBuffer, timeout, unit);		
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
 		}
 
-		// the data read
+		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
 		System.out.println(" ------------>> read = " + read);
 
@@ -159,6 +157,7 @@ public class SecureNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer)
+	 * @deprecated (use writeBytes(...) instead)
 	 */
 	@Deprecated
 	@Override
@@ -219,61 +218,6 @@ public class SecureNioChannel extends NioChannel {
 		getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
 		this.sslEngine.closeInbound();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tomcat.util.net.NioChannel#awaitRead(long,
-	 * java.util.concurrent.TimeUnit, java.lang.Object,
-	 * java.nio.channels.CompletionHandler)
-	 */
-	@Override
-	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
-			final CompletionHandler<Integer, ? super A> handler) {
-
-		/*
-		 System.out.println("**** " + this + ".awaitRead(...) ****");
-		// reset the flag and the buffer
-		reset();
-		// Perform an asynchronous read operation using the internal buffer
-		this.channel.read(buffer, timeout, unit, attachment, handler);
-		 */
-		
-		
-		System.out.println("**** " + this + ".awaitRead(...) ****");
-		// reset the flag and the buffer
-		reset();
-		// Perform an asynchronous read operation using the internal buffer
-		this.channel.read(getBuffer(), timeout, unit, attachment, handler);
-		
-		
-		/*
-		this.channel.read(getBuffer(), timeout, unit, attachment,
-				new CompletionHandler<Integer, A>() {
-
-					@Override
-					public void completed(Integer nBytes, A attach) {
-						try {
-							// unwrap the data
-							int read = unwrap(netInBuffer, getBuffer());
-							// Set the flag to true
-							setFlag();
-							// If everything is OK, so complete
-							handler.completed(read, attachment);
-						} catch (Exception e) {
-							// The operation must fails
-							handler.failed(e, attachment);
-						}
-
-					}
-
-					@Override
-					public void failed(Throwable exc, A attach) {
-						handler.failed(exc, attach);
-					}
-				});
-				*/
 	}
 
 	/*
