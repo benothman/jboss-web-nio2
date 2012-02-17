@@ -145,50 +145,6 @@ public class SecureNioChannel extends NioChannel {
 	}
 
 	/**
-	 * {@inheritDoc}
-	 */
-	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
-			final CompletionHandler<Integer, ? super A> handler) {
-
-		System.out.println("**** " + this + ".awaitRead(...) ****");
-		// Clear the internal buffer
-		getBuffer().clear();
-		
-		// Perform an asynchronous read operation using the internal buffer
-		//this.channel.read(getBuffer(), timeout, unit, attachment, handler);
-		
-		
-		this.channel.read(this.netInBuffer, timeout, unit, attachment, new CompletionHandler<Integer, A> (){
-
-			@Override
-			public void completed(Integer nBytes, A attach) {
-				if(nBytes < 0) {
-					handler.failed(new ClosedChannelException(), attach);
-					return;
-				}
-				
-				ByteBuffer bb = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
-
-				try {
-					int read = unwrap(netInBuffer, bb);
-					bb.flip();
-					byte b[] = new byte[bb.limit()];
-					bb.get(b);
-					System.out.println("**** " + SecureNioChannel.this + ".awaitRead(...) --> "+ new String(b)+" ****");
-					
-					handler.completed(read, attach);
-				} catch (Exception e) {
-					failed(e, attach);
-				}
-			}
-
-			@Override
-			public void failed(Throwable exc, A attach) {
-				handler.failed(exc, attach);
-			}});
-	}
-
-	/**
 	 * 
 	 * @param bytes
 	 * @return a String representation of the hexadecimal value

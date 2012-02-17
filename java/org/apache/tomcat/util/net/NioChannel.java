@@ -745,6 +745,28 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * <p>
+	 * Wait for incoming data in a non-blocking mode. The received data will be
+	 * stored by default in the internal buffer (By default, just one byte).
+	 * </p>
+	 * 
+	 * <p>
+	 * This method behaves exactly in the same manner as
+	 * {@link #awaitRead(long, TimeUnit, Object, CompletionHandler)} but without
+	 * a timeout defined.<br/>
+	 * <code>awaitRead(0L, TimeUnit.MILLISECONDS, attachment, handler);</code>
+	 * </p>
+	 * 
+	 * @param attachment
+	 * @param handler
+	 * @see #awaitRead(long, TimeUnit, Object, CompletionHandler)
+	 */
+	public <A> void awaitRead(final A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+		awaitRead(0L, TimeUnit.MILLISECONDS, attachment, handler);
+	}
+
+	/**
 	 * Write a sequence of bytes to this channel from the given buffer.
 	 * 
 	 * @param src
