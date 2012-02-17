@@ -94,6 +94,7 @@ public class SecureNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
+	 * 
 	 * @deprecated (use readBytes(...) instead)
 	 */
 	@Deprecated
@@ -125,7 +126,7 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
-		int x = super.readBytes(this.netInBuffer, timeout, unit);		
+		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
@@ -133,9 +134,58 @@ public class SecureNioChannel extends NioChannel {
 
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
-		System.out.println(" ------------>> read = " + read);
+
+		dst.flip();
+		byte b[] = new byte[dst.limit()];
+		dst.get(b);
+
+		System.out.println(" ------------>> read = " + read + ", request : " + new String(b));
 
 		return read;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+
+		System.out.println("**** " + this + ".awaitRead(...) ****");
+		// Clear the internal buffer
+		getBuffer().clear();
+		
+		// Perform an asynchronous read operation using the internal buffer
+		//this.channel.read(getBuffer(), timeout, unit, attachment, handler);
+		
+		
+		this.channel.read(this.netInBuffer, timeout, unit, attachment, new CompletionHandler<Integer, A> (){
+
+			@Override
+			public void completed(Integer nBytes, A attach) {
+				if(nBytes < 0) {
+					handler.failed(new ClosedChannelException(), attach);
+					return;
+				}
+				
+				ByteBuffer bb = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
+
+				try {
+					int read = unwrap(netInBuffer, bb);
+					bb.flip();
+					byte b[] = new byte[bb.limit()];
+					bb.get(b);
+					System.out.println("**** " + SecureNioChannel.this + ".awaitRead(...) --> "+ new String(b)+" ****");
+					
+					handler.completed(read, attach);
+				} catch (Exception e) {
+					failed(e, attach);
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, A attach) {
+				handler.failed(exc, attach);
+			}});
 	}
 
 	/**
@@ -157,6 +207,7 @@ public class SecureNioChannel extends NioChannel {
 	 * (non-Javadoc)
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer)
+	 * 
 	 * @deprecated (use writeBytes(...) instead)
 	 */
 	@Deprecated
@@ -570,7 +621,7 @@ public class SecureNioChannel extends NioChannel {
 	 * @see javax.net.ssl.SSLSession#invalidate()
 	 */
 	protected void handshake() throws SSLException {
-		if (handshakeComplete()) {
+		if (handshakeComplete) {
 			return;
 		}
 
@@ -582,7 +633,9 @@ public class SecureNioChannel extends NioChannel {
 	}
 
 	/**
+	 * Start a new handshake operation for this channel.
 	 * 
+	 * @see #handshake()
 	 * @throws SSLException
 	 */
 	protected void reHandshake() throws SSLException {
@@ -614,11 +667,8 @@ public class SecureNioChannel extends NioChannel {
 		sslEngine.beginHandshake();
 		handshakeStatus = sslEngine.getHandshakeStatus();
 
-		int step = 0;
 		// Process handshaking message
 		while (!handshakeComplete) {
-
-			System.out.println("STEP : " + (++step) + ", Handshake status : " + handshakeStatus);
 
 			switch (handshakeStatus) {
 			case NEED_UNWRAP:
@@ -643,7 +693,6 @@ public class SecureNioChannel extends NioChannel {
 						clientNetData.compact();
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
-						System.out.println("NEED_UNWRAP ---> handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 							// Execute tasks if we need to
 							tryTasks();
@@ -661,8 +710,6 @@ public class SecureNioChannel extends NioChannel {
 				SSLEngineResult res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
 				this.netOutBuffer.flip();
 				handshakeStatus = res.getHandshakeStatus();
-				System.out.println(this + " NEED_WRAP ----> res.getStatus() = " + res.getStatus());
-				System.out.println("----> NEED_WRAP-1 : HandshakeStatus = " + handshakeStatus);
 
 				if (res.getStatus() == Status.OK) {
 					// Execute tasks if we need to
@@ -681,8 +728,6 @@ public class SecureNioChannel extends NioChannel {
 							+ " during handshake WRAP.");
 				}
 
-				System.out.println("----> NEED_WRAP-2 : HandshakeStatus = " + handshakeStatus);
-
 				break;
 			case NEED_TASK:
 				handshakeStatus = tasks();
@@ -691,21 +736,19 @@ public class SecureNioChannel extends NioChannel {
 			case NOT_HANDSHAKING:
 				throw new SSLHandshakeException("NOT_HANDSHAKING during handshake");
 			case FINISHED:
-				System.out.println("######### Handshake complete #########");
 				handshakeComplete = true;
 				break;
 			}
 		}
 
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
-
-		System.out.println(this + " END OF HANDSHAKE PROCESS, HANDSHAKE STATUS : "
-				+ handshakeStatus);
 	}
 
 	/**
+	 * Perform tasks, if any, during the handshake phase
 	 * 
-	 * @return
+	 * @return The handshake status (
+	 *         {@link javax.net.ssl.SSLEngineResult.HandshakeStatus})
 	 */
 	private SSLEngineResult.HandshakeStatus tasks() {
 		Runnable task = null;
