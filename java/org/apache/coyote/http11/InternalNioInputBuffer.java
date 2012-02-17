@@ -362,59 +362,31 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalInputBuffer#fill()
 	 */
 	protected boolean fill() throws IOException {
-		int nRead = 0, tmp = 0;
-
+		int nRead = 0;
 		bbuf.clear();
-		System.out.println("FILL - STEP 1");
-		/*
-		if (channel.getBuffer().hasRemaining()) {
-			System.out.println("FILL - STEP 1.1");
-			channel.getBuffer().flip();
-			byte data[] = new byte[channel.getBuffer().limit()];
-			channel.getBuffer().get(data);
-			tmp = data.length;
-						
-			String str = new String(data);
-			System.out.println("special data (tmp = " + tmp + ")-> " + str);
-			
-			
-			bbuf.put(data);
-			channel.reset();
-		}
-		*/
-		int x = bbuf.position();
-		
-		System.out.println("FILL - STEP 2");
 
 		if (parsingHeader) {
-			System.out.println("FILL - STEP 2.1");
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-			System.out.println("FILL - STEP 2.1.1, TMP = " + tmp+", x = " + x);
-			if (tmp <= 1) {
-				System.out.println("FILL - STEP 2.1.1.1");
 
-				if (nonBlocking) {
-					System.out.println("FILL - STEP 2.1.1.2 - NON_BLOCKING");
-					nonBlockingRead(bbuf, readTimeout, unit);
+			if (nonBlocking) {
+				nonBlockingRead(bbuf, readTimeout, unit);
+			} else {
+				nRead = blockingRead(bbuf, readTimeout, unit);
+				if (nRead > 0) {
+					bbuf.flip();
+					bbuf.get(buf, pos, nRead);
+					lastValid = pos + nRead;
 				} else {
-					System.out.println("FILL - STEP 2.1.1.2 - BLOCKING");
-					nRead = blockingRead(bbuf, readTimeout, unit);
-					if (nRead > 0) {
-						nRead += tmp;
-						bbuf.flip();
-						bbuf.get(buf, pos, nRead);
-						lastValid = pos + nRead;
+					if ((-nRead) == Status.EAGAIN) {
+						return false;
 					} else {
-						if ((-nRead) == Status.EAGAIN) {
-							return false;
-						} else {
-							throw new IOException(sm.getString("iib.failedread"));
-						}
+						throw new IOException(sm.getString("iib.failedread"));
 					}
 				}
 			}
+
 		} else {
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
@@ -427,14 +399,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 			pos = end;
 			lastValid = pos;
-			
+
 			if (nonBlocking) {
 				nonBlockingRead(bbuf, readTimeout, unit);
 			} else {
 				nRead = blockingRead(bbuf, readTimeout, unit);
-
 				if (nRead > 0) {
-					nRead += tmp;
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
 					lastValid = pos + nRead;
