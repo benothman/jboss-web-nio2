@@ -196,7 +196,6 @@ public class SecureNioChannel extends NioChannel {
 	 * long, java.util.concurrent.TimeUnit)
 	 */
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
-		System.out.println(this + " ---> writeBytes()");
 		// Clear the output buffer
 		this.netOutBuffer.compact();
 		// the number of bytes written

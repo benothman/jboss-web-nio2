@@ -204,15 +204,13 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		this.channelList = new ChannelList(getMaxThreads());
-		ExecutorService executorService;
-		if (this.executor != null) {
-			executorService = (ExecutorService) this.executor;
-		} else {
-			// Create the executor service
-			executorService = Executors.newFixedThreadPool(getMaxThreads(), this.threadFactory);
-			// initialize the endpoint executor
-			setExecutor(executorService);
+
+		// If the executor is not set, create it with a fixed thread pool
+		if (this.executor == null) {
+			setExecutor(Executors.newFixedThreadPool(getMaxThreads(), this.threadFactory));
 		}
+
+		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
 
@@ -383,7 +381,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			serverSocketChannelFactory.handshake(channel);
 			return true;
 		} catch (Throwable t) {
-			logger.error(t.getMessage(), t);
+			// logger.error(t.getMessage(), t);
 			if (logger.isDebugEnabled()) {
 				if (t instanceof SSLHandshakeException) {
 					logger.debug(sm.getString("endpoint.err.handshake"), t);
