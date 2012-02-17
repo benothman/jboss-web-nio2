@@ -38,15 +38,18 @@ import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
 
 import org.apache.tomcat.util.net.NioChannel;
 
 /**
  * {@code SecureNioChannel}
- * 
+ * <p>
+ * This class is an extension of the class {@link NioChannel} to allow using
+ * secure communication channels.
+ * </p>
  * Created on Jan 3, 2012 at 3:43:44 PM
  * 
+ * @see javax.net.ssl.SSLEngine
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 public class SecureNioChannel extends NioChannel {
@@ -92,6 +95,7 @@ public class SecureNioChannel extends NioChannel {
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer)
 	 */
+	@Deprecated
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
 		throw new RuntimeException("Operation not supported for class " + getClass().getName()
@@ -122,7 +126,17 @@ public class SecureNioChannel extends NioChannel {
 		System.out.println(this + " ---> readBytes()");
 		// Prepare the internal buffer for reading
 		// this.netInBuffer.compact();
-		int x = this.channel.read(this.netInBuffer).get(timeout, unit);
+
+		int x = 0;
+		getBuffer().flip();
+		if (getBuffer().hasRemaining()) {
+			System.out.println(this + " ---> x = " + x);
+			x += getBuffer().remaining();
+			this.netInBuffer.put(getBuffer());
+			reset();
+		}
+
+		x = this.channel.read(this.netInBuffer).get(timeout, unit);
 
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
@@ -156,6 +170,7 @@ public class SecureNioChannel extends NioChannel {
 	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer)
 	 */
+	@Deprecated
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
 		throw new RuntimeException("Operation not supported for class " + getClass().getName()

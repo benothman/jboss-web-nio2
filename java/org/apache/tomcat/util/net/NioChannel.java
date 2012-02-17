@@ -29,7 +29,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AlreadyBoundException;
 import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -49,8 +51,28 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * {@code NioChannel}
  * 
+ * An asynchronous channel that can read and write bytes.
+ * 
+ * <p>
+ * Some channels may not allow more than one read or write to be outstanding at
+ * any given time. If a thread invokes a read method before a previous read
+ * operation has completed then a {@link ReadPendingException} will be thrown.
+ * Similarly, if a write method is invoked before a previous write has completed
+ * then {@link WritePendingException} is thrown. Whether or not other kinds of
+ * I/O operations may proceed concurrently with a read operation depends upon
+ * the type of the channel.
+ * </p>
+ * <p>
+ * Note that {@link java.nio.ByteBuffer ByteBuffers} are not safe for use by
+ * multiple concurrent threads. When a read or write operation is initiated then
+ * care must be taken to ensure that the buffer is not accessed until the
+ * operation completes.
+ * </p>
+ * 
  * Created on Dec 19, 2011 at 11:40:18 AM
  * 
+ * @see Channels#newInputStream(AsynchronousByteChannel)
+ * @see Channels#newOutputStream(AsynchronousByteChannel)
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 public class NioChannel implements AsynchronousByteChannel {
@@ -282,10 +304,22 @@ public class NioChannel implements AsynchronousByteChannel {
 		return this.channel.isOpen();
 	}
 
-	/*
-	 * (non-Javadoc)
+	/**
+	 * Closes this channel.
 	 * 
-	 * @see java.nio.channels.Channel#close()
+	 * <p>
+	 * Any outstanding asynchronous operations upon this channel will complete
+	 * with the exception {@link AsynchronousCloseException}. After a channel is
+	 * closed, further attempts to initiate asynchronous I/O operations complete
+	 * immediately with cause {@link ClosedChannelException}.
+	 * </p>
+	 * <p>
+	 * This method otherwise behaves exactly as specified by the
+	 * {@link java.nio.channels.Channel} interface.
+	 * </p>
+	 * 
+	 * @throws IOException
+	 *             If an I/O error occurs
 	 */
 	@Override
 	public void close() throws IOException {
@@ -293,7 +327,14 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * Try to close this channel. If the channel is already closed or the
+	 * {@code force} parameter is false, nothing will happen. This method have
+	 * an impact only and only if the channel is open and the {@code force}
+	 * parameter is <tt>true</tt>
+	 * 
 	 * @param force
+	 *            a boolean value indicating if we need to force closing the
+	 *            channel
 	 * @throws IOException
 	 */
 	public void close(boolean force) throws IOException {
@@ -307,6 +348,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * 
 	 * @see java.nio.channels.AsynchronousByteChannel#read(java.nio.ByteBuffer)
 	 */
+	@Deprecated
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
 		return this.channel.read(dst);
@@ -553,6 +595,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * 
 	 * @see java.nio.channels.AsynchronousByteChannel#write(java.nio.ByteBuffer)
 	 */
+	@Deprecated
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
 		return this.channel.write(src);

@@ -366,6 +366,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 		bbuf.clear();
 		System.out.println("FILL - STEP 1");
+		/*
 		if (channel.getBuffer().hasRemaining()) {
 			System.out.println("FILL - STEP 1.1");
 			channel.getBuffer().flip();
@@ -380,7 +381,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			bbuf.put(data);
 			channel.reset();
 		}
-		
+		*/
 		int x = bbuf.position();
 		
 		System.out.println("FILL - STEP 2");
