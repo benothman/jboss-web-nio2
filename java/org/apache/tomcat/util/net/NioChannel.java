@@ -81,8 +81,6 @@ public class NioChannel implements AsynchronousByteChannel {
 	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
-	private boolean flag;
-	private String name;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
@@ -100,7 +98,6 @@ public class NioChannel implements AsynchronousByteChannel {
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
 		this.buffer = ByteBuffer.allocateDirect(1);
-		this.name = getClass().getName() + "[" + getId() + "]";
 	}
 
 	/**
@@ -226,10 +223,9 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
-	 * Reset the flag and the internal buffer
+	 * Reset the internal buffer
 	 */
-	public void reset() {
-		this.flag = false;
+	protected void reset() {
 		this.buffer.clear();
 	}
 
@@ -242,23 +238,9 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
-	 * Set the flag to true
-	 */
-	protected void setFlag() {
-		this.flag = true;
-	}
-
-	/**
-	 * @return the value of the <tt>flag</tt>
-	 */
-	public boolean flag() {
-		return this.flag;
-	}
-
-	/**
 	 * @return the internal buffer
 	 */
-	public ByteBuffer getBuffer() {
+	protected ByteBuffer getBuffer() {
 		return this.buffer;
 	}
 
@@ -282,7 +264,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @return the name
 	 */
 	public String getName() {
-		return this.name;
+		return getClass().getName() + "[" + getId() + "]";
 	}
 
 	/**
@@ -351,11 +333,17 @@ public class NioChannel implements AsynchronousByteChannel {
 	@Deprecated
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
+		getBuffer().flip();
+		dst.put(getBuffer());
+		getBuffer().clear();
+
 		return this.channel.read(dst);
 	}
 
 	/**
-	 * Read a sequence of bytes in blocking mode
+	 * Read a sequence of bytes in blocking mode. This method works exactly in
+	 * the same way as
+	 * <code>readBytes(dst, Integer.MAX_VALUE, TimeUnit.MILLISECONDS)</code>.
 	 * 
 	 * @param dst
 	 *            the buffer containing the read bytes
@@ -365,7 +353,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @throws InterruptedException
 	 */
 	public int readBytes(ByteBuffer dst) throws Exception {
-		return read(dst).get();
+		return this.readBytes(dst, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
 	}
 
 	/**
@@ -385,7 +373,11 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @throws InterruptedException
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
-		return read(dst).get(timeout, unit);
+		this.buffer.flip();
+		int x = this.buffer.remaining();
+		dst.put(this.buffer);
+		this.buffer.clear();
+		return (x + this.channel.read(dst).get(timeout, unit));
 	}
 
 	/*
@@ -396,7 +388,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	@Override
 	public <A> void read(ByteBuffer dst, A attachment, CompletionHandler<Integer, ? super A> handler) {
-		this.channel.read(dst, attachment, handler);
+		this.read(dst, 0L, TimeUnit.MILLISECONDS, attachment, handler);
 	}
 
 	/**
@@ -445,6 +437,9 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			CompletionHandler<Integer, ? super A> handler) {
+		getBuffer().flip();
+		dst.put(getBuffer());
+		getBuffer().clear();
 		this.channel.read(dst, timeout, unit, attachment, handler);
 	}
 
@@ -532,19 +527,40 @@ public class NioChannel implements AsynchronousByteChannel {
 	 *             If the channel group has terminated
 	 */
 	public <A> void read(ByteBuffer[] dsts, int offset, int length, long timeout, TimeUnit unit,
-			A attachment, CompletionHandler<Long, ? super A> handler) {
-		this.channel.read(dsts, offset, length, timeout, unit, attachment, handler);
+			A attachment, final CompletionHandler<Long, ? super A> handler) {
+		// Retrieve bytes, if any, from the internal buffer
+		getBuffer().flip();
+		final int x = this.buffer.remaining();
+		dsts[0].put(this.buffer);
+		this.buffer.clear();
+
+		this.channel.read(dsts, offset, length, timeout, unit, attachment,
+				new CompletionHandler<Long, A>() {
+
+					@Override
+					public void completed(Long result, A attach) {
+						handler.completed(result + x, attach);
+					}
+
+					@Override
+					public void failed(Throwable exc, A attach) {
+						handler.failed(exc, attach);
+					}
+				});
 	}
 
 	/**
 	 * <p>
 	 * Wait for incoming data in a non-blocking mode. The received data will be
-	 * stored by default in the internal buffer (By default, only one byte). The
-	 * user should retrieve this byte first and complete the read operation.
-	 * This method works like a listener for the incoming data on this channel.
+	 * stored by default in the internal buffer (By default, just one byte).
 	 * </p>
 	 * <p>
-	 * Note: The channel is reset (flag, buffer) before the read operation
+	 * The byte read using this will be available for the next read operation.
+	 * That is, When attempting to read after receiving a read notification
+	 * saying that there is data available on this stream, the byte will be
+	 * first copied in the destination byte buffer and then perform the read
+	 * operation which may be a blocking or non-blocking operation. So the user
+	 * does not have to do that manually.
 	 * </p>
 	 * 
 	 * @param timeout
@@ -566,28 +582,10 @@ public class NioChannel implements AsynchronousByteChannel {
 			final CompletionHandler<Integer, ? super A> handler) {
 
 		System.out.println("**** " + this + ".awaitRead(...) ****");
-
 		// reset the flag and the buffer
 		reset();
-		if (handler == null) {
-			throw new NullPointerException("null handler parameter");
-		}
-
 		// Perform an asynchronous read operation using the internal buffer
-		read(buffer, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
-
-			@Override
-			public void completed(Integer result, A attach) {
-				// Set the flag to true
-				setFlag();
-				handler.completed(result, attach);
-			}
-
-			@Override
-			public void failed(Throwable exc, A attach) {
-				handler.failed(exc, attach);
-			}
-		});
+		this.channel.read(this.buffer, timeout, unit, attachment, handler);
 	}
 
 	/*
@@ -602,23 +600,37 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
-	 * Write a sequence of bytes in blocking mode
+	 * Writes a sequence of bytes to this channel from the given buffer.
 	 * 
-	 * @param dst
-	 *            the buffer containing the bytes to write
-	 * @return the number of bytes written
-	 * @throws Exception
+	 * <p>
+	 * This method initiates an asynchronous write operation to write a sequence
+	 * of bytes to this channel from the given buffer. The method behaves in
+	 * exactly the same manner as the
+	 * {@link #writeBytes(ByteBuffer, long, TimeUnit)} with
+	 * {@link java.lang.Integer#MAX_VALUE} as a timeout and
+	 * {@link java.util.concurrent.TimeUnit#MILLISECONDS} as a time unit.
+	 * 
+	 * @param src
+	 *            The buffer from which bytes are to be retrieved
+	 * 
+	 * @return The number of bytes written
+	 * @see #writeBytes(ByteBuffer, long, TimeUnit)
+	 * @throws WritePendingException
+	 *             If the channel does not allow more than one write to be
+	 *             outstanding and a previous write has not completed
 	 * @throws ExecutionException
 	 * @throws InterruptedException
+	 * @throws Exception
+	 *             If any other type of errors occurs
 	 */
-	public int writeBytes(ByteBuffer dst) throws Exception {
-		return write(dst).get();
+	public int writeBytes(ByteBuffer src) throws Exception {
+		return writeBytes(src, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
 	}
 
 	/**
 	 * Write a sequence of bytes in blocking mode
 	 * 
-	 * @param dst
+	 * @param src
 	 *            the buffer containing the bytes to write
 	 * @param timeout
 	 *            the read timeout
@@ -630,8 +642,8 @@ public class NioChannel implements AsynchronousByteChannel {
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public int writeBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
-		return write(dst).get(timeout, unit);
+	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
+		return this.channel.write(src).get(timeout, unit);
 	}
 
 	/*
@@ -643,7 +655,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	@Override
 	public <A> void write(ByteBuffer src, A attachment,
 			CompletionHandler<Integer, ? super A> handler) {
-		this.channel.write(src, attachment, handler);
+		write(src, 0L, TimeUnit.MILLISECONDS, attachment, handler);
 	}
 
 	/**

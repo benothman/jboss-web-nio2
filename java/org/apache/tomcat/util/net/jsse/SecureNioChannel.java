@@ -127,12 +127,7 @@ public class SecureNioChannel extends NioChannel {
 		// Prepare the internal buffer for reading
 		// this.netInBuffer.compact();
 
-		getBuffer().flip();
-		this.netInBuffer.put(getBuffer());
-		getBuffer().clear();
-
-		int x = this.channel.read(this.netInBuffer).get(timeout, unit);
-
+		int x = super.readBytes(this.netInBuffer, timeout, unit);		
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
@@ -204,7 +199,7 @@ public class SecureNioChannel extends NioChannel {
 
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
-			int x = this.channel.write(netOutBuffer).get(timeout, unit);
+			int x = this.channel.write(this.netOutBuffer).get(timeout, unit);
 			if (x < 0) {
 				return -1;
 			}
@@ -221,7 +216,7 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public void close() throws IOException {
 		super.close();
-		// getSSLSession().invalidate();
+		getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
 		this.sslEngine.closeInbound();
 	}
@@ -236,15 +231,20 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		System.out.println("**** " + this + ".awaitRead(...) ****");
 
+		/*
+		 System.out.println("**** " + this + ".awaitRead(...) ****");
 		// reset the flag and the buffer
 		reset();
-		if (handler == null) {
-			throw new NullPointerException("null handler parameter");
-		}
 		// Perform an asynchronous read operation using the internal buffer
-
+		this.channel.read(buffer, timeout, unit, attachment, handler);
+		 */
+		
+		
+		System.out.println("**** " + this + ".awaitRead(...) ****");
+		// reset the flag and the buffer
+		reset();
+		// Perform an asynchronous read operation using the internal buffer
 		this.channel.read(getBuffer(), timeout, unit, attachment, handler);
 		
 		
@@ -299,6 +299,9 @@ public class SecureNioChannel extends NioChannel {
 	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
+		getBuffer().flip();
+		this.netInBuffer.put(getBuffer());
+		reset();
 		this.channel.read(this.netInBuffer, timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
@@ -350,6 +353,9 @@ public class SecureNioChannel extends NioChannel {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
 		}
 
+		getBuffer().flip();
+		netInBuffers[0].put(getBuffer());
+		reset();
 		super.read(netInBuffers, 0, length, timeout, unit, attachment,
 				new CompletionHandler<Long, A>() {
 
