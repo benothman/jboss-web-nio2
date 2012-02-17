@@ -127,16 +127,11 @@ public class SecureNioChannel extends NioChannel {
 		// Prepare the internal buffer for reading
 		// this.netInBuffer.compact();
 
-		int x = 0;
 		getBuffer().flip();
-		if (getBuffer().hasRemaining()) {
-			System.out.println(this + " ---> x = " + x);
-			x += getBuffer().remaining();
-			this.netInBuffer.put(getBuffer());
-			reset();
-		}
+		this.netInBuffer.put(getBuffer());
+		getBuffer().clear();
 
-		x = this.channel.read(this.netInBuffer).get(timeout, unit);
+		int x = this.channel.read(this.netInBuffer).get(timeout, unit);
 
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
@@ -250,6 +245,10 @@ public class SecureNioChannel extends NioChannel {
 		}
 		// Perform an asynchronous read operation using the internal buffer
 
+		this.channel.read(getBuffer(), timeout, unit, attachment, handler);
+		
+		
+		/*
 		this.channel.read(getBuffer(), timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
@@ -274,6 +273,7 @@ public class SecureNioChannel extends NioChannel {
 						handler.failed(exc, attach);
 					}
 				});
+				*/
 	}
 
 	/*
