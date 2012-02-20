@@ -127,6 +127,10 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
+
+		System.out.println(this + " ---> netInBuffer.hasRemaining() = "
+				+ this.netInBuffer.hasRemaining());
+
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
@@ -169,9 +173,8 @@ public class SecureNioChannel extends NioChannel {
 	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
-		getBuffer().flip();
-		this.netInBuffer.put(getBuffer());
-		reset();
+		this.reset(this.netInBuffer);
+
 		this.channel.read(this.netInBuffer, timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
@@ -228,9 +231,7 @@ public class SecureNioChannel extends NioChannel {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
 		}
 
-		getBuffer().flip();
-		netInBuffers[0].put(getBuffer());
-		reset();
+		this.reset(netInBuffers[0]);
 		super.read(netInBuffers, 0, length, timeout, unit, attachment,
 				new CompletionHandler<Long, A>() {
 
@@ -338,6 +339,7 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	@Override
 	public void close() throws IOException {
+
 		super.close();
 		// getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
@@ -643,8 +645,9 @@ public class SecureNioChannel extends NioChannel {
 				// clientNetData.clear();
 				// }
 
-				System.out.println("NEED_UNWRAP -->clientNetData.position() ===> " + clientNetData.position());
-				
+				System.out.println("NEED_UNWRAP -->clientNetData.position() ===> "
+						+ clientNetData.position());
+
 				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
 				int nBytes = this.channel.read(clientNetData).get();
 				System.out
