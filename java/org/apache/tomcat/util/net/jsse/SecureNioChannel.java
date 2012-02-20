@@ -656,7 +656,7 @@ public class SecureNioChannel extends NioChannel {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
 					boolean cont = false;
-					clientAppData.compact();
+					clientAppData.clear();
 					// Loop while we can perform pure SSLEngine data
 					do {
 						// Prepare the buffer with the incoming data
