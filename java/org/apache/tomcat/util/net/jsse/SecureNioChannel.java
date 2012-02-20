@@ -655,13 +655,20 @@ public class SecureNioChannel extends NioChannel {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
 					boolean cont = false;
+					clientAppData.compact();
 					// Loop while we can perform pure SSLEngine data
 					do {
 						// Prepare the buffer with the incoming data
 						this.netInBuffer.flip();
 						// Call unwrap
-						SSLEngineResult res = sslEngine.unwrap(this.netInBuffer, clientAppData);						
-						System.out.println(this + " --> UNWRAP STEP - " + (step++));
+						SSLEngineResult res = sslEngine.unwrap(this.netInBuffer, clientAppData);
+						System.out.println(this + " --> UNWRAP STEP " + (step++));
+						clientAppData.flip();
+						byte b[] = new byte[clientAppData.limit()];
+						clientAppData.get(b);
+						System.out.println("#### UNWRAP result -----> " + new String(b));
+						
+						
 						
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
