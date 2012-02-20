@@ -140,7 +140,8 @@ public class SecureNioChannel extends NioChannel {
 		byte b[] = new byte[dst.limit()];
 		dst.get(b);
 
-		System.out.println(" ------------>> read = " + read + ", request : " + new String(b));
+		System.out.println(" ------------>> read = " + read);
+		System.out.println(new String(b));
 
 		return read;
 	}
@@ -338,9 +339,9 @@ public class SecureNioChannel extends NioChannel {
 	@Override
 	public void close() throws IOException {
 		super.close();
-		//getSSLSession().invalidate();
+		// getSSLSession().invalidate();
 		// The closeOutbound method will be called automatically
-		//this.sslEngine.closeInbound();
+		// this.sslEngine.closeInbound();
 	}
 
 	/*
@@ -644,9 +645,18 @@ public class SecureNioChannel extends NioChannel {
 
 				int nBytes = this.channel.read(clientNetData).get();
 				if (nBytes < 0) {
-					throw new IOException(this + " NEED_UNWRAP : EOF encountered during handshake.");
+					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
 
+					clientNetData.flip();
+					byte b[] = new byte[clientNetData.limit()];
+					clientNetData.get(b);
+					System.out.println("NEED_UNWRAP ---->>> 1 - " + new String(b));
+					System.out.println("NEED_UNWRAP ---->>> 2 - " + bytesToHexString(b));
+					
+					
+					
+					
 					boolean cont = false;
 					// Loop while we can perform pure SSLEngine data
 					do {
@@ -673,10 +683,14 @@ public class SecureNioChannel extends NioChannel {
 			case NEED_WRAP:
 				this.netInBuffer.clear();
 				this.netOutBuffer.clear();
-				SSLEngineResult res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
-				this.netOutBuffer.flip();
-				handshakeStatus = res.getHandshakeStatus();
+				SSLEngineResult res = null;
+				do {
+					res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
+					handshakeStatus = res.getHandshakeStatus();
+				} while (handshakeStatus == HandshakeStatus.NEED_WRAP);
 
+				this.netOutBuffer.flip();
+				
 				if (res.getStatus() == Status.OK) {
 					// Execute tasks if we need to
 					tryTasks();
@@ -685,7 +699,7 @@ public class SecureNioChannel extends NioChannel {
 						if (this.channel.write(this.netOutBuffer).get() < 0) {
 							// Handle closed channel
 							throw new IOException(this
-									+ " NEED_WRAP : EOF encountered during handshake.");
+									+ " : EOF encountered during handshake WRAP.");
 						}
 					}
 				} else {
