@@ -128,8 +128,8 @@ public class SecureNioChannel extends NioChannel {
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
 
-		System.out.println(this + " ---> netInBuffer.hasRemaining() = "
-				+ this.netInBuffer.hasRemaining());
+		System.out.println(this + " ---> netInBuffer.position() = "
+				+ this.netInBuffer.position());
 
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
@@ -649,23 +649,22 @@ public class SecureNioChannel extends NioChannel {
 						+ clientNetData.position());
 
 				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
-				int nBytes = this.channel.read(clientNetData).get();
+				int nBytes = this.channel.read(this.netInBuffer).get();
 				System.out
 						.println("NEED_UNWRAP --> End Read from channel " + this + " : " + nBytes);
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
-
 					boolean cont = false;
 					// Loop while we can perform pure SSLEngine data
 					do {
 						// Prepare the buffer with the incoming data
-						clientNetData.flip();
+						this.netInBuffer.flip();
 						// Call unwrap
-						SSLEngineResult res = sslEngine.unwrap(clientNetData, clientAppData);
+						SSLEngineResult res = sslEngine.unwrap(this.netInBuffer, clientAppData);
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
-						clientNetData.compact();
+						this.netInBuffer.compact();
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
