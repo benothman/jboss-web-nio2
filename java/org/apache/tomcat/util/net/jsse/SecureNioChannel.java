@@ -673,13 +673,14 @@ public class SecureNioChannel extends NioChannel {
 						this.netInBuffer.compact();
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
+						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = " + res.getStatus());
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 							// Execute tasks if we need to
 							tryTasks();
 						}
 						// Perform another unwrap?
 						cont = res.getStatus() == SSLEngineResult.Status.OK
-								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP;
+								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP && this.netInBuffer.position() > 0;
 					} while (cont);
 				}
 
