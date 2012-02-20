@@ -643,7 +643,7 @@ public class SecureNioChannel extends NioChannel {
 				// clientNetData.clear();
 				// }
 
-				System.out.println("clientNetData.position() ===> " + clientNetData.position());
+				System.out.println("NEED_UNWRAP -->clientNetData.position() ===> " + clientNetData.position());
 				
 				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
 				int nBytes = this.channel.read(clientNetData).get();
@@ -673,13 +673,6 @@ public class SecureNioChannel extends NioChannel {
 						cont = res.getStatus() == SSLEngineResult.Status.OK
 								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP;
 					} while (cont);
-
-					clientAppData.flip();
-					System.out.println(" HANDSHAKE NEED_UNWRAP  --> clientAppData.limit() : "
-							+ clientAppData.limit());
-					byte b[] = new byte[clientAppData.limit()];
-					clientAppData.get(b);
-					System.out.println("HANDSHAKE - NEED_UNWRAP ---->>> " + new String(b));
 				}
 
 				break;
