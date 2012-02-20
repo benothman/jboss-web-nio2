@@ -127,15 +127,13 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
-
-		System.out.println(this + " ---> netInBuffer.position() = " + this.netInBuffer.position());
-
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
 		}
 
+		this.netInBuffer.flip();
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
 
@@ -682,8 +680,7 @@ public class SecureNioChannel extends NioChannel {
 						}
 						// Perform another unwrap?
 						cont = res.getStatus() == SSLEngineResult.Status.OK
-								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP
-								&& this.netInBuffer.position() > 0;
+								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP;
 					} while (cont);
 				}
 
