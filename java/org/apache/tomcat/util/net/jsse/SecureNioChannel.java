@@ -647,15 +647,6 @@ public class SecureNioChannel extends NioChannel {
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
-
-					clientNetData.flip();
-					byte b[] = new byte[clientNetData.limit()];
-					clientNetData.get(b);
-					System.out.println("NEED_UNWRAP ---->>> 1 - " + new String(b));
-					System.out.println("NEED_UNWRAP ---->>> 2 - " + bytesToHexString(b));
-					
-					
-					
 					
 					boolean cont = false;
 					// Loop while we can perform pure SSLEngine data
@@ -677,6 +668,11 @@ public class SecureNioChannel extends NioChannel {
 						cont = res.getStatus() == SSLEngineResult.Status.OK
 								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP;
 					} while (cont);
+					
+					clientAppData.flip();
+					byte b[] = new byte[clientAppData.limit()];
+					clientAppData.get(b);
+					System.out.println("HANDSHAKE - NEED_UNWRAP ---->>> 1 - " + new String(b));
 				}
 
 				break;
@@ -733,7 +729,7 @@ public class SecureNioChannel extends NioChannel {
 	private SSLEngineResult.HandshakeStatus tasks() {
 		Runnable task = null;
 		while ((task = sslEngine.getDelegatedTask()) != null) {
-			// Run the task in non-blocking mode
+			// Run the task in blocking mode
 			System.out.println("New Task started");
 			task.run();
 		}
