@@ -639,13 +639,16 @@ public class SecureNioChannel extends NioChannel {
 
 			switch (handshakeStatus) {
 			case NEED_UNWRAP:
-				//if (!clientNetData.hasRemaining()) {
-				//	clientNetData.clear();
-				//}
+				// if (!clientNetData.hasRemaining()) {
+				// clientNetData.clear();
+				// }
 
-				System.out.println("NEED_UNWRAP --> Start Read from channel");
+				System.out.println("clientNetData.hasRemaining() ===> " + clientNetData.hasRemaining());
+				
+				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
 				int nBytes = this.channel.read(clientNetData).get();
-				System.out.println("NEED_UNWRAP --> End Read from channel : " + nBytes);
+				System.out
+						.println("NEED_UNWRAP --> End Read from channel " + this + " : " + nBytes);
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
@@ -672,7 +675,8 @@ public class SecureNioChannel extends NioChannel {
 					} while (cont);
 
 					clientAppData.flip();
-					System.out.println(" HANDSHAKE NEED_UNWRAP --> clientAppData.limit() : " + clientAppData.limit());
+					System.out.println(" HANDSHAKE NEED_UNWRAP  --> clientAppData.limit() : "
+							+ clientAppData.limit());
 					byte b[] = new byte[clientAppData.limit()];
 					clientAppData.get(b);
 					System.out.println("HANDSHAKE - NEED_UNWRAP ---->>> " + new String(b));
