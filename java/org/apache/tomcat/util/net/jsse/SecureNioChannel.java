@@ -679,6 +679,10 @@ public class SecureNioChannel extends NioChannel {
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 							// Execute tasks if we need to
 							tryTasks();
+							read = true;
+						} else if (res.getStatus() ==  Status.BUFFER_OVERFLOW) {
+							clientAppData = ByteBuffer.allocateDirect(2 * clientAppData.capacity());
+							read = false;
 						}
 						// Perform another unwrap?
 						cont = res.getStatus() == SSLEngineResult.Status.OK
