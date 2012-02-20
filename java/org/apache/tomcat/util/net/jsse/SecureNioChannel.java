@@ -643,7 +643,7 @@ public class SecureNioChannel extends NioChannel {
 				// clientNetData.clear();
 				// }
 
-				System.out.println("clientNetData.hasRemaining() ===> " + clientNetData.hasRemaining());
+				System.out.println("clientNetData.position() ===> " + clientNetData.position());
 				
 				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
 				int nBytes = this.channel.read(clientNetData).get();
