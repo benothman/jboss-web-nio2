@@ -666,9 +666,7 @@ public class SecureNioChannel extends NioChannel {
 						clientAppData.flip();
 						byte b[] = new byte[clientAppData.limit()];
 						clientAppData.get(b);
-						System.out.println("#### UNWRAP result -----> " + new String(b));
-						
-						
+						System.out.println("#### HANDSHAKE UNWRAP result -----> " + new String(b));
 						
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
