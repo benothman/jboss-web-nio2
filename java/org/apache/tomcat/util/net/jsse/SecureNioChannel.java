@@ -60,7 +60,8 @@ public class SecureNioChannel extends NioChannel {
 	private ByteBuffer netInBuffer;
 	private ByteBuffer netOutBuffer;
 	protected boolean handshakeComplete = false;
-	protected HandshakeStatus handshakeStatus; // gets set by handshake
+	// To save the handshake status for each operation
+	protected HandshakeStatus handshakeStatus;
 
 	/**
 	 * Create a new instance of {@code SecureNioChannel}
@@ -142,6 +143,122 @@ public class SecureNioChannel extends NioChannel {
 		System.out.println(" ------------>> read = " + read + ", request : " + new String(b));
 
 		return read;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer,
+	 * java.lang.Object, java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void read(final ByteBuffer dst, A attachment,
+			CompletionHandler<Integer, ? super A> handler) {
+		this.read(dst, Integer.MAX_VALUE, TimeUnit.MILLISECONDS, attachment, handler);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer,
+	 * long, java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+
+		getBuffer().flip();
+		this.netInBuffer.put(getBuffer());
+		reset();
+		this.channel.read(this.netInBuffer, timeout, unit, attachment,
+				new CompletionHandler<Integer, A>() {
+
+					@Override
+					public void completed(Integer nBytes, A attach) {
+						if (nBytes < 0) {
+							handler.failed(new ClosedChannelException(), attach);
+							return;
+						}
+
+						try {
+							// Unwrap the data
+							int read = unwrap(netInBuffer, dst);
+							// If everything is OK, so complete
+							handler.completed(read, attach);
+						} catch (Exception e) {
+							// The operation must fails
+							handler.failed(e, attach);
+						}
+					}
+
+					@Override
+					public void failed(Throwable exc, A attach) {
+						handler.failed(exc, attach);
+					}
+				});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer[],
+	 * int, int, long, java.util.concurrent.TimeUnit, java.lang.Object,
+	 * java.nio.channels.CompletionHandler)
+	 */
+	@Override
+	public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, long timeout,
+			TimeUnit unit, A attachment, final CompletionHandler<Long, ? super A> handler) {
+
+		if (!handshakeComplete) {
+			throw new IllegalStateException(
+					"Handshake incomplete, you must complete handshake before writing data.");
+		}
+
+		if (handler == null) {
+			throw new NullPointerException("'handler' parameter is null");
+		}
+		if ((offset < 0) || (length < 0) || (offset > dsts.length - length)) {
+			throw new IndexOutOfBoundsException();
+		}
+
+		final ByteBuffer netInBuffers[] = new ByteBuffer[length];
+		for (int i = 0; i < length; i++) {
+			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
+		}
+
+		getBuffer().flip();
+		netInBuffers[0].put(getBuffer());
+		reset();
+		super.read(netInBuffers, 0, length, timeout, unit, attachment,
+				new CompletionHandler<Long, A>() {
+
+					@Override
+					public void completed(Long nBytes, A attach) {
+						if (nBytes < 0) {
+							handler.failed(new ClosedChannelException(), attach);
+							return;
+						}
+
+						long read = 0;
+						for (int i = 0; i < length; i++) {
+							try {
+								read += unwrap(netInBuffers[i], dsts[offset + i]);
+							} catch (Exception e) {
+								handler.failed(e, attach);
+								return;
+							}
+						}
+
+						handler.completed(read, attach);
+					}
+
+					@Override
+					public void failed(Throwable exc, A attach) {
+						handler.failed(exc, attach);
+					}
+				});
+
 	}
 
 	/**
@@ -229,117 +346,6 @@ public class SecureNioChannel extends NioChannel {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer,
-	 * java.lang.Object, java.nio.channels.CompletionHandler)
-	 */
-	@Override
-	public <A> void read(final ByteBuffer dst, A attachment,
-			CompletionHandler<Integer, ? super A> handler) {
-		this.read(dst, Integer.MAX_VALUE, TimeUnit.MILLISECONDS, attachment, handler);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer,
-	 * long, java.util.concurrent.TimeUnit, java.lang.Object,
-	 * java.nio.channels.CompletionHandler)
-	 */
-	@Override
-	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
-			final CompletionHandler<Integer, ? super A> handler) {
-
-		getBuffer().flip();
-		this.netInBuffer.put(getBuffer());
-		reset();
-		this.channel.read(this.netInBuffer, timeout, unit, attachment,
-				new CompletionHandler<Integer, A>() {
-
-					@Override
-					public void completed(Integer nBytes, A attachment) {
-						try {
-							// unwrap the data
-							int read = unwrap(netInBuffer, dst);
-							// If everything is OK, so complete
-							handler.completed(read, attachment);
-						} catch (Exception e) {
-							// The operation must fails
-							handler.failed(e, attachment);
-						}
-					}
-
-					@Override
-					public void failed(Throwable exc, A attachment) {
-						handler.failed(exc, attachment);
-					}
-				});
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.apache.tomcat.util.net.NioChannel#read(java.nio.ByteBuffer[],
-	 * int, int, long, java.util.concurrent.TimeUnit, java.lang.Object,
-	 * java.nio.channels.CompletionHandler)
-	 */
-	@Override
-	public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, long timeout,
-			TimeUnit unit, A attachment, final CompletionHandler<Long, ? super A> handler) {
-
-		if (!handshakeComplete()) {
-			throw new IllegalStateException(
-					"Handshake incomplete, you must complete handshake before writing data.");
-		}
-
-		if (handler == null) {
-			throw new NullPointerException("'handler' parameter is null");
-		}
-		if ((offset < 0) || (length < 0) || (offset > dsts.length - length)) {
-			throw new IndexOutOfBoundsException();
-		}
-
-		final ByteBuffer netInBuffers[] = new ByteBuffer[length];
-		for (int i = 0; i < length; i++) {
-			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
-		}
-
-		getBuffer().flip();
-		netInBuffers[0].put(getBuffer());
-		reset();
-		super.read(netInBuffers, 0, length, timeout, unit, attachment,
-				new CompletionHandler<Long, A>() {
-
-					@Override
-					public void completed(Long nBytes, A attach) {
-						if (nBytes < 0) {
-							handler.failed(new ClosedChannelException(), attach);
-							return;
-						}
-
-						long read = 0;
-						for (int i = 0; i < length; i++) {
-							try {
-								read += unwrap(netInBuffers[i], dsts[offset + i]);
-							} catch (Exception e) {
-								handler.failed(e, attach);
-								return;
-							}
-						}
-
-						handler.completed(read, attach);
-					}
-
-					@Override
-					public void failed(Throwable exc, A attach) {
-						handler.failed(exc, attach);
-					}
-				});
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer,
 	 * java.lang.Object, java.nio.channels.CompletionHandler)
 	 */
@@ -357,7 +363,7 @@ public class SecureNioChannel extends NioChannel {
 	 * java.nio.channels.CompletionHandler)
 	 */
 	@Override
-	public <A> void write(final ByteBuffer src, long timeout, TimeUnit unit, A attachment,
+	public <A> void write(final ByteBuffer src, long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
 		try {
@@ -372,15 +378,20 @@ public class SecureNioChannel extends NioChannel {
 					new CompletionHandler<Integer, A>() {
 
 						@Override
-						public void completed(Integer nBytes, A attachment) {
+						public void completed(Integer nBytes, A attach) {
+							if (nBytes < 0) {
+								handler.failed(new ClosedChannelException(), attach);
+								return;
+							}
+
 							// Call the handler completed method with the
 							// consumed bytes number
-							handler.completed(written, attachment);
+							handler.completed(written, attach);
 						}
 
 						@Override
-						public void failed(Throwable exc, A attachment) {
-							handler.failed(exc, attachment);
+						public void failed(Throwable exc, A attach) {
+							handler.failed(exc, attach);
 						}
 					});
 
@@ -439,7 +450,7 @@ public class SecureNioChannel extends NioChannel {
 							handler.failed(new ClosedChannelException(), attach);
 							return;
 						}
-
+						// If everything is OK, so complete
 						handler.completed(res, attach);
 					}
 

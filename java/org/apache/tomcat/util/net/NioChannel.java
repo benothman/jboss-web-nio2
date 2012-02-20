@@ -593,9 +593,9 @@ public class NioChannel implements AsynchronousByteChannel {
 	 */
 	public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			CompletionHandler<Integer, ? super A> handler) {
-		getBuffer().flip();
-		dst.put(getBuffer());
-		getBuffer().clear();
+		this.buffer.flip();
+		dst.put(this.buffer);
+		this.buffer.clear();
 		this.channel.read(dst, timeout, unit, attachment, handler);
 	}
 
@@ -685,7 +685,7 @@ public class NioChannel implements AsynchronousByteChannel {
 	public <A> void read(ByteBuffer[] dsts, int offset, int length, long timeout, TimeUnit unit,
 			A attachment, final CompletionHandler<Long, ? super A> handler) {
 		// Retrieve bytes, if any, from the internal buffer
-		getBuffer().flip();
+		this.buffer.flip();
 		final int x = this.buffer.remaining();
 		dsts[0].put(this.buffer);
 		this.buffer.clear();
