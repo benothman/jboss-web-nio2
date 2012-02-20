@@ -667,13 +667,12 @@ public class SecureNioChannel extends NioChannel {
 
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
-						//this.netInBuffer.compact();
+						this.netInBuffer.compact();
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
 						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = "
 								+ res.getStatus()+", handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
-							this.netInBuffer.compact();
 							// Execute tasks if we need to
 							tryTasks();
 							read = true;
