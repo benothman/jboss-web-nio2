@@ -128,8 +128,7 @@ public class SecureNioChannel extends NioChannel {
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
 		System.out.println(this + " ---> readBytes()");
 
-		System.out.println(this + " ---> netInBuffer.position() = "
-				+ this.netInBuffer.position());
+		System.out.println(this + " ---> netInBuffer.position() = " + this.netInBuffer.position());
 
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
@@ -637,7 +636,7 @@ public class SecureNioChannel extends NioChannel {
 		handshakeStatus = sslEngine.getHandshakeStatus();
 
 		int step = 1;
-		
+		boolean read = true;
 		// Process handshaking message
 		while (!handshakeComplete) {
 
@@ -646,11 +645,13 @@ public class SecureNioChannel extends NioChannel {
 				// if (!clientNetData.hasRemaining()) {
 				// clientNetData.clear();
 				// }
-
-				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
-				int nBytes = this.channel.read(this.netInBuffer).get();
-				System.out
-						.println("NEED_UNWRAP --> End Read from channel " + this + " : " + nBytes);
+				int nBytes = 0;
+				if (read) {
+					System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
+					nBytes = this.channel.read(this.netInBuffer).get();
+					System.out.println("NEED_UNWRAP --> End Read from channel " + this + " : "
+							+ nBytes);
+				}
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
@@ -667,20 +668,22 @@ public class SecureNioChannel extends NioChannel {
 						byte b[] = new byte[clientAppData.limit()];
 						clientAppData.get(b);
 						System.out.println("#### HANDSHAKE UNWRAP result -----> " + new String(b));
-						
+
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
 						this.netInBuffer.compact();
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
-						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = " + res.getStatus());
+						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = "
+								+ res.getStatus()+", handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 							// Execute tasks if we need to
 							tryTasks();
 						}
 						// Perform another unwrap?
 						cont = res.getStatus() == SSLEngineResult.Status.OK
-								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP && this.netInBuffer.position() > 0;
+								&& handshakeStatus == HandshakeStatus.NEED_UNWRAP
+								&& this.netInBuffer.position() > 0;
 					} while (cont);
 				}
 
