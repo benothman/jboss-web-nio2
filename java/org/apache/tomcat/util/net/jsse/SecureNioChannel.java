@@ -643,7 +643,9 @@ public class SecureNioChannel extends NioChannel {
 					clientNetData.clear();
 				}
 
+				System.out.println("NEED_UNWRAP --> Start Read from channel");
 				int nBytes = this.channel.read(clientNetData).get();
+				System.out.println("NEED_UNWRAP --> End Read from channel : " + nBytes);
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
 				} else {
