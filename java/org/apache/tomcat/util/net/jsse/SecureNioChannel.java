@@ -636,6 +636,8 @@ public class SecureNioChannel extends NioChannel {
 		sslEngine.beginHandshake();
 		handshakeStatus = sslEngine.getHandshakeStatus();
 
+		int step = 1;
+		
 		// Process handshaking message
 		while (!handshakeComplete) {
 
@@ -644,9 +646,6 @@ public class SecureNioChannel extends NioChannel {
 				// if (!clientNetData.hasRemaining()) {
 				// clientNetData.clear();
 				// }
-
-				System.out.println("NEED_UNWRAP -->clientNetData.position() ===> "
-						+ clientNetData.position());
 
 				System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
 				int nBytes = this.channel.read(this.netInBuffer).get();
@@ -661,7 +660,9 @@ public class SecureNioChannel extends NioChannel {
 						// Prepare the buffer with the incoming data
 						this.netInBuffer.flip();
 						// Call unwrap
-						SSLEngineResult res = sslEngine.unwrap(this.netInBuffer, clientAppData);
+						SSLEngineResult res = sslEngine.unwrap(this.netInBuffer, clientAppData);						
+						System.out.println(this + " --> UNWRAP STEP - " + (step++));
+						
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
 						this.netInBuffer.compact();
