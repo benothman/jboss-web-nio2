@@ -307,13 +307,13 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// (long keep-alive), so that the processor should be
 					// recycled and the method should return true
 					final NioChannel ch = channel;
-					// Perform an asynchronous read operation to wait for incoming data
+					// Perform an asynchronous read operation to wait for
+					// incoming data
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
 
 								@Override
 								public void completed(Integer nBytes, NioChannel attachment) {
-									System.out.println(Http11NioProcessor.class.getName() + " ----->> read some data from client");
 									if (nBytes < 0) {
 										// Reach the end of the stream
 										close(ch);
@@ -664,9 +664,12 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 * Get the SSL attribute
 	 */
 	private void requestSSLAttr() {
-		if (sslEnabled && (channel != null)) {
-			try {
 
+		System.out.println("**************** " + getClass().getName() + "-1 ****************");
+
+		if (sslEnabled && (channel != null)) {
+			System.out.println("**************** " + getClass().getName() + "-2 ****************");
+			try {
 				SecureNioChannel sslChannel = (SecureNioChannel) channel;
 				// Cipher suite
 				// Object sslO = SSLSocket.getInfoS(socket,
