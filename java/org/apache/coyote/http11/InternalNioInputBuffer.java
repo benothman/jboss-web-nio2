@@ -297,9 +297,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		// Reading the protocol
 		// Protocol is always US-ASCII
 		//
-
 		while (!eol) {
-
 			// Read new bytes if needed
 			if (pos >= lastValid) {
 				if (!fill()) {

@@ -309,6 +309,14 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					final NioChannel ch = channel;
 					// Perform an asynchronous read operation to wait for
 					// incoming data
+					System.out.println(getClass().getName() + " -----> keptAlive : " + keptAlive);
+					String connectionH = inputBuffer.request.getHeader("connection");
+					if (connectionH == null) {
+						connectionH = inputBuffer.request.getHeader("Connection");
+					}
+					
+					System.out.println(getClass().getName() + " -----> connectionH : " + connectionH);
+					
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
 
@@ -317,6 +325,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 									if (nBytes < 0) {
 										// Reach the end of the stream
 										close(ch);
+										return;
 									}
 
 									if (nBytes > 0) {
@@ -334,6 +343,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 									}
 								}
 							});
+
 					openChannel = true;
 					break;
 				}
