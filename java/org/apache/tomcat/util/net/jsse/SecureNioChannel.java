@@ -660,7 +660,7 @@ public class SecureNioChannel extends NioChannel {
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
 						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = "
-								+ res.getStatus() + ", handshakeStatus = " + handshakeStatus);
+								+ res.getStatus() + ",  handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 
 							System.out
@@ -673,7 +673,9 @@ public class SecureNioChannel extends NioChannel {
 											+ ", clientAppData.limit() = " + clientAppData.limit());
 
 							// --------------------------
-							clientAppData.flip();
+							if (clientAppData.position() > 0) {
+								clientAppData.flip();
+							}
 							byte b[] = new byte[clientAppData.limit()];
 							clientAppData.get(b);
 							System.out.println("*** clientAppData content -> " + new String(b)
@@ -687,8 +689,8 @@ public class SecureNioChannel extends NioChannel {
 							read = true;
 						} else if (res.getStatus() == Status.BUFFER_OVERFLOW) {
 							ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize * (++i));
-							
-							if(clientAppData.position() == clientAppData.limit()) { 
+
+							if (clientAppData.position() == clientAppData.limit()) {
 								clientAppData.flip();
 							}
 							tmp.put(clientAppData);
@@ -746,10 +748,8 @@ public class SecureNioChannel extends NioChannel {
 				+ this.netInBuffer.position() + ", netInBuffer.limit() = "
 				+ this.netInBuffer.limit());
 
-		System.out
-		.println("######## NEED_UNWRAP ----->>>>  2) clientAppData.position() = "
-				+ clientAppData.position()
-				+ ", clientAppData.limit() = " + clientAppData.limit());
+		System.out.println("######## NEED_UNWRAP ----->>>>  2) clientAppData.position() = "
+				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
 
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
 	}
