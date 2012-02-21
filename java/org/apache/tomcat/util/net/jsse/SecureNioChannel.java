@@ -694,8 +694,8 @@ public class SecureNioChannel extends NioChannel {
 				handshakeStatus = res.getHandshakeStatus();
 				this.netOutBuffer.flip();
 
-				System.out.println(this + " NEED_WRAP : this.netOutBuffer.position() = "
-						+ this.netOutBuffer.position());
+				System.out.println(this + " NEED_WRAP : this.netOutBuffer.limit() = "
+						+ this.netOutBuffer.limit());
 
 				if (res.getStatus() == Status.OK) {
 					// Execute tasks if we need to
