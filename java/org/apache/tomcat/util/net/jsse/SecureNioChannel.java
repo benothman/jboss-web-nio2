@@ -664,14 +664,11 @@ public class SecureNioChannel extends NioChannel {
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 
 							System.out
-									.println("######## NEED_UNWRAP ----->>>> res.bytesProduced() = "
-											+ res.bytesProduced());
-							System.out
 									.println("######## NEED_UNWRAP ----->>>> res.bytesConsumed() = "
 											+ res.bytesConsumed());
 
 							System.out
-									.println("######## NEED_UNWRAP ----->>>> clientAppData.position() = "
+									.println("######## NEED_UNWRAP ----->>>>  1) clientAppData.position() = "
 											+ clientAppData.position()
 											+ ", clientAppData.limit() = " + clientAppData.limit());
 
@@ -689,13 +686,14 @@ public class SecureNioChannel extends NioChannel {
 						} else if (res.getStatus() == Status.BUFFER_UNDERFLOW) {
 							read = true;
 						} else if (res.getStatus() == Status.BUFFER_OVERFLOW) {
-							System.out.println("1) clientAppData.capacity() = "+clientAppData.capacity());
 							ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize * (++i));
-							clientAppData.flip();
+							
+							if(clientAppData.position() == clientAppData.limit()) { 
+								clientAppData.flip();
+							}
 							tmp.put(clientAppData);
 							clientAppData = tmp;
 							read = false;
-							System.out.println("2) clientAppData.capacity() = "+clientAppData.capacity());
 						}
 						// Perform another unwrap?
 						cont = res.getStatus() == SSLEngineResult.Status.OK
@@ -748,8 +746,10 @@ public class SecureNioChannel extends NioChannel {
 				+ this.netInBuffer.position() + ", netInBuffer.limit() = "
 				+ this.netInBuffer.limit());
 
-		System.out.println("######## ----->>>> clientAppData.position() = "
-				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
+		System.out
+		.println("######## NEED_UNWRAP ----->>>>  2) clientAppData.position() = "
+				+ clientAppData.position()
+				+ ", clientAppData.limit() = " + clientAppData.limit());
 
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
 	}
