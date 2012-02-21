@@ -664,12 +664,12 @@ public class SecureNioChannel extends NioChannel {
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 
 							
-							System.out.println("######## NEED_UNWRAP ----->>>> clientAppData.position()" + clientAppData.position()
+							System.out.println("######## NEED_UNWRAP ----->>>> clientAppData.position() = " + clientAppData.position()
 									+ ", clientAppData.limit() = " + clientAppData.limit());
 							
 							
 							// --------------------------
-							clientAppData.flip();
+							//clientAppData.flip();
 							byte b[] = new byte[clientAppData.limit()];
 							clientAppData.get(b);
 							System.out.println("*** clientAppData content -> " + new String(b)
@@ -736,7 +736,7 @@ public class SecureNioChannel extends NioChannel {
 				+ this.netInBuffer.position() + ", netInBuffer.limit() = "
 				+ this.netInBuffer.limit());
 
-		System.out.println("######## ----->>>> clientAppData.position()" + clientAppData.position()
+		System.out.println("######## ----->>>> clientAppData.position() = " + clientAppData.position()
 				+ ", clientAppData.limit() = " + clientAppData.limit());
 
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
