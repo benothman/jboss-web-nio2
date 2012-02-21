@@ -137,7 +137,8 @@ public class SecureNioChannel extends NioChannel {
 
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
-		System.out.println(" ------------>> read = " + read+", this.netInBuffer.position() = " + this.netInBuffer.position());
+		System.out.println(" ------------>> read = " + read + ", this.netInBuffer.position() = "
+				+ this.netInBuffer.position());
 		System.out.println(this + " ---> END readBytes()");
 		return read;
 	}
@@ -635,15 +636,10 @@ public class SecureNioChannel extends NioChannel {
 
 			switch (handshakeStatus) {
 			case NEED_UNWRAP:
-				// if (!clientNetData.hasRemaining()) {
-				// clientNetData.clear();
-				// }
 				int nBytes = 0;
 				if (read) {
-					System.out.println("NEED_UNWRAP --> Start Read from channel " + this);
 					nBytes = this.channel.read(this.netInBuffer).get();
-					System.out.println("NEED_UNWRAP --> End Read from channel " + this + " : "
-							+ nBytes);
+					System.out.println("NEED_UNWRAP --> " + this + " : " + nBytes);
 				}
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
@@ -692,11 +688,14 @@ public class SecureNioChannel extends NioChannel {
 
 				break;
 			case NEED_WRAP:
-				this.netInBuffer.clear();
+				clientNetData.compact();
 				this.netOutBuffer.clear();
-				SSLEngineResult res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
+				SSLEngineResult res = sslEngine.wrap(clientNetData, this.netOutBuffer);
 				handshakeStatus = res.getHandshakeStatus();
 				this.netOutBuffer.flip();
+
+				System.out.println(this + " NEED_WRAP : this.netOutBuffer.position() = "
+						+ this.netOutBuffer.position());
 
 				if (res.getStatus() == Status.OK) {
 					// Execute tasks if we need to
