@@ -663,6 +663,11 @@ public class SecureNioChannel extends NioChannel {
 								+ res.getStatus() + ", handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 
+							
+							System.out.println("######## NEED_UNWRAP ----->>>> clientAppData.position()" + clientAppData.position()
+									+ ", clientAppData.limit() = " + clientAppData.limit());
+							
+							
 							// --------------------------
 							clientAppData.flip();
 							byte b[] = new byte[clientAppData.limit()];
