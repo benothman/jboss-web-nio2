@@ -748,12 +748,16 @@ public class SecureNioChannel extends NioChannel {
 				+ this.netInBuffer.position() + ", netInBuffer.limit() = "
 				+ this.netInBuffer.limit());
 
-		System.out.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 2) clientAppData.position() = "
+		System.out.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 2.1) clientAppData.position() = "
 				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
 		clientAppData.flip();
-		byte b[] = new byte[clientAppData.limit()];
-		clientAppData.get(b);
-		System.out.println("*** FINISHED - clientAppData content --> " + new String(b));
+		System.out.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 2.2) clientAppData.position() = "
+				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
+
+		byte bbb[] = new byte[clientAppData.limit()];
+		clientAppData.get(bbb);
+		System.out.println("*** FINISHED - b.length --> " + bbb.length);
+		System.out.println("*** FINISHED - clientAppData content --> " + new String(bbb));
 		
 		
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
