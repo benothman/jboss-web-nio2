@@ -664,6 +664,7 @@ public class SecureNioChannel extends NioChannel {
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 
 							System.out.println("######## NEED_UNWRAP ----->>>> res.bytesProduced() = " + res.bytesProduced());
+							System.out.println("######## NEED_UNWRAP ----->>>> res.bytesConsumed() = " + res.bytesConsumed());
 							
 							System.out.println("######## NEED_UNWRAP ----->>>> clientAppData.position() = " + clientAppData.position()
 									+ ", clientAppData.limit() = " + clientAppData.limit());
