@@ -690,7 +690,7 @@ public class SecureNioChannel extends NioChannel {
 						} else if (res.getStatus() == Status.BUFFER_OVERFLOW) {
 							ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize * (++i));
 
-							if (clientAppData.position() == clientAppData.limit()) {
+							if (clientAppData.position() > 0) {
 								clientAppData.flip();
 							}
 							tmp.put(clientAppData);
