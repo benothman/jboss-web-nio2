@@ -128,12 +128,15 @@ public class SecureNioChannel extends NioChannel {
 	 * long, java.util.concurrent.TimeUnit)
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
-		System.out.println(this + " ---> START readBytes(), this.netInBuffer.position() = " + this.netInBuffer.position());
-		
-		int x = super.readBytes(this.netInBuffer, timeout, unit);
-		System.out.println("*** x = " + x + " ***");
-		if (x < 0) {
-			return -1;
+		System.out.println(this + " ---> START readBytes(), this.netInBuffer.position() = "
+				+ this.netInBuffer.position());
+
+		if (this.netInBuffer.position() == 0) {
+			int x = super.readBytes(this.netInBuffer, timeout, unit);
+			System.out.println("*** x = " + x + " ***");
+			if (x < 0) {
+				return -1;
+			}
 		}
 
 		// Unwrap the data read
@@ -668,10 +671,10 @@ public class SecureNioChannel extends NioChannel {
 									.println("######## NEED_UNWRAP ----->>>> res.bytesConsumed() = "
 											+ res.bytesConsumed());
 
-							System.out
-									.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 1) clientAppData.position() = "
-											+ clientAppData.position()
-											+ ", clientAppData.limit() = " + clientAppData.limit());
+							System.out.println("######## NEED_UNWRAP ----->>>> [" + getId()
+									+ "] - 1) clientAppData.position() = "
+									+ clientAppData.position() + ", clientAppData.limit() = "
+									+ clientAppData.limit());
 
 							// --------------------------
 							if (clientAppData.position() > 0) {
@@ -749,18 +752,19 @@ public class SecureNioChannel extends NioChannel {
 				+ this.netInBuffer.position() + ", netInBuffer.limit() = "
 				+ this.netInBuffer.limit());
 
-		System.out.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 2.1) clientAppData.position() = "
-				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
+		System.out.println("######## NEED_UNWRAP ----->>>> [" + getId()
+				+ "] - 2.1) clientAppData.position() = " + clientAppData.position()
+				+ ", clientAppData.limit() = " + clientAppData.limit());
 		clientAppData.flip();
-		System.out.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 2.2) clientAppData.position() = "
-				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
+		System.out.println("######## NEED_UNWRAP ----->>>> [" + getId()
+				+ "] - 2.2) clientAppData.position() = " + clientAppData.position()
+				+ ", clientAppData.limit() = " + clientAppData.limit());
 
 		byte bbb[] = new byte[clientAppData.limit()];
 		clientAppData.get(bbb);
 		System.out.println("*** FINISHED - b.length --> " + bbb.length);
-		System.out.println("*** FINISHED - clientAppData content : <" + new String(bbb)+">");
-		
-		
+		System.out.println("*** FINISHED - clientAppData content : <" + new String(bbb) + ">");
+
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
 	}
 
