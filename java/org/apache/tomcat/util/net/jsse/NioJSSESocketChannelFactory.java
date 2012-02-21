@@ -56,7 +56,6 @@ import javax.net.ssl.ManagerFactoryParameters;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
@@ -274,21 +273,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 				trustAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
 			}
 
-			/*
-			 * log.info("SSL Parameters [Protocol :" + protocol +
-			 * ", algorithm : " + algorithm + ", keystoreType : " + keystoreType
-			 * + ", keystoreProvider : " + keystoreProvider +
-			 * ", trustAlgorithm: " + trustAlgorithm + "]");
-			 * 
-			 * log.info("Key Managers --> " + getKeyManagers(keystoreType,
-			 * keystoreProvider, algorithm, (String)
-			 * attributes.get("keyAlias")));
-			 * 
-			 * log.info("Trust Managers --> " + getTrustManagers(keystoreType,
-			 * keystoreProvider, trustAlgorithm));
-			 */
-
-			// Create and init SSLContext
+			// Create and initialize SSLContext
 			sslContext = (SSLContext) attributes.get("SSLContext");
 			if (sslContext == null) {
 				sslContext = SSLContext.getInstance(protocol);
@@ -324,16 +309,9 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 			// Determine which cipher suites to enable
 			String requestedCiphers = (String) attributes.get("ciphers");
-			// log.info("Requested Ciphers --> " + requestedCiphers);
 			enabledCiphers = getEnabledCiphers(requestedCiphers,
 					sslProxy.getSupportedCipherSuites());
 
-			/*
-			 * String tmp = ""; for (String s : enabledCiphers) { tmp += s +
-			 * ", "; }
-			 * 
-			 * log.info("Enabled Ciphers --> " + tmp);
-			 */
 			allowUnsafeLegacyRenegotiation = "true".equals(attributes
 					.get("allowUnsafeLegacyRenegotiation"));
 
@@ -832,7 +810,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			 * SecurityException socket.setSoTimeout() throws a SocketException
 			 * socket.accept() throws some other exception (after a JDK change)
 			 * In these cases the test won't work so carry on - essentially the
-			 * behaviour before this patch socket.accept() throws a
+			 * Behavior before this patch socket.accept() throws a
 			 * SocketTimeoutException In this case all is well so carry on
 			 */
 		} finally {

@@ -22,6 +22,8 @@
 package org.apache.tomcat.util.net.jsse;
 
 import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
@@ -135,14 +137,7 @@ public class SecureNioChannel extends NioChannel {
 
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
-
-		dst.flip();
-		byte b[] = new byte[dst.limit()];
-		dst.get(b);
-
-		System.out.println(" ------------>> read = " + read);
-		System.out.println(new String(b));
-
+		System.out.println(" ------------>> read = " + read+", this.netInBuffer.position() = " + this.netInBuffer.position());
 		System.out.println(this + " ---> END readBytes()");
 		return read;
 	}
@@ -490,7 +485,7 @@ public class SecureNioChannel extends NioChannel {
 	 *            a ByteBuffer to hold outbound network data
 	 * @return the number of bytes consumed
 	 * @throws Exception
-	 *             if
+	 *             if the wrap status is not <tt>OK</tt>
 	 */
 	private int wrap(ByteBuffer src, ByteBuffer dst) throws Exception {
 		// Wrap the source data into the destination buffer
@@ -676,7 +671,8 @@ public class SecureNioChannel extends NioChannel {
 							clientAppData.flip();
 							byte b[] = new byte[clientAppData.limit()];
 							clientAppData.get(b);
-							System.out.println("*** clientAppData content -> " + new String(b) +" ***");
+							System.out.println("*** clientAppData content -> " + new String(b)
+									+ " ***");
 							// --------------------------
 
 							// Execute tasks if we need to
