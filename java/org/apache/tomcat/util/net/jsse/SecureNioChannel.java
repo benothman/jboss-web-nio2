@@ -676,7 +676,7 @@ public class SecureNioChannel extends NioChannel {
 							clientAppData.flip();
 							byte b[] = new byte[clientAppData.limit()];
 							clientAppData.get(b);
-							System.out.println("*** clientAppData content -> " + new String(b));
+							System.out.println("*** clientAppData content -> " + new String(b) +" ***");
 							// --------------------------
 
 							// Execute tasks if we need to
