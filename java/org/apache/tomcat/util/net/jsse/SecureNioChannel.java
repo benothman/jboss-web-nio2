@@ -128,7 +128,8 @@ public class SecureNioChannel extends NioChannel {
 	 * long, java.util.concurrent.TimeUnit)
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
-		System.out.println(this + " ---> START readBytes()");
+		System.out.println(this + " ---> START readBytes(), this.netInBuffer.position() = " + this.netInBuffer.position());
+		
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
