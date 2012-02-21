@@ -133,7 +133,7 @@ public class SecureNioChannel extends NioChannel {
 
 		if (this.netInBuffer.position() == 0) {
 			int x = super.readBytes(this.netInBuffer, timeout, unit);
-			System.out.println("*** readBytes(...) --> x = " + x + " ***");
+			System.out.println("*** " + this + " readBytes(...) --> x = " + x + " ***");
 			if (x < 0) {
 				return -1;
 			}
@@ -141,7 +141,7 @@ public class SecureNioChannel extends NioChannel {
 
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
-		System.out.println("*** readBytes(...) --> read = " + read + " ***");
+		System.out.println("*** " + this + " readBytes(...) --> read = " + read + " ***");
 		System.out.println(this + " ---> END readBytes(...)");
 		return read;
 	}
@@ -543,6 +543,8 @@ public class SecureNioChannel extends NioChannel {
 				// buffer overflow can happen, if we have read data, then
 				// empty out the dst buffer before we do another read
 				break;
+			} else if (result.getStatus() == Status.CLOSED) {
+				return -1;
 			} else {
 				// here we should trap BUFFER_OVERFLOW and call expand on the
 				// buffer for now, throw an exception, as we initialized the
