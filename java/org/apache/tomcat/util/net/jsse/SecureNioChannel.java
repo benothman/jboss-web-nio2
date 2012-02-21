@@ -126,14 +126,13 @@ public class SecureNioChannel extends NioChannel {
 	 * long, java.util.concurrent.TimeUnit)
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
-		System.out.println(this + " ---> readBytes()");
+		System.out.println(this + " ---> START readBytes()");
 		int x = super.readBytes(this.netInBuffer, timeout, unit);
 		System.out.println("*** x = " + x + " ***");
 		if (x < 0) {
 			return -1;
 		}
 
-		this.netInBuffer.flip();
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
 
@@ -144,6 +143,7 @@ public class SecureNioChannel extends NioChannel {
 		System.out.println(" ------------>> read = " + read);
 		System.out.println(new String(b));
 
+		System.out.println(this + " ---> END readBytes()");
 		return read;
 	}
 
@@ -669,12 +669,22 @@ public class SecureNioChannel extends NioChannel {
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
 						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = "
-								+ res.getStatus()+", handshakeStatus = " + handshakeStatus);
+								+ res.getStatus() + ", handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
+
+							// --------------------------
+							clientAppData.flip();
+							byte b[] = new byte[clientAppData.limit()];
+							clientAppData.get(b);
+							System.out.println("*** clientAppData content -> " + new String(b));
+							// --------------------------
+
 							// Execute tasks if we need to
 							tryTasks();
 							read = true;
-						} else if (res.getStatus() ==  Status.BUFFER_OVERFLOW) {
+						} else if (res.getStatus() == Status.BUFFER_UNDERFLOW) {
+							read = true;
+						} else if (res.getStatus() == Status.BUFFER_OVERFLOW) {
 							clientAppData = ByteBuffer.allocateDirect(2 * clientAppData.capacity());
 							read = false;
 						}
@@ -735,7 +745,6 @@ public class SecureNioChannel extends NioChannel {
 		Runnable task = null;
 		while ((task = sslEngine.getDelegatedTask()) != null) {
 			// Run the task in blocking mode
-			System.out.println("New Task started");
 			task.run();
 		}
 
