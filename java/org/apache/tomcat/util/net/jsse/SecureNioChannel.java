@@ -727,6 +727,10 @@ public class SecureNioChannel extends NioChannel {
 			}
 		}
 
+		System.out.println("######## ----->>>> netInBuffer.position() = "
+				+ this.netInBuffer.position() + ", netInBuffer.limit() = "
+				+ this.netInBuffer.limit());
+
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
 	}
 
