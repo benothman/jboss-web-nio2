@@ -678,8 +678,8 @@ public class SecureNioChannel extends NioChannel {
 							}
 							byte b[] = new byte[clientAppData.limit()];
 							clientAppData.get(b);
-							System.out.println("*** clientAppData content -> " + new String(b)
-									+ " ***");
+							System.out.println("*** clientAppData content : <" + new String(b)
+									+ "> ***");
 							// --------------------------
 
 							// Execute tasks if we need to
@@ -757,7 +757,7 @@ public class SecureNioChannel extends NioChannel {
 		byte bbb[] = new byte[clientAppData.limit()];
 		clientAppData.get(bbb);
 		System.out.println("*** FINISHED - b.length --> " + bbb.length);
-		System.out.println("*** FINISHED - clientAppData content --> " + new String(bbb));
+		System.out.println("*** FINISHED - clientAppData content : <" + new String(bbb)+">");
 		
 		
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
