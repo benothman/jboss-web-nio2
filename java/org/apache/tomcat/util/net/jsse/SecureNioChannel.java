@@ -750,7 +750,12 @@ public class SecureNioChannel extends NioChannel {
 
 		System.out.println("######## NEED_UNWRAP ----->>>> ["+getId()+"] - 2) clientAppData.position() = "
 				+ clientAppData.position() + ", clientAppData.limit() = " + clientAppData.limit());
-
+		clientAppData.flip();
+		byte b[] = new byte[clientAppData.limit()];
+		clientAppData.get(b);
+		System.out.println("*** FINISHED - clientAppData content --> " + new String(b));
+		
+		
 		this.handshakeComplete = (handshakeStatus == HandshakeStatus.FINISHED);
 	}
 
