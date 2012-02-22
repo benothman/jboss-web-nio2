@@ -230,9 +230,11 @@ public class NioEndpoint extends AbstractEndpoint {
 					factory.setSslContext(sslContext);
 				}
 			}
-			// Initialize the channel factory
-			this.serverSocketChannelFactory.init();
+		} else {
+			this.serverSocketChannelFactory.threadGroup = threadGroup;
 		}
+		// Initialize the channel factory
+		this.serverSocketChannelFactory.init();
 
 		if (listener == null) {
 			try {
@@ -297,29 +299,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			running = false;
 			unlockAccept();
 			// TODO complete implementation
-		}
-	}
-
-	/**
-	 * 
-	 * @param attributes
-	 */
-	public void setSSLAttributes(Map<String, Object> attributes) {
-		if (this.attributes == null) {
-			this.attributes = attributes;
-		} else {
-			this.attributes.putAll(attributes);
-		}
-	}
-
-	/**
-	 * 
-	 * @param name
-	 * @param value
-	 */
-	public void setSSLAttribute(String name, Object value) {
-		if (name != null && value != null) {
-			this.attributes.put(name, value);
 		}
 	}
 

@@ -26,6 +26,7 @@ import java.net.Socket;
 import javax.net.ssl.SSLSession;
 
 import org.apache.tomcat.util.net.NioChannel;
+import org.apache.tomcat.util.net.SSLImplementation;
 import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.ServerSocketFactory;
 
@@ -36,7 +37,7 @@ import org.apache.tomcat.util.net.ServerSocketFactory;
  * 
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
-public class NioJSSEImplementation {
+public class NioJSSEImplementation extends SSLImplementation {
 
 	static final String SSLClass = "javax.net.ssl.SSLEngine";
 
@@ -56,41 +57,70 @@ public class NioJSSEImplementation {
 		factory = new NioJSSEFactory();
 	}
 
-	/**
-	 * Return the implementation name
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.SSLImplementation#getImplementationName()
 	 */
 	public String getImplementationName() {
 		return "JSSE";
 	}
 
-	/**
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @return
+	 * @see
+	 * org.apache.tomcat.util.net.SSLImplementation#getServerSocketChannelFactory
+	 * ()
 	 */
 	public NioJSSESocketChannelFactory getServerSocketChannelFactory() {
 		NioJSSESocketChannelFactory ssf = factory.getSocketChannelFactory();
 		return ssf;
 	}
 
-	/**
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param channel
-	 * @return
+	 * @see
+	 * org.apache.tomcat.util.net.SSLImplementation#getSSLSupport(org.apache
+	 * .tomcat.util.net.NioChannel)
 	 */
 	public SSLSupport getSSLSupport(NioChannel channel) {
-		SSLSupport ssls = factory.getSSLSupport(channel);
-		return ssls;
+		return factory.getSSLSupport(channel);
 	}
 
-	/**
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param session
-	 * @return
+	 * @see
+	 * org.apache.tomcat.util.net.SSLImplementation#getSSLSupport(javax.net.
+	 * ssl.SSLSession)
 	 */
 	public SSLSupport getSSLSupport(SSLSession session) {
-		SSLSupport ssls = factory.getSSLSupport(session);
-		return ssls;
+		return factory.getSSLSupport(session);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.SSLImplementation#getServerSocketFactory()
+	 */
+	@Override
+	public ServerSocketFactory getServerSocketFactory() {
+		throw new RuntimeException("Not supported for class " + getClass().getName());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.SSLImplementation#getSSLSupport(java.net.Socket
+	 * )
+	 */
+	@Override
+	public SSLSupport getSSLSupport(Socket sock) {
+		throw new RuntimeException("Not supported for class " + getClass().getName());
 	}
 
 }

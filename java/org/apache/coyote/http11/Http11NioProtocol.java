@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
@@ -36,7 +37,9 @@ import org.apache.coyote.RequestInfo;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
+import org.apache.tomcat.util.net.SSLImplementation;
 import org.apache.tomcat.util.net.SocketStatus;
+import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 
 /**
  * {@code Http11NioProtocol}
@@ -49,6 +52,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 	protected NioEndpoint endpoint = new NioEndpoint();
 	private Http11ConnectionHandler cHandler = new Http11ConnectionHandler(this);
+	protected NioJSSESocketChannelFactory socketFactory = null;
 
 	/**
 	 * Create a new instance of {@code Http11NioProtocol}
@@ -79,8 +83,26 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		endpoint.setName(getName());
 		endpoint.setHandler(cHandler);
 
-		if (this.isSSLEnabled()) {
-			endpoint.setSSLAttributes(attributes);
+		// Verify the validity of the configured socket factory
+		try {
+			if (isSSLEnabled()) {
+				sslImplementation = SSLImplementation.getInstance(NioJSSESocketChannelFactory.class
+						.getName());
+				socketFactory = sslImplementation.getServerSocketChannelFactory();
+				endpoint.setServerSocketChannelFactory(socketFactory);
+			}
+		} catch (Exception ex) {
+			log.error(sm.getString("http11protocol.socketfactory.initerror"), ex);
+			throw ex;
+		}
+
+		if (socketFactory != null) {
+			Iterator<String> attE = attributes.keySet().iterator();
+			while (attE.hasNext()) {
+				String key = attE.next();
+				Object v = attributes.get(key);
+				socketFactory.setAttribute(key, v);
+			}
 		}
 
 		try {
@@ -828,6 +850,13 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					processor = createProcessor();
 				}
 
+				if (proto.secure && (proto.sslImplementation != null)) {
+					processor.setSSLSupport
+                        (proto.sslImplementation.getSSLSupport(channel));
+                } else {
+                    processor.setSSLSupport(null);
+                }
+				
 				SocketState state = processor.process(channel);
 				if (processor.keepAlive) {
 

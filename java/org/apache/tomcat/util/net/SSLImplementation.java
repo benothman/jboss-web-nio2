@@ -20,12 +20,18 @@ package org.apache.tomcat.util.net;
 import java.net.Socket;
 import javax.net.ssl.SSLSession;
 
-/*
- * SSLImplementation:
- * 
+import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
+
+/**
+ * {@code SSLImplementation}
+ * <p>
  * Abstract factory and base class for all SSL implementations.
+ * </p>
  * 
- * @author EKR
+ * 
+ * Created on Feb 22, 2012 at 12:55:17 PM
+ * 
+ * @author EKR & <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 abstract public class SSLImplementation {
 	private static org.jboss.logging.Logger logger = org.jboss.logging.Logger
@@ -34,8 +40,13 @@ abstract public class SSLImplementation {
 	// The default implementations in our search path
 	private static final String JSSEImplementationClass = "org.apache.tomcat.util.net.jsse.JSSEImplementation";
 
-	private static final String[] implementations = { JSSEImplementationClass };
+	private static final String[] implementations = { JSSEImplementationClass,
+			"org.apache.tomcat.util.net.jsse.NioJSSEImplementation" };
 
+	/**
+	 * @return the default implementation of {@code SSLImplementation}
+	 * @throws ClassNotFoundException
+	 */
 	public static SSLImplementation getInstance() throws ClassNotFoundException {
 		for (int i = 0; i < implementations.length; i++) {
 			try {
@@ -51,6 +62,13 @@ abstract public class SSLImplementation {
 		throw new ClassNotFoundException("Can't find any SSL implementation");
 	}
 
+	/**
+	 * Returns the {@code SSLImplementation} specified by the name of it's class
+	 * 
+	 * @param className
+	 * @return a new instance of the {@code SSLImplementation} given by it's name
+	 * @throws ClassNotFoundException
+	 */
 	public static SSLImplementation getInstance(String className) throws ClassNotFoundException {
 		if (className == null)
 			return getInstance();
@@ -73,11 +91,38 @@ abstract public class SSLImplementation {
 		}
 	}
 
+	/**
+	 * @return the implementation name
+	 */
 	abstract public String getImplementationName();
 
+	/**
+	 * @return a new instance of {@link ServerSocketFactory} 
+	 */
 	abstract public ServerSocketFactory getServerSocketFactory();
 
+	/**
+	 * 
+	 * @return a new instance of {@link NioJSSESocketChannelFactory}
+	 */
+	public abstract NioJSSESocketChannelFactory getServerSocketChannelFactory();
+
+	/**
+	 * Return a {@link SSLSupport} attached to the socket
+	 * @param sock
+	 * @return a {@link SSLSupport} attached to the socket
+	 */
 	abstract public SSLSupport getSSLSupport(Socket sock);
 
+	/**
+	 * @param channel
+	 * @return the {@link SSLSupport} attached to this channel
+	 */
+	public abstract SSLSupport getSSLSupport(NioChannel channel);
+	
+	/**
+	 * @param session
+	 * @return the {@link SSLSupport} attached to this session
+	 */
 	abstract public SSLSupport getSSLSupport(SSLSession session);
 }

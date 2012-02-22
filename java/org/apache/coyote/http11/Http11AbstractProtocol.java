@@ -31,6 +31,7 @@ import javax.net.ssl.SSLContext;
 
 import org.apache.coyote.Adapter;
 import org.apache.coyote.ProtocolHandler;
+import org.apache.tomcat.util.net.SSLImplementation;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -59,7 +60,10 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	protected ObjectName tpOname = null;
 	// *
 	protected ObjectName rgOname = null;
+	
+    protected SSLImplementation sslImplementation = null;
 
+	
 	/**
 	 * The adapter, used to call the connector.
 	 */

@@ -847,7 +847,7 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	 * 
 	 * @return the sslSupport
 	 */
-	public SSLSupport getSslSupport() {
+	public SSLSupport getSSLSupport() {
 		return this.sslSupport;
 	}
 
@@ -857,7 +857,7 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	 * @param sslSupport
 	 *            the sslSupport to set
 	 */
-	public void setSslSupport(SSLSupport sslSupport) {
+	public void setSSLSupport(SSLSupport sslSupport) {
 		this.sslSupport = sslSupport;
 	}
 
