@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
-import java.util.Formatter;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -256,21 +255,6 @@ public class SecureNioChannel extends NioChannel {
 					}
 				});
 
-	}
-
-	/**
-	 * 
-	 * @param bytes
-	 * @return a String representation of the hexadecimal value
-	 */
-	public static String bytesToHexString(byte[] bytes) {
-		StringBuilder sb = new StringBuilder(bytes.length * 2);
-		Formatter formatter = new Formatter(sb);
-		for (byte b : bytes) {
-			formatter.format("%02x", b);
-		}
-
-		return sb.toString();
 	}
 
 	/*
