@@ -53,7 +53,7 @@ class NioJSSESupport implements SSLSupport {
 	 */
 	NioJSSESupport(SecureNioChannel channel) {
 		this.channel = channel;
-		session = channel.getSSLSession();
+		this.session = channel.getSSLSession();
 	}
 
 	/**
@@ -73,9 +73,7 @@ class NioJSSESupport implements SSLSupport {
 	@Override
 	public String getCipherSuite() throws IOException {
 		// Look up the current SSLSession
-		if (session == null)
-			return null;
-		return session.getCipherSuite();
+		return this.session == null ? null : this.session.getCipherSuite();
 	}
 
 	/*
@@ -97,8 +95,9 @@ class NioJSSESupport implements SSLSupport {
 	@Override
 	public Object[] getPeerCertificateChain(boolean force) throws IOException {
 		// Look up the current SSLSession
-		if (session == null)
+		if (session == null) {
 			return null;
+		}
 
 		// Convert JSSE's certificate format to the ones we need
 		X509Certificate[] jsseCerts = null;
@@ -195,19 +194,23 @@ class NioJSSESupport implements SSLSupport {
 	@Override
 	public String getSessionId() throws IOException {
 		// Look up the current SSLSession
-		if (session == null)
+		if (session == null) {
 			return null;
+		}
 		// Expose ssl_session (getId)
 		byte[] ssl_session = session.getId();
-		if (ssl_session == null)
+		if (ssl_session == null) {
 			return null;
+		}
 		StringBuilder buf = new StringBuilder("");
 		for (int x = 0; x < ssl_session.length; x++) {
 			String digit = Integer.toHexString((int) ssl_session[x]);
-			if (digit.length() < 2)
+			if (digit.length() < 2) {
 				buf.append('0');
-			if (digit.length() > 2)
+			}
+			if (digit.length() > 2) {
 				digit = digit.substring(digit.length() - 2);
+			}
 			buf.append(digit);
 		}
 		return buf.toString();
@@ -218,11 +221,11 @@ class NioJSSESupport implements SSLSupport {
 	 * @throws IOException
 	 */
 	protected void handShake() throws IOException {
-		if(channel != null && channel.handshakeComplete) {
+		if (channel != null && channel.handshakeComplete) {
 			return;
 		}
-		
-		if(channel != null) {
+
+		if (channel != null) {
 			channel.handshake();
 		}
 	}

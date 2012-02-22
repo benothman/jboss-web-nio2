@@ -27,8 +27,6 @@ import java.net.BindException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -62,7 +60,6 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	protected AsynchronousServerSocketChannel listener;
 	private ThreadFactory threadFactory;
-	protected Map<String, Object> attributes = new HashMap<String, Object>();
 
 	/**
 	 * Available workers.
@@ -217,22 +214,20 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (this.serverSocketChannelFactory == null) {
 			this.serverSocketChannelFactory = NioServerSocketChannelFactory
 					.createServerSocketChannelFactory(threadGroup, SSLEnabled);
-
-			// Initialize the SSL context if the SSL mode is enabled
-			if (SSLEnabled) {
-				NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
-				for (String key : this.attributes.keySet()) {
-					factory.setAttribute(key, this.attributes.get(key));
-				}
-				if (sslContext == null) {
-					sslContext = factory.getSslContext();
-				} else {
-					factory.setSslContext(sslContext);
-				}
-			}
 		} else {
 			this.serverSocketChannelFactory.threadGroup = threadGroup;
 		}
+
+		// Initialize the SSL context if the SSL mode is enabled
+		if (SSLEnabled) {
+			NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
+			if (sslContext == null) {
+				sslContext = factory.getSslContext();
+			} else {
+				factory.setSslContext(sslContext);
+			}
+		}
+
 		// Initialize the channel factory
 		this.serverSocketChannelFactory.init();
 

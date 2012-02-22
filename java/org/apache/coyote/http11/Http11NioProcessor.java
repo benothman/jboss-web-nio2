@@ -32,6 +32,7 @@ import org.apache.coyote.ActionCode;
 import org.apache.coyote.Request;
 import org.apache.coyote.RequestInfo;
 import org.apache.coyote.Response;
+import org.apache.coyote.http11.filters.BufferedInputFilter;
 import org.apache.coyote.http11.filters.ChunkedInputFilter;
 import org.apache.coyote.http11.filters.ChunkedOutputFilter;
 import org.apache.coyote.http11.filters.GzipOutputFilter;
@@ -649,90 +650,23 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 * Get the SSL attribute
 	 */
 	private void requestSSLAttr() {
-
-		System.out.println("**************** " + getClass().getName() + "-1 ****************");
-
-		if (sslEnabled && channel != null) {
-			try {
-				if (sslSupport != null) {
-					Object sslO = sslSupport.getCipherSuite();
-					if (sslO != null)
-						request.setAttribute(SSLSupport.CIPHER_SUITE_KEY, sslO);
-					sslO = sslSupport.getPeerCertificateChain(false);
-					if (sslO != null)
-						request.setAttribute(SSLSupport.CERTIFICATE_KEY, sslO);
-					sslO = sslSupport.getKeySize();
-					if (sslO != null)
-						request.setAttribute(SSLSupport.KEY_SIZE_KEY, sslO);
-					sslO = sslSupport.getSessionId();
-					if (sslO != null)
-						request.setAttribute(SSLSupport.SESSION_ID_KEY, sslO);
-				}
-			} catch (Exception e) {
-				log.warn(sm.getString("http11processor.socket.ssl"), e);
+		try {
+			if (sslSupport != null) {
+				Object sslO = sslSupport.getCipherSuite();
+				if (sslO != null)
+					request.setAttribute(SSLSupport.CIPHER_SUITE_KEY, sslO);
+				sslO = sslSupport.getPeerCertificateChain(false);
+				if (sslO != null)
+					request.setAttribute(SSLSupport.CERTIFICATE_KEY, sslO);
+				sslO = sslSupport.getKeySize();
+				if (sslO != null)
+					request.setAttribute(SSLSupport.KEY_SIZE_KEY, sslO);
+				sslO = sslSupport.getSessionId();
+				if (sslO != null)
+					request.setAttribute(SSLSupport.SESSION_ID_KEY, sslO);
 			}
-
-		}
-
-		if (sslEnabled && (channel != null)) {
-			System.out.println("**************** " + getClass().getName() + "-2 ****************");
-			try {
-				SecureNioChannel sslChannel = (SecureNioChannel) channel;
-				// Cipher suite
-				// Object sslO = SSLSocket.getInfoS(socket,
-				// SSL.SSL_INFO_CIPHER);
-				Object sslO = sslChannel.getSSLSession().getCipherSuite();
-				if (sslO != null) {
-					request.setAttribute(org.apache.tomcat.util.net.Constants.CIPHER_SUITE_KEY,
-							sslO);
-				}
-				// Get client certificate and the certificate chain if
-				// present
-				// certLength == -1 indicates an error
-				// int certLength = SSLSocket.getInfoI(socket,
-				// SSL.SSL_INFO_CLIENT_CERT_CHAIN);
-				// TODO not sure that is correct
-				int certLength = sslChannel.getSSLSession().getPeerCertificates().length;
-
-				// byte[] clientCert = SSLSocket.getInfoB(socket,
-				// SSL.SSL_INFO_CLIENT_CERT);
-				// TODO not sure that is correct
-				byte[] clientCert = sslChannel.getSSLSession().getPeerCertificates()[0]
-						.getEncoded();
-				X509Certificate[] certs = null;
-				if (clientCert != null && certLength > -1) {
-					certs = new X509Certificate[certLength + 1];
-					CertificateFactory cf = CertificateFactory.getInstance("X.509");
-					certs[0] = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(
-							clientCert));
-					for (int i = 0; i < certLength; i++) {
-						// TODO not sure that is correct
-						// byte[] data = SSLSocket.getInfoB(socket,
-						// SSL.SSL_INFO_CLIENT_CERT_CHAIN + i);
-						byte[] data = sslChannel.getSSLSession().getPeerCertificateChain()[i]
-								.getEncoded();
-						certs[i + 1] = (X509Certificate) cf
-								.generateCertificate(new ByteArrayInputStream(data));
-					}
-				}
-				if (certs != null) {
-					request.setAttribute(org.apache.tomcat.util.net.Constants.CERTIFICATE_KEY,
-							certs);
-				}
-				// User key size
-				// sslO = new Integer(SSLSocket.getInfoI(socket,
-				// SSL.SSL_INFO_CIPHER_USEKEYSIZE));
-				sslO = sslChannel.getSSLSession().getValue("javax.servlet.request.key_size");
-				request.setAttribute(org.apache.tomcat.util.net.Constants.KEY_SIZE_KEY, sslO);
-				// SSL session ID
-				// sslO = SSLSocket.getInfoS(socket, SSL.SSL_INFO_SESSION_ID);
-				sslO = sslChannel.getSSLSession().getId();
-				if (sslO != null) {
-					request.setAttribute(org.apache.tomcat.util.net.Constants.SESSION_ID_KEY, sslO);
-				}
-			} catch (Exception e) {
-				log.warn(sm.getString("http11processor.socket.ssl"), e);
-			}
+		} catch (Exception e) {
+			log.warn(sm.getString("http11processor.socket.ssl"), e);
 		}
 	}
 
@@ -740,38 +674,23 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 * Get the SSL certificate
 	 */
 	private void requestSSLCertificate() {
-		/*
-		 * if (sslEnabled && (channel != null)) { // Consume and buffer the
-		 * request body, so that it does not // interfere with the client's
-		 * handshake messages if (maxSavePostSize != 0) { BufferedInputFilter
-		 * buffredInputFilter = new BufferedInputFilter();
-		 * buffredInputFilter.setLimit(maxSavePostSize);
-		 * inputBuffer.addActiveFilter(buffredInputFilter); } try { // Configure
-		 * connection to require a certificate SSLNioChannel sslChannel =
-		 * (SSLNioChannel) channel;
-		 * sslChannel.getSslEngine().setWantClientAuth(true); //
-		 * SSLSocket.setVerify(socket, SSL.SSL_CVERIFY_REQUIRE, //
-		 * endpoint.getSSLVerifyDepth()); // Renegociate certificates if
-		 * (SSLSocket.renegotiate(socket) == 0) { // Don't look for certs unless
-		 * we know renegotiation // worked. // Get client certificate and the
-		 * certificate chain if // present // certLength == -1 indicates an
-		 * error // int certLength = SSLSocket.getInfoI(socket, //
-		 * SSL.SSL_INFO_CLIENT_CERT_CHAIN); int certLength =
-		 * sslChannel.getSSLSession().getPeerCertificateChain().length; byte[]
-		 * clientCert = SSLSocket.getInfoB(socket, SSL.SSL_INFO_CLIENT_CERT);
-		 * X509Certificate[] certs = null; if (clientCert != null && certLength
-		 * > -1) { certs = new X509Certificate[certLength + 1];
-		 * CertificateFactory cf = CertificateFactory.getInstance("X.509");
-		 * certs[0] = (X509Certificate) cf .generateCertificate(new
-		 * ByteArrayInputStream(clientCert)); for (int i = 0; i < certLength;
-		 * i++) { byte[] data = SSLSocket.getInfoB(socket,
-		 * SSL.SSL_INFO_CLIENT_CERT_CHAIN + i); certs[i + 1] = (X509Certificate)
-		 * cf .generateCertificate(new ByteArrayInputStream(data)); } } if
-		 * (certs != null) {
-		 * request.setAttribute(org.apache.tomcat.util.net.Constants
-		 * .CERTIFICATE_KEY, certs); } } } catch (Exception e) {
-		 * log.warn(sm.getString("http11processor.socket.ssl"), e); } }
-		 */
+		if (sslSupport != null) {
+			// Consume and buffer the request body, so that it does not
+			// interfere with the client's handshake messages
+			if (maxSavePostSize != 0) {
+				BufferedInputFilter buffredInputFilter = new BufferedInputFilter();
+				buffredInputFilter.setLimit(maxSavePostSize);
+				inputBuffer.addActiveFilter(buffredInputFilter);
+			}
+			try {
+				Object sslO = sslSupport.getPeerCertificateChain(true);
+				if (sslO != null) {
+					request.setAttribute(SSLSupport.CERTIFICATE_KEY, sslO);
+				}
+			} catch (Exception e) {
+				log.warn(sm.getString("http11processor.socket.ssl"), e);
+			}
+		}
 	}
 
 	/**
