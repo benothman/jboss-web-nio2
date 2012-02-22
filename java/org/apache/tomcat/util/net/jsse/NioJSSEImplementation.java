@@ -21,45 +21,76 @@
  */
 package org.apache.tomcat.util.net.jsse;
 
+import java.net.Socket;
+
 import javax.net.ssl.SSLSession;
+
 import org.apache.tomcat.util.net.NioChannel;
+import org.apache.tomcat.util.net.SSLSupport;
+import org.apache.tomcat.util.net.ServerSocketFactory;
 
 /**
- * {@code NioJSSEFactory}
+ * {@code NioJSSEImplementation}
  * 
- * Created on Feb 22, 2012 at 12:10:48 PM
+ * Created on Feb 22, 2012 at 12:41:08 PM
  * 
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
-public class NioJSSEFactory {
+public class NioJSSEImplementation {
+
+	static final String SSLClass = "javax.net.ssl.SSLEngine";
+
+	static org.jboss.logging.Logger logger = org.jboss.logging.Logger
+			.getLogger(JSSEImplementation.class);
+
+	private NioJSSEFactory factory = null;
 
 	/**
-	 * Returns the NioSocketChannelFactory to use.
+	 * Create a new instance of {@code NioJSSEImplementation}
 	 * 
-	 * @return the NioSocketChannelFactory to use.
+	 * @throws ClassNotFoundException
 	 */
-	public NioJSSESocketChannelFactory getSocketChannelFactory() {
-		return new NioJSSESocketChannelFactory();
+	public NioJSSEImplementation() throws ClassNotFoundException {
+		// Check to see if JSSE is floating around somewhere
+		Class.forName(SSLClass);
+		factory = new NioJSSEFactory();
 	}
 
 	/**
-	 * Returns the SSLSupport attached to this channel.
+	 * Return the implementation name
+	 * @return
+	 */
+	public String getImplementationName() {
+		return "JSSE";
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public NioJSSESocketChannelFactory getServerSocketChannelFactory() {
+		NioJSSESocketChannelFactory ssf = factory.getSocketChannelFactory();
+		return ssf;
+	}
+
+	/**
 	 * 
 	 * @param channel
-	 * @return the SSLSupport attached to this channel
+	 * @return
 	 */
-	public NioJSSESupport getSSLSupport(NioChannel channel) {
-		return new NioJSSESupport((SecureNioChannel) channel);
+	public SSLSupport getSSLSupport(NioChannel channel) {
+		SSLSupport ssls = factory.getSSLSupport(channel);
+		return ssls;
 	}
 
 	/**
-	 * Return the SSLSupport attached to this session
 	 * 
 	 * @param session
-	 * @return the SSLSupport attached to this session
+	 * @return
 	 */
-	public NioJSSESupport getSSLSupport(SSLSession session) {
-		return new NioJSSESupport(session);
+	public SSLSupport getSSLSupport(SSLSession session) {
+		SSLSupport ssls = factory.getSSLSupport(session);
+		return ssls;
 	}
 
 }

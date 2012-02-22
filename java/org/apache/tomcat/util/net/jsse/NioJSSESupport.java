@@ -23,8 +23,6 @@ package org.apache.tomcat.util.net.jsse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 
@@ -119,6 +117,12 @@ class NioJSSESupport implements SSLSupport {
 		return getX509Certificates(session);
 	}
 
+	/**
+	 * 
+	 * @param session
+	 * @return
+	 * @throws IOException
+	 */
 	protected java.security.cert.X509Certificate[] getX509Certificates(SSLSession session)
 			throws IOException {
 		Certificate[] certs = null;
@@ -209,39 +213,17 @@ class NioJSSESupport implements SSLSupport {
 		return buf.toString();
 	}
 
+	/**
+	 * 
+	 * @throws IOException
+	 */
 	protected void handShake() throws IOException {
-		if (channel.getSslEngine().getWantClientAuth()) {
-			log.debug("No client cert sent for want");
-		} else {
-			channel.getSslEngine().setNeedClientAuth(true);
-		}
-
-		if (channel.getSslEngine().getEnabledCipherSuites().length == 0) {
-			// Handshake is never going to be successful.
-			// Assume this is because handshakes are disabled
-			log.warn("SSL server initiated renegotiation is disabled, closing connection");
-			session.invalidate();
-			channel.close();
+		if(channel != null && channel.handshakeComplete) {
 			return;
 		}
-
-		int maxTries = 60; // 60 * 1000 = example 1 minute time out
-		for (int i = 0; i < maxTries; i++) {
-			if (log.isTraceEnabled())
-				log.trace("Reading for try #" + i);
-			try {
-				channel.handshake();				
-			} catch (Exception sslex) {
-				log.info("SSL Error getting client Certs", sslex);
-				throw new IOException(sslex);
-			}
-			if(channel.handshakeComplete()) {
-				break;
-			}
-		}
 		
-		if(!channel.handshakeComplete()) {
-			throw new SocketException("SSL Cert handshake timeout");
+		if(channel != null) {
+			channel.handshake();
 		}
 	}
 }

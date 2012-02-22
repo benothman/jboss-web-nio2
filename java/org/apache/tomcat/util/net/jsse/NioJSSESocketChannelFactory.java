@@ -48,7 +48,6 @@ import java.security.cert.X509CertSelector;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Vector;
-import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
@@ -99,9 +98,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	private static final int defaultSessionCacheSize = 0;
 	private static final int defaultSessionTimeout = 86400;
 
-	static org.jboss.logging.Logger log = org.jboss.logging.Logger
-			.getLogger(NioJSSESocketChannelFactory.class);
-
 	// private static SSLContext context;
 	static {
 		boolean result = false;
@@ -116,9 +112,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					break;
 				}
 			}
-		} catch (NoSuchAlgorithmException e) {
-			// Assume no RFC 5746 support
-		} catch (KeyManagementException e) {
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
 			// Assume no RFC 5746 support
 		}
 		RFC_5746_SUPPORTED = result;

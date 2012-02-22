@@ -38,6 +38,9 @@ import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
  */
 public abstract class NioServerSocketChannelFactory implements Cloneable {
 
+	protected static org.jboss.logging.Logger log = org.jboss.logging.Logger
+			.getLogger(NioServerSocketChannelFactory.class);
+
 	private static NioServerSocketChannelFactory theFactory;
 	protected Hashtable<String, Object> attributes = new Hashtable<String, Object>();
 
