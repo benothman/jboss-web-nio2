@@ -329,48 +329,47 @@ public class SecureNioChannel extends NioChannel {
 	}
 
 	/**
+	 * Close the {@link SSLEngine} attached to this channel
 	 * 
 	 * @throws Exception
 	 */
 	private void handleClose() throws Exception {
+		if (sslEngine.isOutboundDone()) {
+			return;
+		}
 		sslEngine.closeOutbound();
-		if (this.isOpen()) {
-			this.netOutBuffer.clear();
-			int i = 1;
-			int packetBufferSize = getSSLSession().getPacketBufferSize();
-			ByteBuffer bb = ByteBuffer.allocateDirect(packetBufferSize * (i++));
+		this.netOutBuffer.compact();
+		this.netInBuffer.compact();
+		int packetBufferSize = getSSLSession().getPacketBufferSize();
 
-			boolean cont = true;
+		while (!sslEngine.isOutboundDone()) {
+			// Get close message
+			SSLEngineResult res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
 
-			while (!sslEngine.isOutboundDone() && cont) {
-				// Get close message
-				SSLEngineResult res = sslEngine.wrap(bb, this.netOutBuffer);
-
-				switch (res.getStatus()) {
-				case OK:
-					// Execute tasks if we need to
-					tryTasks();
-					while (this.netOutBuffer.hasRemaining()) {
-						if (this.channel.write(this.netOutBuffer).get() < 0) {
-							cont = false;
-							break;
-						}
-						this.netOutBuffer.compact();
+			switch (res.getStatus()) {
+			case OK:
+				// Execute tasks if we need to
+				tryTasks();
+				while (this.netOutBuffer.hasRemaining()) {
+					if (this.channel.write(this.netOutBuffer).get() < 0) {
+						break;
 					}
-					break;
-				case BUFFER_OVERFLOW:
-					ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize * (i++));
-					this.netOutBuffer.flip();
-					tmp.put(this.netOutBuffer);
-					this.netOutBuffer = tmp;
-
-					break;
-				case BUFFER_UNDERFLOW:
-					// Cannot happens in case of wrap
-				case CLOSED:
-					cont = false;
-					break;
+					this.netOutBuffer.compact();
 				}
+				break;
+			case BUFFER_OVERFLOW:
+				ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize
+						+ this.netOutBuffer.capacity());
+				this.netOutBuffer.flip();
+				tmp.put(this.netOutBuffer);
+				this.netOutBuffer = tmp;
+
+				break;
+			case BUFFER_UNDERFLOW:
+				// Cannot happens in case of wrap
+			case CLOSED:
+				// Already closed, so return
+				break;
 			}
 		}
 	}
