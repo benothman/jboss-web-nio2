@@ -39,6 +39,7 @@ import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
 import org.apache.tomcat.util.net.SSLImplementation;
 import org.apache.tomcat.util.net.SocketStatus;
+import org.apache.tomcat.util.net.jsse.NioJSSEImplementation;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 
 /**
@@ -86,7 +87,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		// Verify the validity of the configured socket factory
 		try {
 			if (isSSLEnabled()) {
-				sslImplementation = SSLImplementation.getInstance(NioJSSESocketChannelFactory.class
+				sslImplementation = SSLImplementation.getInstance(NioJSSEImplementation.class
 						.getName());
 				socketFactory = sslImplementation.getServerSocketChannelFactory();
 				endpoint.setServerSocketChannelFactory(socketFactory);
