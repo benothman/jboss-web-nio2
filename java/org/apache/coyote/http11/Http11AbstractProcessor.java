@@ -555,6 +555,25 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	protected abstract void initializeFilters();
 
 	/**
+	 * Reset flags of the Processor
+	 */
+	protected void reset() {
+		// Set the remote address
+		remoteAddr = null;
+		remoteHost = null;
+		localAddr = null;
+		localName = null;
+		remotePort = -1;
+		localPort = -1;
+
+		// Error flag
+		error = false;
+		event = false;
+		keepAlive = true;
+	}
+	
+	
+	/**
 	 * Determine if we must drop the connection because of the HTTP status code.
 	 * Use the same list of codes as Apache/httpd.
 	 */

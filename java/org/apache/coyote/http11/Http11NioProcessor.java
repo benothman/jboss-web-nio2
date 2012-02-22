@@ -47,6 +47,7 @@ import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
+import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.SocketStatus;
 import org.apache.tomcat.util.net.jsse.SecureNioChannel;
@@ -255,24 +256,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	}
 
 	/**
-	 * 
-	 */
-	private void reset() {
-		// Set the remote address
-		remoteAddr = null;
-		remoteHost = null;
-		localAddr = null;
-		localName = null;
-		remotePort = -1;
-		localPort = -1;
-
-		// Error flag
-		error = false;
-		event = false;
-		keepAlive = true;
-	}
-
-	/**
 	 * Process pipelined HTTP requests using the specified input and output
 	 * streams.
 	 * 
@@ -308,7 +291,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// recycled and the method should return true
 					final NioChannel ch = channel;
 					// Perform an asynchronous read operation to wait for
-					// incoming data					
+					// incoming data
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
 							new CompletionHandler<Integer, NioChannel>() {
 
@@ -668,6 +651,28 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	private void requestSSLAttr() {
 
 		System.out.println("**************** " + getClass().getName() + "-1 ****************");
+
+		if (sslEnabled && channel != null) {
+			try {
+				if (sslSupport != null) {
+					Object sslO = sslSupport.getCipherSuite();
+					if (sslO != null)
+						request.setAttribute(SSLSupport.CIPHER_SUITE_KEY, sslO);
+					sslO = sslSupport.getPeerCertificateChain(false);
+					if (sslO != null)
+						request.setAttribute(SSLSupport.CERTIFICATE_KEY, sslO);
+					sslO = sslSupport.getKeySize();
+					if (sslO != null)
+						request.setAttribute(SSLSupport.KEY_SIZE_KEY, sslO);
+					sslO = sslSupport.getSessionId();
+					if (sslO != null)
+						request.setAttribute(SSLSupport.SESSION_ID_KEY, sslO);
+				}
+			} catch (Exception e) {
+				log.warn(sm.getString("http11processor.socket.ssl"), e);
+			}
+
+		}
 
 		if (sslEnabled && (channel != null)) {
 			System.out.println("**************** " + getClass().getName() + "-2 ****************");

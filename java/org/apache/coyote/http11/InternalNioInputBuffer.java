@@ -503,7 +503,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			long readTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 			return this.channel.readBytes(bb, readTimeout, unit);
 		} catch (Exception e) {
-			log.warn("An error occurs when trying a blocking read " + e.getMessage());
+			if (log.isDebugEnabled()) {
+				log.debug("An error occurs when trying a blocking read " + e.getMessage());
+			}
 			if (e instanceof TimeoutException) {
 				close(channel);
 			}

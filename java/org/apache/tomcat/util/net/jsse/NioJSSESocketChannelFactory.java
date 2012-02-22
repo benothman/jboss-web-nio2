@@ -48,6 +48,7 @@ import java.security.cert.X509CertSelector;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
@@ -355,7 +356,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 						for (int i = 0; supportedCiphers != null && i < supportedCiphers.length; i++) {
 							if (supportedCiphers[i].equals(cipher)) {
 								if (vec == null) {
-									vec = new Vector<Object>();
+									vec = new Vector<>();
 								}
 								vec.addElement(cipher);
 								break;
@@ -378,7 +379,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 					for (int i = 0; supportedCiphers != null && i < supportedCiphers.length; i++) {
 						if (supportedCiphers[i].equals(cipher)) {
 							if (vec == null) {
-								vec = new Vector<Object>();
+								vec = new Vector<>();
 							}
 							vec.addElement(cipher);
 							break;

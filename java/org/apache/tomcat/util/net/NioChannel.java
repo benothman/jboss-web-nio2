@@ -747,7 +747,6 @@ public class NioChannel implements AsynchronousByteChannel {
 	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
-		System.out.println("**** " + this + ".awaitRead(...) ****");
 		// Clear the internal buffer
 		this.buffer.clear();
 		// Perform an asynchronous read operation using the internal buffer
