@@ -23,7 +23,6 @@ package org.apache.tomcat.util.net.jsse;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
@@ -335,11 +334,61 @@ public class SecureNioChannel extends NioChannel {
 	 */
 	@Override
 	public void close() throws IOException {
+		try {
+			// Handle closing the SSL Engine
+			handleClose();
+		} catch (Exception e) {
+			throw new IOException(e);
+		} finally {
+			super.close();
+		}
+	}
 
-		super.close();
-		// getSSLSession().invalidate();
-		// The closeOutbound method will be called automatically
-		// this.sslEngine.closeInbound();
+	/**
+	 * 
+	 * @throws Exception
+	 */
+	private void handleClose() throws Exception {
+		sslEngine.closeOutbound();
+		if (this.isOpen()) {
+			this.netOutBuffer.clear();
+			int i = 1;
+			int packetBufferSize = getSSLSession().getPacketBufferSize();
+			ByteBuffer bb = ByteBuffer.allocateDirect(packetBufferSize * (i++));
+
+			boolean cont = true;
+
+			while (!sslEngine.isOutboundDone() && cont) {
+				// Get close message
+				SSLEngineResult res = sslEngine.wrap(bb, this.netOutBuffer);
+
+				switch (res.getStatus()) {
+				case OK:
+					// Execute tasks if we need to
+					tryTasks();
+					while (this.netOutBuffer.hasRemaining()) {
+						if (this.channel.write(this.netOutBuffer).get() < 0) {
+							cont = false;
+							break;
+						}
+						this.netOutBuffer.compact();
+					}
+					break;
+				case BUFFER_OVERFLOW:
+					ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize * (i++));
+					this.netOutBuffer.flip();
+					tmp.put(this.netOutBuffer);
+					this.netOutBuffer = tmp;
+
+					break;
+				case BUFFER_UNDERFLOW:
+					// Cannot happens in case of wrap
+				case CLOSED:
+					cont = false;
+					break;
+				}
+			}
+		}
 	}
 
 	/*
@@ -497,10 +546,20 @@ public class SecureNioChannel extends NioChannel {
 		// the number of bytes written
 		int written = result.bytesConsumed();
 		this.handshakeStatus = result.getHandshakeStatus();
-		if (result.getStatus() == Status.OK) {
+
+		switch (result.getStatus()) {
+		case OK:
+			// Execute tasks if we need to
 			tryTasks();
-		} else {
-			throw new Exception("Unable to wrap data, invalid engine state: " + result.getStatus());
+			break;
+		case CLOSED:
+			// We can't do encryption any more
+			written = -1;
+		case BUFFER_OVERFLOW:
+			throw new BufferOverflowException();
+		case BUFFER_UNDERFLOW:
+			// This case should not happen for a wrap method
+			break;
 		}
 
 		return written;
@@ -541,7 +600,7 @@ public class SecureNioChannel extends NioChannel {
 				}
 			} else if (result.getStatus() == Status.BUFFER_OVERFLOW && read > 0) {
 				// buffer overflow can happen, if we have read data, then
-				// empty out the dst buffer before we do another read
+				// empty out the destination buffer before we do another read
 				break;
 			} else if (result.getStatus() == Status.CLOSED) {
 				return -1;
