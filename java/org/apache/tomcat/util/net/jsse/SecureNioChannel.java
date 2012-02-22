@@ -314,69 +314,6 @@ public class SecureNioChannel extends NioChannel {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.apache.tomcat.util.net.NioChannel#close()
-	 */
-	@Override
-	public void close() throws IOException {
-		try {
-			// Handle closing the SSL Engine
-			handleClose();
-		} catch (Exception e) {
-			throw new IOException(e);
-		} finally {
-			super.close();
-		}
-	}
-
-	/**
-	 * Close the {@link SSLEngine} attached to this channel
-	 * 
-	 * @throws Exception
-	 */
-	private void handleClose() throws Exception {
-		if (sslEngine.isOutboundDone()) {
-			return;
-		}
-		sslEngine.closeOutbound();
-		this.netOutBuffer.compact();
-		this.netInBuffer.compact();
-		int packetBufferSize = getSSLSession().getPacketBufferSize();
-
-		while (!sslEngine.isOutboundDone()) {
-			// Get close message
-			SSLEngineResult res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
-
-			switch (res.getStatus()) {
-			case OK:
-				// Execute tasks if we need to
-				tryTasks();
-				while (this.netOutBuffer.hasRemaining()) {
-					if (this.channel.write(this.netOutBuffer).get() < 0) {
-						break;
-					}
-					this.netOutBuffer.compact();
-				}
-				break;
-			case BUFFER_OVERFLOW:
-				ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize
-						+ this.netOutBuffer.capacity());
-				this.netOutBuffer.flip();
-				tmp.put(this.netOutBuffer);
-				this.netOutBuffer = tmp;
-
-				break;
-			case BUFFER_UNDERFLOW:
-				// Cannot happens in case of wrap
-			case CLOSED:
-				// Already closed, so return
-				break;
-			}
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.apache.tomcat.util.net.NioChannel#write(java.nio.ByteBuffer,
 	 * java.lang.Object, java.nio.channels.CompletionHandler)
 	 */
@@ -490,6 +427,69 @@ public class SecureNioChannel extends NioChannel {
 						handler.failed(exc, attach);
 					}
 				});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.apache.tomcat.util.net.NioChannel#close()
+	 */
+	@Override
+	public void close() throws IOException {
+		try {
+			// Handle closing the SSL Engine
+			handleClose();
+		} catch (Exception e) {
+			throw new IOException(e);
+		} finally {
+			super.close();
+		}
+	}
+
+	/**
+	 * Close the {@link SSLEngine} attached to this channel
+	 * 
+	 * @throws Exception
+	 */
+	private void handleClose() throws Exception {
+		if (sslEngine.isOutboundDone()) {
+			return;
+		}
+		sslEngine.closeOutbound();
+		this.netOutBuffer.compact();
+		this.netInBuffer.compact();
+		int packetBufferSize = getSSLSession().getPacketBufferSize();
+
+		while (!sslEngine.isOutboundDone()) {
+			// Get close message
+			SSLEngineResult res = sslEngine.wrap(this.netInBuffer, this.netOutBuffer);
+
+			switch (res.getStatus()) {
+			case OK:
+				// Execute tasks if we need to
+				tryTasks();
+				while (this.netOutBuffer.hasRemaining()) {
+					if (this.channel.write(this.netOutBuffer).get() < 0) {
+						break;
+					}
+					this.netOutBuffer.compact();
+				}
+				break;
+			case BUFFER_OVERFLOW:
+				ByteBuffer tmp = ByteBuffer.allocateDirect(packetBufferSize
+						+ this.netOutBuffer.capacity());
+				this.netOutBuffer.flip();
+				tmp.put(this.netOutBuffer);
+				this.netOutBuffer = tmp;
+
+				break;
+			case BUFFER_UNDERFLOW:
+				// Cannot happens in case of wrap
+			case CLOSED:
+				// Already closed, so return
+				break;
+			}
+		}
 	}
 
 	/**
@@ -676,7 +676,6 @@ public class SecureNioChannel extends NioChannel {
 		sslEngine.beginHandshake();
 		handshakeStatus = sslEngine.getHandshakeStatus();
 		int i = 1;
-		int step = 1;
 		boolean read = true;
 		// Process handshaking message
 		while (!handshakeComplete) {
@@ -687,7 +686,6 @@ public class SecureNioChannel extends NioChannel {
 				if (read) {
 					clientAppData.clear();
 					nBytes = this.channel.read(this.netInBuffer).get();
-					System.out.println("NEED_UNWRAP --> " + this + " : " + nBytes);
 				}
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
@@ -699,15 +697,11 @@ public class SecureNioChannel extends NioChannel {
 						this.netInBuffer.flip();
 						// Call unwrap
 						SSLEngineResult res = sslEngine.unwrap(this.netInBuffer, clientAppData);
-						System.out.println(this + " --> UNWRAP STEP " + (step++));
-
 						// Compact the buffer, this is an optional method,
 						// wonder what would happen if we didn't
 						this.netInBuffer.compact();
 						// Read in the status
 						handshakeStatus = res.getHandshakeStatus();
-						System.out.println(" HANDSHAKE UNWRAP --------> res.getStatus() = "
-								+ res.getStatus() + ",  handshakeStatus = " + handshakeStatus);
 						if (res.getStatus() == SSLEngineResult.Status.OK) {
 							// Execute tasks if we need to
 							tryTasks();
@@ -783,8 +777,6 @@ public class SecureNioChannel extends NioChannel {
 			// Run the task in blocking mode
 			task.run();
 		}
-
-		System.out.println("----->> task() : handshakeStatus = " + sslEngine.getHandshakeStatus());
 
 		return sslEngine.getHandshakeStatus();
 	}
