@@ -186,6 +186,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	@Override
 	public void init() throws Exception {
+
+		System.out.println("Available Processors : " + Runtime.getRuntime().availableProcessors());
+
 		if (initialized) {
 			return;
 		}
@@ -208,7 +211,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		ExecutorService executorService = (ExecutorService) this.executor;
-		
+
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
 
