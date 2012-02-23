@@ -21,8 +21,10 @@
  */
 package org.apache.coyote.http11;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -142,8 +144,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 			log.error(sm.getString("http11protocol.endpoint.starterror"), ex);
 			throw ex;
 		}
-		if (log.isInfoEnabled())
-			log.info(sm.getString("http11protocol.start", getName()));
+
+		log.info(sm.getString("http11protocol.start", getName()));
 	}
 
 	/*
@@ -182,8 +184,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				canDestroy = true;
 			}
 		}
-		if (log.isInfoEnabled())
-			log.info(sm.getString("http11protocol.pause", getName()));
+
+		log.info(sm.getString("http11protocol.pause", getName()));
 	}
 
 	/*
@@ -199,8 +201,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 			log.error(sm.getString("http11protocol.endpoint.resumeerror"), ex);
 			throw ex;
 		}
-		if (log.isInfoEnabled())
-			log.info(sm.getString("http11protocol.resume", getName()));
+
+		log.info(sm.getString("http11protocol.resume", getName()));
 	}
 
 	/*
@@ -210,8 +212,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	 */
 	@Override
 	public void destroy() throws Exception {
-		if (log.isInfoEnabled())
-			log.info(sm.getString("http11protocol.stop", getName()));
+		log.info(sm.getString("http11protocol.stop", getName()));
 		if (canDestroy) {
 			endpoint.destroy();
 		} else {
@@ -245,7 +246,11 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		String encodedAddr = "";
 		if (getAddress() != null) {
 			encodedAddr = "" + getAddress();
-			encodedAddr = URLEncoder.encode(encodedAddr.replace('/', '-')) + "-";
+			try {
+				encodedAddr = URLEncoder.encode(encodedAddr.replace('/', '-'), "UTF-8") + "-";
+			} catch (UnsupportedEncodingException e) {
+				log.warn("UTF-8 encoding is not supported");
+			}
 		}
 		return ("http-" + encodedAddr + endpoint.getPort());
 	}
@@ -852,12 +857,11 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				}
 
 				if (proto.secure && (proto.sslImplementation != null)) {
-					processor.setSSLSupport
-                        (proto.sslImplementation.getSSLSupport(channel));
-                } else {
-                    processor.setSSLSupport(null);
-                }
-				
+					processor.setSSLSupport(proto.sslImplementation.getSSLSupport(channel));
+				} else {
+					processor.setSSLSupport(null);
+				}
+
 				SocketState state = processor.process(channel);
 				if (processor.keepAlive) {
 

@@ -204,10 +204,11 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		// If the executor is not set, create it with a fixed thread pool
 		if (this.executor == null) {
-			setExecutor(Executors.newFixedThreadPool(getMaxThreads(), this.threadFactory));
+			setExecutor(Executors.newFixedThreadPool(this.maxThreads, this.threadFactory));
 		}
 
 		ExecutorService executorService = (ExecutorService) this.executor;
+		
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
 

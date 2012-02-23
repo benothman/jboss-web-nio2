@@ -17,14 +17,11 @@
 
 package org.apache.coyote.http11;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -48,15 +45,16 @@ import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
-import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
+import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.SocketStatus;
-import org.apache.tomcat.util.net.jsse.SecureNioChannel;
 
 /**
- * Processes HTTP requests.
+ * {@code Http11NioProcessor}
+ * <p>Processes HTTP requests.</p>
  * 
- * @author Remy Maucherat
+ * Created on Feb 22, 2012 at 3:00:29 PM
+ * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 public class Http11NioProcessor extends Http11AbstractProcessor {
 
@@ -312,9 +310,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 								@Override
 								public void failed(Throwable exc, NioChannel attachment) {
 									if (exc instanceof InterruptedByTimeoutException) {
-										System.out
-												.println("Read timout, closing connection on channel: "
-														+ attachment);
 										close(ch);
 									}
 								}
