@@ -23,6 +23,7 @@ package org.apache.tomcat.util.net;
 
 import java.net.InetAddress;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tomcat.jni.Library;
 import org.apache.tomcat.util.res.StringManager;
@@ -52,6 +53,11 @@ public abstract class AbstractEndpoint {
 	 * Track the initialization state of the endpoint.
 	 */
 	protected boolean initialized = false;
+	
+	/**
+	 * The number of open connections
+	 */
+	protected AtomicInteger counter = new AtomicInteger();
 
 	/**
 	 * 

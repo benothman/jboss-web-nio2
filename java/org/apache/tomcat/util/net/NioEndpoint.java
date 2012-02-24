@@ -27,6 +27,7 @@ import java.net.BindException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -60,6 +61,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	protected AsynchronousServerSocketChannel listener;
 	private ThreadFactory threadFactory;
+	protected ConcurrentHashMap<Long, NioChannel> connections;
 
 	/**
 	 * Available workers.
@@ -186,9 +188,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	@Override
 	public void init() throws Exception {
-
-		System.out.println("Available Processors : " + Runtime.getRuntime().availableProcessors());
-
 		if (initialized) {
 			return;
 		}
@@ -203,6 +202,10 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.threadFactory = new DefaultThreadFactory(getName() + "-", threadPriority);
 		}
 
+		if (this.connections == null) {
+			this.connections = new ConcurrentHashMap<Long, NioChannel>();
+		}
+
 		this.channelList = new ChannelList(getMaxThreads());
 
 		// If the executor is not set, create it with a fixed thread pool
@@ -211,7 +214,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		ExecutorService executorService = (ExecutorService) this.executor;
-
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
 
@@ -540,6 +542,29 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * Try to add the specified channel to the list of connections.
+	 * 
+	 * @param channel
+	 *            the channel to be added
+	 * @return <tt>true</tt> if the channel is added successfully, else
+	 *         <tt>false</tt>
+	 */
+	private boolean addChannel(NioChannel channel) {
+		if (this.counter.get() < maxThreads) {
+			if (this.connections.get(channel.getId()) == null
+					|| !this.connections.get(channel.getId()).isOpen()) {
+				this.connections.put(channel.getId(), channel);
+				this.counter.incrementAndGet();
+				return true;
+			}
+		}
+		
+		System.out.println("Max-connections reached");
+		
+		return false;
+	}
+
+	/**
 	 * Getter for serverSocketChannelFactory
 	 * 
 	 * @return the serverSocketChannelFactory
@@ -560,16 +585,22 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * Close the specified channel
+	 * Close the specified channel and remove it from the list of open
+	 * connections
 	 * 
 	 * @param channel
 	 *            the channel to be closed
 	 */
-	private static void closeChannel(NioChannel channel) {
-		try {
-			channel.close();
-		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
+	public void closeChannel(NioChannel channel) {
+		if (channel != null) {
+			try {
+				channel.close();
+			} catch (IOException e) {
+				logger.error(e.getMessage(), e);
+			} finally {
+				this.connections.remove(channel.getId());
+				this.counter.decrementAndGet();
+			}
 		}
 	}
 
@@ -607,16 +638,18 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					// Set the channel options
-					if (!setChannelOptions(channel)) {
-						closeChannel(channel);
-					}
-					if (channel.isOpen()) {
-						// Hand this channel off to an appropriate processor
-						if (!processChannel(channel)) {
-							logger.info("Fail processing the channel");
-							// Close channel right away
+					if (addChannel(channel)) {
+						// Set the channel options
+						if (!setChannelOptions(channel)) {
 							closeChannel(channel);
+						}
+						if (channel.isOpen()) {
+							// Hand this channel off to an appropriate processor
+							if (!processChannel(channel)) {
+								logger.info("Fail processing the channel");
+								// Close channel right away
+								closeChannel(channel);
+							}
 						}
 					}
 				} catch (Exception x) {
