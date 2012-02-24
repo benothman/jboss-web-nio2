@@ -558,9 +558,9 @@ public class NioEndpoint extends AbstractEndpoint {
 				return true;
 			}
 		}
-		
+
 		System.out.println("Max-connections reached");
-		
+
 		return false;
 	}
 
@@ -598,8 +598,9 @@ public class NioEndpoint extends AbstractEndpoint {
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
 			} finally {
-				this.connections.remove(channel.getId());
-				this.counter.decrementAndGet();
+				if (this.connections.remove(channel.getId()) != null) {
+					this.counter.decrementAndGet();
+				}
 			}
 		}
 	}
@@ -651,6 +652,8 @@ public class NioEndpoint extends AbstractEndpoint {
 								closeChannel(channel);
 							}
 						}
+					} else {
+						closeChannel(channel);
 					}
 				} catch (Exception x) {
 					if (running) {
