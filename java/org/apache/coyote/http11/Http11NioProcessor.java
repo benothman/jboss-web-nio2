@@ -51,9 +51,12 @@ import org.apache.tomcat.util.net.SocketStatus;
 
 /**
  * {@code Http11NioProcessor}
- * <p>Processes HTTP requests.</p>
+ * <p>
+ * Processes HTTP requests.
+ * </p>
  * 
  * Created on Feb 22, 2012 at 3:00:29 PM
+ * 
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 public class Http11NioProcessor extends Http11AbstractProcessor {
@@ -298,7 +301,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 								public void completed(Integer nBytes, NioChannel attachment) {
 									if (nBytes < 0) {
 										// Reach the end of the stream
-										close(ch);
+										closeChannel(ch);
 										return;
 									}
 
@@ -310,7 +313,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 								@Override
 								public void failed(Throwable exc, NioChannel attachment) {
 									if (exc instanceof InterruptedByTimeoutException) {
-										close(ch);
+										closeChannel(ch);
 									}
 								}
 							});
@@ -542,12 +545,8 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 * @param ch
 	 *            the channel to be closed
 	 */
-	private static void close(NioChannel ch) {
-		try {
-			ch.close();
-		} catch (IOException ioe) {
-			// NOP
-		}
+	private void closeChannel(NioChannel ch) {
+		endpoint.closeChannel(ch);
 	}
 
 	/**

@@ -98,12 +98,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * 
 	 * @param channel
 	 */
-	private static void close(NioChannel channel) {
-		try {
-			channel.close();
-		} catch (IOException e) {
-			// NOTHING
-		}
+	private void close(NioChannel channel) {
+		endpoint.closeChannel(channel);
 	}
 
 	/**
