@@ -559,8 +559,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 
-		System.out.println("Max-connections reached");
-
 		return false;
 	}
 
