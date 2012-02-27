@@ -24,8 +24,14 @@ package org.apache.tomcat.util;
  */
 public final class Constants {
 
+    /**
+     * 
+     */
     public static final boolean ENABLE_MODELER = Boolean.valueOf(System.getProperty(
             "org.apache.tomcat.util.ENABLE_MODELER", "false")).booleanValue();
+    /**
+     * 
+     */
     public static final boolean LOW_MEMORY = Boolean.valueOf(System.getProperty(
             "org.apache.tomcat.util.LOW_MEMORY", "false")).booleanValue();
 

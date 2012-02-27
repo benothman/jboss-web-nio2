@@ -91,8 +91,8 @@ public abstract class AbstractEndpoint {
 	/**
 	 * Maximum amount of worker threads.
 	 */
-	protected int maxThreads = (org.apache.tomcat.util.Constants.LOW_MEMORY) ? 32 : 32 * Runtime
-			.getRuntime().availableProcessors();
+	protected int maxThreads = 64 * ((org.apache.tomcat.util.Constants.LOW_MEMORY) ? 1 : Runtime
+			.getRuntime().availableProcessors());
 
 	/**
 	 * Priority of the acceptor and poller threads.
