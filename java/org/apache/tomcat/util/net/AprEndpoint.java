@@ -680,8 +680,10 @@ public class AprEndpoint {
 		if (initialized)
 			return;
 
+		System.out.println("********* Cores : " + Runtime.getRuntime().availableProcessors()+" *********");
 		System.out.println("********* Max Thread = " + this.maxThreads + " *********");
-
+		
+		
 		// Create the root APR memory pool
 		rootPool = Pool.create(0);
 		// Create the pool for the server socket
