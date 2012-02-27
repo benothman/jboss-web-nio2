@@ -192,6 +192,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			return;
 		}
 
+		System.out.println("********* Max Thread = " + this.maxThreads + " *********");
+
 		// Initialize thread count defaults for acceptor
 		if (acceptorThreadCount <= 0) {
 			acceptorThreadCount = 1;

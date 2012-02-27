@@ -137,8 +137,8 @@ public class AprEndpoint {
 	/**
 	 * Maximum amount of worker threads.
 	 */
-	protected int maxThreads = (org.apache.tomcat.util.Constants.LOW_MEMORY) ? 32 : 32 * Runtime
-			.getRuntime().availableProcessors();
+	protected int maxThreads = 64 * ((org.apache.tomcat.util.Constants.LOW_MEMORY) ? 1 : Runtime
+			.getRuntime().availableProcessors());
 
 	public void setMaxThreads(int maxThreads) {
 		this.maxThreads = maxThreads;
@@ -672,11 +672,15 @@ public class AprEndpoint {
 
 	/**
 	 * Initialize the endpoint.
+	 * 
+	 * @throws Exception
 	 */
 	public void init() throws Exception {
 
 		if (initialized)
 			return;
+
+		System.out.println("********* Max Thread = " + this.maxThreads + " *********");
 
 		// Create the root APR memory pool
 		rootPool = Pool.create(0);
