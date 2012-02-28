@@ -94,6 +94,12 @@ public abstract class AbstractEndpoint {
 	protected int maxThreads = 64 * ((org.apache.tomcat.util.Constants.LOW_MEMORY) ? 1 : Runtime
 			.getRuntime().availableProcessors());
 
+	
+	/**
+	 * Size of the socket poller (max connections).
+	 */
+	protected int pollerSize = -1;
+	
 	/**
 	 * Priority of the acceptor and poller threads.
 	 */
@@ -1030,4 +1036,21 @@ public abstract class AbstractEndpoint {
 		this.acceptorThreadCount = acceptorThreadCount;
 	}
 
+	/**
+	 * Setter for the pollerSize
+	 * @param pollerSize
+	 */
+	public void setPollerSize(int pollerSize) {
+		this.pollerSize = pollerSize;
+	}
+
+	/**
+	 * Getter for the pollerSize
+	 * @return the poller size (the max connections)
+	 */
+	public int getPollerSize() {
+		return pollerSize;
+	}
+
+	
 }

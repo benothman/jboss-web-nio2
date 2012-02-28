@@ -84,6 +84,8 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	protected Sendfile sendfile = null;
 
+	protected int maxConnections = 0;
+	
 	/**
 	 * SSL context.
 	 */
@@ -192,8 +194,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			return;
 		}
 
-		System.out.println("********* Max Thread = " + this.maxThreads + " *********");
-
 		// Initialize thread count defaults for acceptor
 		if (acceptorThreadCount <= 0) {
 			acceptorThreadCount = 1;
@@ -208,7 +208,15 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.connections = new ConcurrentHashMap<Long, NioChannel>();
 		}
 
-		this.channelList = new ChannelList(getMaxThreads());
+		this.maxConnections = this.pollerSize > 0 ? this.pollerSize : this.maxThreads;		
+		
+		
+		System.out.println("********* Max Thread = " + this.maxThreads + " *********");
+		System.out.println("********* Max Connections = " + this.maxConnections + " *********");
+
+		
+		
+		this.channelList = new ChannelList(this.maxConnections);
 
 		// If the executor is not set, create it with a fixed thread pool
 		if (this.executor == null) {
@@ -552,7 +560,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 *         <tt>false</tt>
 	 */
 	private boolean addChannel(NioChannel channel) {
-		if (this.counter.get() < maxThreads) {
+		if (this.counter.get() < this.maxConnections) {
 			if (this.connections.get(channel.getId()) == null
 					|| !this.connections.get(channel.getId()).isOpen()) {
 				this.connections.put(channel.getId(), channel);
