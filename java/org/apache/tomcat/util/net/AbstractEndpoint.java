@@ -53,7 +53,7 @@ public abstract class AbstractEndpoint {
 	 * Track the initialization state of the endpoint.
 	 */
 	protected boolean initialized = false;
-	
+
 	/**
 	 * The number of open connections
 	 */
@@ -91,15 +91,9 @@ public abstract class AbstractEndpoint {
 	/**
 	 * Maximum amount of worker threads.
 	 */
-	protected int maxThreads = 64 * ((org.apache.tomcat.util.Constants.LOW_MEMORY) ? 1 : Runtime
-			.getRuntime().availableProcessors());
+	protected int maxThreads = (org.apache.tomcat.util.Constants.LOW_MEMORY) ? 32 : 32 * Runtime
+			.getRuntime().availableProcessors();
 
-	
-	/**
-	 * Size of the socket poller (max connections).
-	 */
-	protected int pollerSize = -1;
-	
 	/**
 	 * Priority of the acceptor and poller threads.
 	 */
@@ -1036,21 +1030,4 @@ public abstract class AbstractEndpoint {
 		this.acceptorThreadCount = acceptorThreadCount;
 	}
 
-	/**
-	 * Setter for the pollerSize
-	 * @param pollerSize
-	 */
-	public void setPollerSize(int pollerSize) {
-		this.pollerSize = pollerSize;
-	}
-
-	/**
-	 * Getter for the pollerSize
-	 * @return the poller size (the max connections)
-	 */
-	public int getPollerSize() {
-		return pollerSize;
-	}
-
-	
 }
