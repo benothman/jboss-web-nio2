@@ -206,22 +206,20 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		if (this.connections == null) {
-			this.connections = new ConcurrentHashMap<Long, NioChannel>();
+			this.connections = new ConcurrentHashMap<>();
 		}
 
 		if (this.recycledChannelProcessors == null) {
-			this.recycledChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelProcessor>();
+			this.recycledChannelProcessors = new ConcurrentLinkedQueue<>();
 		}
 
 		if (this.recycledEventChannelProcessors == null) {
-			this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelEventProcessor>();
+			this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<>();
 		}
-
-		this.channelList = new ChannelList(this.maxThreads);
 
 		// If the executor is not set, create it with a fixed thread pool
 		if (this.executor == null) {
-			setExecutor(Executors.newFixedThreadPool(this.maxThreads, this.threadFactory));
+			this.executor = Executors.newFixedThreadPool(this.maxThreads, this.threadFactory);
 		}
 
 		ExecutorService executorService = (ExecutorService) this.executor;
@@ -256,13 +254,12 @@ public class NioEndpoint extends AbstractEndpoint {
 				listener.setOption(StandardSocketOptions.SO_REUSEADDR, this.reuseAddress);
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
-				if (address == null) {
-					throw new BindException(be.getMessage() + " <null>:" + port);
-				} else {
-					throw new BindException(be.getMessage() + " " + address.toString() + ":" + port);
-				}
+				throw new BindException(be.getMessage() + " "
+						+ (address == null ? "<null>" : address.toString()) + ":" + port);
 			}
 		}
+
+		this.channelList = new ChannelList(this.maxThreads);
 
 		initialized = true;
 	}
@@ -342,6 +339,9 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		this.serverSocketChannelFactory.destroy();
 		this.serverSocketChannelFactory = null;
+		this.recycledChannelProcessors = null;
+		this.recycledEventChannelProcessors = null;
+
 		initialized = false;
 	}
 
@@ -382,6 +382,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * 
 	 * 
 	 * @param channel
 	 * @param timeout
