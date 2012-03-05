@@ -509,14 +509,15 @@ public class NioEndpoint extends AbstractEndpoint {
 					return false;
 				}
 			} else {
+				/*
 				ChannelProcessor processor = this.recycledChannelProcessors.poll();
 				if (processor == null) {
 					processor = new ChannelProcessor(channel);
 				} else {
 					processor.setChannel(channel);
 				}
-
-				executor.execute(processor);
+				*/
+				executor.execute(new ChannelProcessor(channel));
 			}
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
