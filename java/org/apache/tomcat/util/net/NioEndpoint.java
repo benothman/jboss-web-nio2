@@ -260,6 +260,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 
+		System.out.println("******** Creating recycled channel processors list ********");
+		
 		this.recycledChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelProcessor>();
 		this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelEventProcessor>();
 
