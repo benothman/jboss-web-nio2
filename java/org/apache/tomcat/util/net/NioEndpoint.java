@@ -209,8 +209,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.connections = new ConcurrentHashMap<Long, NioChannel>();
 		}
 
-		System.out.println("******** Creating recycled channel processors list ********");
-
 		if (this.recycledChannelProcessors == null) {
 			this.recycledChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelProcessor>();
 		}
@@ -240,11 +238,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		// Initialize the SSL context if the SSL mode is enabled
 		if (SSLEnabled) {
 			NioJSSESocketChannelFactory factory = (NioJSSESocketChannelFactory) this.serverSocketChannelFactory;
-			if (sslContext == null) {
-				sslContext = factory.getSslContext();
-			} else {
-				factory.setSslContext(sslContext);
-			}
+			sslContext = factory.getSslContext();
 		}
 
 		// Initialize the channel factory
@@ -346,8 +340,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 
+		this.serverSocketChannelFactory.destroy();
 		this.serverSocketChannelFactory = null;
-		sslContext = null;
 		initialized = false;
 	}
 

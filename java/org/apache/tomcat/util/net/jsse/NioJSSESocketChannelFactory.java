@@ -318,6 +318,18 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.apache.tomcat.util.net.DefaultNioServerSocketChannelFactory#destroy()
+	 */
+	@Override
+	public void destroy() throws IOException {
+		super.destroy();
+		this.sslContext = null;
+	}
+
 	/**
 	 * Determines the SSL cipher suites to be enabled.
 	 * 
@@ -784,8 +796,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		// Create an unbound server socket
 		SSLServerSocketFactory sslProxy = sslContext.getServerSocketFactory();
 		ServerSocket socket = sslProxy.createServerSocket();
-		SSLEngine engine = sslContext.createSSLEngine();
-		initSSLEngine(engine);
+		//SSLEngine engine = sslContext.createSSLEngine();
+		//initSSLEngine(engine);
 
 		try {
 			// Set the timeout to 1ms as all we care about is if it throws an

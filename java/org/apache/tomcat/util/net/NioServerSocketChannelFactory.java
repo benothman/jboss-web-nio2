@@ -63,10 +63,17 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	}
 
 	/**
+	 * Initialize the factory
 	 * 
 	 * @throws IOException
 	 */
 	public abstract void init() throws IOException;
+
+	/**
+	 * Destroy the factory
+	 * @throws IOException
+	 */
+	public abstract void destroy() throws IOException;
 
 	/**
 	 * General mechanism to pass attributes from the ServerConnector to the

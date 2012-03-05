@@ -135,7 +135,7 @@ public class JIoEndpoint {
      */
     protected int maxThreads = (org.apache.tomcat.util.Constants.LOW_MEMORY) ? 64 : 512 * Runtime.getRuntime().availableProcessors();
     public void setMaxThreads(int maxThreads) { this.maxThreads = maxThreads; }
-    public int getMaxThreads() { return maxThreads; }
+    public int getMaxThreads() { return maxThreads;}
 
 
     /**

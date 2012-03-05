@@ -64,6 +64,16 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 
 	/*
 	 * (non-Javadoc)
+	 * @see org.apache.tomcat.util.net.NioServerSocketChannelFactory#destroy()
+	 */
+	public void destroy() throws IOException {
+		this.threadGroup = null;
+		this.attributes.clear();
+		this.attributes = null;
+	}
+	
+	/*
+	 * (non-Javadoc)
 	 * 
 	 * @see
 	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#initChannel(
