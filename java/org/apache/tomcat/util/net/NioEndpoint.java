@@ -209,6 +209,16 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.connections = new ConcurrentHashMap<Long, NioChannel>();
 		}
 
+		System.out.println("******** Creating recycled channel processors list ********");
+
+		if (this.recycledChannelProcessors == null) {
+			this.recycledChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelProcessor>();
+		}
+
+		if (this.recycledEventChannelProcessors == null) {
+			this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelEventProcessor>();
+		}
+
 		this.channelList = new ChannelList(this.maxThreads);
 
 		// If the executor is not set, create it with a fixed thread pool
@@ -259,11 +269,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			}
 		}
-
-		System.out.println("******** Creating recycled channel processors list ********");
-		
-		this.recycledChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelProcessor>();
-		this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelEventProcessor>();
 
 		initialized = true;
 	}
