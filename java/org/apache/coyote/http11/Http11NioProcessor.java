@@ -353,7 +353,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			}
 
 			if (maxKeepAliveRequests > 0 && --keepAliveLeft == 0) {
-				System.out.println("Step #9.1");
 				keepAlive = false;
 			}
 
@@ -378,7 +377,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// 500 - Internal Server Error
 					response.setStatus(500);
 					error = true;
-					t.printStackTrace();
 				}
 			}
 

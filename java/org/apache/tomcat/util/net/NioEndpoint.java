@@ -28,6 +28,7 @@ import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -62,6 +63,8 @@ public class NioEndpoint extends AbstractEndpoint {
 	protected AsynchronousServerSocketChannel listener;
 	private ThreadFactory threadFactory;
 	protected ConcurrentHashMap<Long, NioChannel> connections;
+	protected ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
+	protected ConcurrentLinkedQueue<ChannelEventProcessor> recycledEventChannelProcessors;
 
 	/**
 	 * Available workers.
@@ -212,7 +215,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (this.executor == null) {
 			setExecutor(Executors.newFixedThreadPool(this.maxThreads, this.threadFactory));
 		}
-		
+
 		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
@@ -250,12 +253,15 @@ public class NioEndpoint extends AbstractEndpoint {
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
 				if (address == null) {
-					throw new BindException(be.getMessage() + "<null>:" + port);
+					throw new BindException(be.getMessage() + " <null>:" + port);
 				} else {
 					throw new BindException(be.getMessage() + " " + address.toString() + ":" + port);
 				}
 			}
 		}
+
+		this.recycledChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelProcessor>();
+		this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<NioEndpoint.ChannelEventProcessor>();
 
 		initialized = true;
 	}
@@ -501,7 +507,14 @@ public class NioEndpoint extends AbstractEndpoint {
 					return false;
 				}
 			} else {
-				executor.execute(new ChannelProcessor(channel));
+				ChannelProcessor processor = this.recycledChannelProcessors.poll();
+				if (processor == null) {
+					processor = new ChannelProcessor(channel);
+				} else {
+					processor.setChannel(channel);
+				}
+
+				executor.execute(processor);
 			}
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -530,7 +543,15 @@ public class NioEndpoint extends AbstractEndpoint {
 					return false;
 				}
 			} else {
-				executor.execute(new ChannelEventProcessor(channel, status));
+				ChannelEventProcessor processor = this.recycledEventChannelProcessors.poll();
+				if (processor == null) {
+					processor = new ChannelEventProcessor(channel, status);
+				} else {
+					processor.setChannel(channel);
+					processor.setStatus(status);
+				}
+
+				executor.execute(processor);
 			}
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -637,25 +658,14 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					if (addChannel(channel)) {
-						// Set the channel options
-						if (!setChannelOptions(channel)) {
-							closeChannel(channel);
-						}
-						if (channel.isOpen()) {
-							// Hand this channel off to an appropriate processor
-							if (!processChannel(channel)) {
-								logger.info("Fail processing the channel");
-								// Close channel right away
-								closeChannel(channel);
-							}
-						}
-					} else {
+					// Using the short-circuit AND operator
+					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(channel))) {
+						logger.info("Fail processing the channel");
 						closeChannel(channel);
 					}
-				} catch (Exception x) {
+				} catch (Exception exp) {
 					if (running) {
-						logger.error(sm.getString("endpoint.accept.fail"), x);
+						logger.error(sm.getString("endpoint.accept.fail"), exp);
 					}
 				} catch (Throwable t) {
 					logger.error(sm.getString("endpoint.accept.fail"), t);
@@ -1353,14 +1363,14 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (!deferAccept) {
 				if (!setChannelOptions(channel)) {
 					// Close channel
-					close();
+					closeChannel(channel);
 				}
 			} else {
 				// Process the request from this channel
 				if (!setChannelOptions(channel)
 						|| handler.process(channel) == Handler.SocketState.CLOSED) {
 					// Close the channel
-					close();
+					closeChannel(channel);
 				}
 			}
 			channel = null;
@@ -1392,22 +1402,17 @@ public class NioEndpoint extends AbstractEndpoint {
 			// Process the request from this socket
 			if (handler.process(this.channel) == Handler.SocketState.CLOSED) {
 				// Close channel
-				close();
+				closeChannel(channel);
 			}
-			this.channel = null;
+			this.reset();
+			recycledChannelProcessors.offer(this);
 		}
 
 		/**
-		 * Close the channel
+		 * Reset this channel processor
 		 */
-		protected void close() {
-			try {
-				this.channel.close();
-			} catch (IOException e) {
-				// NOP
-				logger.error("Error when closing the channel : " + e.getMessage(), e);
-				e.printStackTrace();
-			}
+		protected void reset() {
+			this.channel = null;
 		}
 
 		/**
@@ -1444,9 +1449,25 @@ public class NioEndpoint extends AbstractEndpoint {
 			// Process the request from this channel
 			if (handler.event(channel, status) == Handler.SocketState.CLOSED) {
 				// Close channel
-				close();
+				closeChannel(channel);
 			}
-			channel = null;
+			this.reset();
+			recycledEventChannelProcessors.offer(this);
+		}
+
+		@Override
+		protected void reset() {
+			super.reset();
+			this.status = null;
+		}
+
+		/**
+		 * Set the new status
+		 * 
+		 * @param status
+		 */
+		public void setStatus(SocketStatus status) {
+			this.status = status;
 		}
 	}
 

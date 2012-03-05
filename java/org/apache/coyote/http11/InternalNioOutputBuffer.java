@@ -193,13 +193,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		if (!committed) {
 			this.bbuf.clear();
-			this.bbuf.put(Constants.ACK_BYTES).flip();
-			if (this.nonBlocking) {
-				this.nonBlockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-			} else {
-				if (this.blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS) < 0) {
-					throw new IOException(sm.getString("oob.failedwrite"));
-				}
+			this.bbuf.put(Constants.ACK_BYTES).flip();			
+			if(this.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS) < 0) {
+				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
 	}

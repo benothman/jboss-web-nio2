@@ -32,7 +32,7 @@ base-commons.loc=http://archive.apache.org/dist/commons
 base-tomcat.loc=http://archive.apache.org/dist/tomcat
 base-sf.loc=http://downloads.sourceforge.net
 
-# ----- Eclipse JDT, version 3.2 or later -----
+# ----- Eclipse JDT, version 3.7 or later -----
 jdt.home=${base.path}/plugins
 jdt.lib=${jdt.home}
 jdt.jar=${jdt.lib}/org.eclipse.jdt.core_3.7.0.v_B61.jar
