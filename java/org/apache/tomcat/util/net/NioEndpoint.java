@@ -140,7 +140,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * 
 	 * @return the amount of threads currently busy
 	 */
-	public int getCurrentThreadsBusy() {
+	public int getCurrentThreadsBusy() {		
 		return curThreadsBusy;
 	}
 
@@ -303,7 +303,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (running) {
 			running = false;
 			unlockAccept();
-			// TODO complete implementation
 		}
 	}
 
@@ -501,7 +500,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public boolean processChannel(NioChannel channel) {
 		try {
-			if (executor == null) {
+			if (this.executor == null) {
 				Worker worker = getWorkerThread();
 				if (worker != null) {
 					worker.assign(channel);
@@ -509,15 +508,14 @@ public class NioEndpoint extends AbstractEndpoint {
 					return false;
 				}
 			} else {
-				/*
 				ChannelProcessor processor = this.recycledChannelProcessors.poll();
 				if (processor == null) {
 					processor = new ChannelProcessor(channel);
 				} else {
 					processor.setChannel(channel);
 				}
-				*/
-				executor.execute(new ChannelProcessor(channel));
+
+				this.executor.execute(processor);
 			}
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -538,7 +536,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public boolean processChannel(NioChannel channel, SocketStatus status) {
 		try {
-			if (executor == null) {
+			if (this.executor == null) {
 				Worker worker = getWorkerThread();
 				if (worker != null) {
 					worker.assign(channel, status);
@@ -554,7 +552,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					processor.setStatus(status);
 				}
 
-				executor.execute(processor);
+				this.executor.execute(processor);
 			}
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -637,7 +635,14 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	// --------------------------------------------------- Acceptor Inner Class
 	/**
+	 * {@code Acceptor}
+	 * 
+	 * <p>
 	 * Server socket acceptor thread.
+	 * </p>
+	 * Created on Mar 6, 2012 at 9:13:34 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	protected class Acceptor implements Runnable {
 
@@ -677,7 +682,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 	}
 
-	// ------------------------------------------------- SocketInfo Inner Class
+	// ------------------------------------------------- ChannelInfo Inner Class
 
 	/**
 	 * Channel list class, used to avoid using a possibly large amount of
@@ -727,7 +732,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
-		 * @return the wakeup flag
+		 * @return the wake up flag
 		 */
 		public boolean wakeup() {
 			return (flags & WAKEUP) == WAKEUP;
@@ -744,7 +749,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 	}
 
-	// --------------------------------------------- SocketTimeouts Inner Class
+	// --------------------------------------------- ChannelTimeouts Inner Class
 
 	/**
 	 * Channel list class, used to avoid using a possibly large amount of
@@ -1220,9 +1225,17 @@ public class NioEndpoint extends AbstractEndpoint {
 	// ------------------------------------------------ Handler Inner Interface
 
 	/**
+	 * {@code Handler}
+	 * 
+	 * <p>
 	 * Bare bones interface used for socket processing. Per thread data is to be
 	 * stored in the ThreadWithAttributes extra folders, or alternately in
 	 * thread local fields.
+	 * </p>
+	 * 
+	 * Created on Mar 6, 2012 at 9:13:07 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	public interface Handler {
 		/**
@@ -1345,9 +1358,15 @@ public class NioEndpoint extends AbstractEndpoint {
 	// -------------------------------- ChannelWithOptionsProcessor Inner Class
 
 	/**
+	 * {@code ChannelWithOptionsProcessor}
+	 * <p>
 	 * This class is the equivalent of the Worker, but will simply use in an
 	 * external Executor thread pool. This will also set the channel options and
 	 * do the handshake.
+	 * </p>
+	 * Created on Mar 6, 2012 at 9:09:43 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	protected class ChannelWithOptionsProcessor extends ChannelProcessor {
 
@@ -1362,20 +1381,21 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		@Override
 		public void run() {
+			boolean ok = true;
 
 			if (!deferAccept) {
-				if (!setChannelOptions(channel)) {
-					// Close channel
-					closeChannel(channel);
-				}
+				ok = setChannelOptions(channel);
 			} else {
 				// Process the request from this channel
-				if (!setChannelOptions(channel)
-						|| handler.process(channel) == Handler.SocketState.CLOSED) {
-					// Close the channel
-					closeChannel(channel);
-				}
+				ok = setChannelOptions(channel)
+						&& handler.process(channel) != Handler.SocketState.CLOSED;
 			}
+
+			if (!ok) {
+				// Close the channel
+				closeChannel(channel);
+			}
+
 			channel = null;
 		}
 	}
@@ -1383,8 +1403,14 @@ public class NioEndpoint extends AbstractEndpoint {
 	// ------------------------------------------- ChannelProcessor Inner Class
 
 	/**
+	 * {@code ChannelProcessor}
+	 * <p>
 	 * This class is the equivalent of the Worker, but will simply use in an
 	 * external Executor thread pool.
+	 * </p>
+	 * Created on Mar 6, 2012 at 9:10:06 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	protected class ChannelProcessor implements Runnable {
 
@@ -1407,8 +1433,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Close channel
 				closeChannel(channel);
 			}
+
 			this.reset();
-			recycledChannelProcessors.offer(this);
 		}
 
 		/**
@@ -1416,6 +1442,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected void reset() {
 			this.channel = null;
+			recycledChannelProcessors.offer(this);
 		}
 
 		/**
@@ -1429,8 +1456,15 @@ public class NioEndpoint extends AbstractEndpoint {
 	// --------------------------------------- ChannelEventProcessor Inner Class
 
 	/**
+	 * {@code ChannelEventProcessor}
+	 * <p>
 	 * This class is the equivalent of the Worker, but will simply use in an
 	 * external Executor thread pool.
+	 * </p>
+	 * 
+	 * Created on Mar 6, 2012 at 9:11:02 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	protected class ChannelEventProcessor extends ChannelProcessor {
 
@@ -1455,13 +1489,13 @@ public class NioEndpoint extends AbstractEndpoint {
 				closeChannel(channel);
 			}
 			this.reset();
-			recycledEventChannelProcessors.offer(this);
 		}
 
 		@Override
 		protected void reset() {
-			super.reset();
+			this.channel = null;
 			this.status = null;
+			recycledEventChannelProcessors.offer(this);
 		}
 
 		/**
@@ -1475,7 +1509,13 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * {@code DefaultThreadFactory}
+	 * 
 	 * The default thread factory
+	 * 
+	 * Created on Mar 6, 2012 at 9:11:20 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	protected static class DefaultThreadFactory implements ThreadFactory {
 		private static final AtomicInteger poolNumber = new AtomicInteger(1);

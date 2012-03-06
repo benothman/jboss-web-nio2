@@ -92,7 +92,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	public void setChannel(NioChannel channel) {
 		this.channel = channel;
-		// Socket.setrbb(this.socket, bbuf);
 	}
 
 	/**
@@ -167,7 +166,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 		byte chr = 0;
 		do {
-
 			// Read new bytes if needed
 			if (pos >= lastValid) {
 				if (useAvailableData) {
@@ -238,13 +236,10 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		int end = 0;
 		int questionPos = -1;
 
-		//
 		// Reading the URI
-		//
 		boolean eol = false;
 
 		while (!space) {
-
 			// Read new bytes if needed
 			if (pos >= lastValid) {
 				if (!fill())
