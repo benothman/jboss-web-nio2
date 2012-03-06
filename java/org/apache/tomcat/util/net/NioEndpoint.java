@@ -40,6 +40,7 @@ import javax.net.ssl.SSLHandshakeException;
 
 import org.apache.tomcat.jni.File;
 import org.apache.tomcat.util.net.AprEndpoint.Sendfile;
+import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 import org.jboss.logging.Logger;
 
@@ -64,7 +65,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	private ThreadFactory threadFactory;
 	protected ConcurrentHashMap<Long, NioChannel> connections;
 	protected ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
-	protected ConcurrentLinkedQueue<ChannelEventProcessor> recycledEventChannelProcessors;
 
 	/**
 	 * Available workers.
@@ -140,7 +140,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * 
 	 * @return the amount of threads currently busy
 	 */
-	public int getCurrentThreadsBusy() {		
+	public int getCurrentThreadsBusy() {
 		return curThreadsBusy;
 	}
 
@@ -211,10 +211,6 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		if (this.recycledChannelProcessors == null) {
 			this.recycledChannelProcessors = new ConcurrentLinkedQueue<>();
-		}
-
-		if (this.recycledEventChannelProcessors == null) {
-			this.recycledEventChannelProcessors = new ConcurrentLinkedQueue<>();
 		}
 
 		// If the executor is not set, create it with a fixed thread pool
@@ -339,7 +335,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		this.serverSocketChannelFactory.destroy();
 		this.serverSocketChannelFactory = null;
 		this.recycledChannelProcessors = null;
-		this.recycledEventChannelProcessors = null;
 
 		initialized = false;
 	}
@@ -544,9 +539,9 @@ public class NioEndpoint extends AbstractEndpoint {
 					return false;
 				}
 			} else {
-				ChannelEventProcessor processor = this.recycledEventChannelProcessors.poll();
+				ChannelProcessor processor = this.recycledChannelProcessors.poll();
 				if (processor == null) {
-					processor = new ChannelEventProcessor(channel, status);
+					processor = new ChannelProcessor(channel, status);
 				} else {
 					processor.setChannel(channel);
 					processor.setStatus(status);
@@ -1415,6 +1410,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	protected class ChannelProcessor implements Runnable {
 
 		protected NioChannel channel;
+		protected SocketStatus status = null;
 
 		/**
 		 * Create a new instance of {@code ChannelProcessor}
@@ -1425,86 +1421,51 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.channel = channel;
 		}
 
+		/**
+		 * Create a new instance of {@code ChannelProcessor}
+		 * 
+		 * @param channel
+		 * @param status
+		 */
+		public ChannelProcessor(NioChannel channel, SocketStatus status) {
+			this(channel);
+			this.status = status;
+		}
+
 		@Override
 		public void run() {
 
-			// Process the request from this socket
-			if (handler.process(this.channel) == Handler.SocketState.CLOSED) {
-				// Close channel
+			Handler.SocketState state = (status == null ? handler.process(channel) : handler.event(
+					channel, status));
+
+			if (state == SocketState.CLOSED) {
 				closeChannel(channel);
 			}
 
-			this.reset();
+			this.recycle();			
 		}
 
 		/**
 		 * Reset this channel processor
 		 */
-		protected void reset() {
+		protected void recycle() {
 			this.channel = null;
+			this.status = null;
 			recycledChannelProcessors.offer(this);
 		}
 
+		/**
+		 * @param status
+		 */
+		public void setStatus(SocketStatus status) {
+			this.status = status;
+		}
+		
 		/**
 		 * @param channel
 		 */
 		public void setChannel(NioChannel channel) {
 			this.channel = channel;
-		}
-	}
-
-	// --------------------------------------- ChannelEventProcessor Inner Class
-
-	/**
-	 * {@code ChannelEventProcessor}
-	 * <p>
-	 * This class is the equivalent of the Worker, but will simply use in an
-	 * external Executor thread pool.
-	 * </p>
-	 * 
-	 * Created on Mar 6, 2012 at 9:11:02 AM
-	 * 
-	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
-	 */
-	protected class ChannelEventProcessor extends ChannelProcessor {
-
-		protected SocketStatus status = null;
-
-		/**
-		 * Create a new instance of {@code ChannelEventProcessor}
-		 * 
-		 * @param channel
-		 * @param status
-		 */
-		public ChannelEventProcessor(NioChannel channel, SocketStatus status) {
-			super(channel);
-			this.status = status;
-		}
-
-		@Override
-		public void run() {
-			// Process the request from this channel
-			if (handler.event(channel, status) == Handler.SocketState.CLOSED) {
-				// Close channel
-				closeChannel(channel);
-			}
-			this.reset();
-		}
-
-		@Override
-		protected void reset() {
-			this.channel = null;
-			this.status = null;
-			recycledEventChannelProcessors.offer(this);
-		}
-
-		/**
-		 * Set the new status
-		 * 
-		 * @param status
-		 */
-		public void setStatus(SocketStatus status) {
-			this.status = status;
 		}
 	}
 
