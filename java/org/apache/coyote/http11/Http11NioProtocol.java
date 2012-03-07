@@ -827,12 +827,13 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						// SocketState.OPEN) {
 						// proto.endpoint.getPoller().add(channel);
 						// }
+
+						// TODO
+
 					} else {
 						if (proto.endpoint.isRunning()) {
-							int read = result.getReadNotifications() ? 1 : 0;
-							int resume = result.getResumeNotification() ? 1 : 0;
-
-							proto.endpoint.addChannel(channel, result.getTimeout(), read | resume);
+							proto.endpoint.addChannel(channel, result.getTimeout(),
+									getFlags(result));
 						}
 					}
 					result.endProcessing();
@@ -877,9 +878,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						// Call a read event right away
 						state = event(channel, SocketStatus.OPEN_READ);
 					} else {
-						int read = processor.getReadNotifications() ? 1 : 0;
-						int resume = processor.getResumeNotification() ? 1 : 0;
-						proto.endpoint.addChannel(channel, processor.getTimeout(), read | resume);
+						proto.endpoint.addChannel(channel, processor.getTimeout(),
+								getFlags(processor));
 					}
 				} else {
 					recycledProcessors.offer(processor);
@@ -908,6 +908,21 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 			}
 			recycledProcessors.offer(processor);
 			return SocketState.CLOSED;
+		}
+
+		/**
+		 * Calculate the processor flags to be attached with a channel
+		 * 
+		 * @param proc
+		 * @return the flags of the processor to be attached with the current
+		 *         channel
+		 */
+		private int getFlags(Http11NioProcessor proc) {
+			int read = proc.getReadNotifications() ? NioEndpoint.ChannelInfo.READ : 0;
+			int resume = proc.getResumeNotification() ? NioEndpoint.ChannelInfo.RESUME : 0;
+			int write = proc.getWriteNotification() ? NioEndpoint.ChannelInfo.WRITE : 0;
+
+			return (read | resume | write);
 		}
 
 		/**

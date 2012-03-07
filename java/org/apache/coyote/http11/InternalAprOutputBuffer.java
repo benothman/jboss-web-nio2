@@ -705,8 +705,8 @@ public class InternalAprOutputBuffer
      * 
      * @return true if all leftover bytes have been flushed
      */
-    public boolean flushLeftover()
-        throws IOException {
+    public boolean flushLeftover() throws IOException {
+    	
         int len = leftover.getLength();
         int start = leftover.getStart();
         byte[] b = leftover.getBuffer();

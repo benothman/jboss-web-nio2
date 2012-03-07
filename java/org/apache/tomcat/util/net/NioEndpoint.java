@@ -38,8 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 
-import org.apache.tomcat.jni.File;
-import org.apache.tomcat.util.net.AprEndpoint.Sendfile;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 import org.jboss.logging.Logger;
@@ -48,8 +46,6 @@ import org.jboss.logging.Logger;
  * {@code NioEndpoint} NIO2 endpoint, providing the following services:
  * <ul>
  * <li>Socket channel acceptor thread</li>
- * <li>Socket poller thread</li>
- * <li>Sendfile thread</li>
  * <li>Simple Worker thread pool, with possible use of executors</li>
  * </ul>
  * 
@@ -61,10 +57,10 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	protected static Logger logger = Logger.getLogger(NioEndpoint.class);
 
-	protected AsynchronousServerSocketChannel listener;
+	private AsynchronousServerSocketChannel listener;
 	private ThreadFactory threadFactory;
-	protected ConcurrentHashMap<Long, NioChannel> connections;
-	protected ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
+	private ConcurrentHashMap<Long, NioChannel> connections;
+	private ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
 
 	/**
 	 * Available workers.
@@ -76,16 +72,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	protected Handler handler = null;
 
-	protected ListChannel[] listChannel = null;
-
 	protected ChannelList channelList;
 
 	protected NioServerSocketChannelFactory serverSocketChannelFactory = null;
-
-	/**
-	 * The static file sender.
-	 */
-	protected Sendfile sendfile = null;
 
 	/**
 	 * SSL context.
@@ -98,8 +87,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	public NioEndpoint() {
 		super();
 	}
-
-	// ----------------------- Getters and Setters -----------------------
 
 	/**
 	 * @param handler
@@ -114,8 +101,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	public Handler getHandler() {
 		return handler;
 	}
-
-	// --------------------------------------------------------- Public Methods
 
 	/**
 	 * Number of keep-alive channels.
@@ -144,8 +129,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		return curThreadsBusy;
 	}
 
-	// ----------------------------------------------- Public Lifecycle Methods
-
 	/**
 	 * Getter for sslContext
 	 * 
@@ -163,25 +146,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void setSslContext(SSLContext sslContext) {
 		this.sslContext = sslContext;
-	}
-
-	/**
-	 * Getter for sendfile
-	 * 
-	 * @return the sendfile
-	 */
-	public Sendfile getSendfile() {
-		return this.sendfile;
-	}
-
-	/**
-	 * Setter for the sendfile
-	 * 
-	 * @param sendfile
-	 *            the sendfile to set
-	 */
-	public void setSendfile(Sendfile sendfile) {
-		this.sendfile = sendfile;
 	}
 
 	/*
@@ -380,10 +344,10 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * 
 	 * @param channel
 	 * @param timeout
-	 * @param flag
+	 * @param flags
 	 */
-	public void addChannel(NioChannel channel, int timeout, int flag) {
-		this.channelList.add(channel, timeout, flag);
+	public void addChannel(NioChannel channel, long timeout, int flags) {
+		this.channelList.add(channel, timeout, flags);
 	}
 
 	/**
@@ -476,41 +440,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			} else {
 				executor.execute(new ChannelWithOptionsProcessor(channel));
-			}
-		} catch (Throwable t) {
-			// This means we got an OOM or similar creating a thread, or that
-			// the pool and its queue are full
-			logger.error(sm.getString("endpoint.process.fail"), t);
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Process given channel.
-	 * 
-	 * @param channel
-	 * @return <tt>true</tt> if the processing of the channel finish
-	 *         successfully else <tt>false</tt>
-	 */
-	public boolean processChannel(NioChannel channel) {
-		try {
-			if (this.executor == null) {
-				Worker worker = getWorkerThread();
-				if (worker != null) {
-					worker.assign(channel);
-				} else {
-					return false;
-				}
-			} else {
-				ChannelProcessor processor = this.recycledChannelProcessors.poll();
-				if (processor == null) {
-					processor = new ChannelProcessor(channel);
-				} else {
-					processor.setChannel(channel);
-				}
-
-				this.executor.execute(processor);
 			}
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -621,15 +550,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * List of channel counters.
-	 */
-	class ListChannel {
-		int count;
-		int port;
-	}
-
-	// --------------------------------------------------- Acceptor Inner Class
-	/**
 	 * {@code Acceptor}
 	 * 
 	 * <p>
@@ -662,7 +582,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
 					// Using the short-circuit AND operator
-					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(channel))) {
+					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(
+							channel, null))) {
 						logger.info("Fail processing the channel");
 						closeChannel(channel);
 					}
@@ -702,8 +623,52 @@ public class NioEndpoint extends AbstractEndpoint {
 		public static final int WAKEUP = 8;
 
 		protected NioChannel channel;
-		protected int timeout;
+		protected long timeout;
 		protected int flags;
+
+		/**
+		 * Create a new instance of {@code ChannelInfo}
+		 */
+		public ChannelInfo() {
+			this(null, 0, 0);
+		}
+
+		/**
+		 * Create a new instance of {@code ChannelInfo}
+		 * 
+		 * @param channel
+		 *            the channel
+		 * @param timeout
+		 *            the channel timeout. The default time unit is
+		 *            {@code java.util.concurrent.TimeUnit.MILLISECONDS}
+		 * @param flags
+		 */
+		public ChannelInfo(NioChannel channel, long timeout, int flags) {
+			this.channel = channel;
+			this.timeout = timeout;
+			this.flags = flags;
+		}
+
+		/**
+		 * Create a new instance of {@code ChannelInfo}
+		 * 
+		 * @param channel
+		 * @param timeout
+		 * @param unit
+		 * @param flags
+		 */
+		public ChannelInfo(NioChannel channel, long timeout, TimeUnit unit, int flags) {
+			this(channel, TimeUnit.MILLISECONDS.convert(timeout, unit), flags);
+		}
+
+		/**
+		 * Recycle this channel info for next use
+		 */
+		public void recycle() {
+			this.channel = null;
+			this.timeout = 0;
+			this.flags = 0;
+		}
 
 		/**
 		 * @return the read flag
@@ -734,9 +699,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Merge the tow flags
+		 * 
 		 * @param flag1
 		 * @param flag2
-		 * @return
+		 * @return the result of merging the tow flags
 		 */
 		public static int merge(int flag1, int flag2) {
 			return ((flag1 & READ) | (flag2 & READ)) | ((flag1 & WRITE) | (flag2 & WRITE))
@@ -828,12 +795,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	public class ChannelList {
 		protected int size;
 		protected int pos;
-
-		protected NioChannel[] channels;
-		protected int[] timeouts;
-		protected int[] flags;
-
-		protected ChannelInfo info = new ChannelInfo();
+		protected ChannelInfo infos[];
 
 		/**
 		 * Create a new instance of {@code ChannelList}
@@ -843,9 +805,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public ChannelList(int size) {
 			this.size = 0;
 			pos = 0;
-			channels = new NioChannel[size];
-			timeouts = new int[size];
-			flags = new int[size];
+			this.infos = new ChannelInfo[size];
 		}
 
 		/**
@@ -859,15 +819,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @return the current ChannelInfo
 		 */
 		public ChannelInfo get() {
-			if (pos == size) {
-				return null;
-			} else {
-				info.channel = channels[pos];
-				info.timeout = timeouts[pos];
-				info.flags = flags[pos];
-				pos++;
-				return info;
-			}
+			return pos == size ? null : infos[pos++];
 		}
 
 		/**
@@ -887,20 +839,18 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @return <tt>true</tt> if the channel is added successfully else
 		 *         <tt>false</tt>
 		 */
-		public boolean add(NioChannel channel, int timeout, int flag) {
-			if (size == channels.length) {
+		public boolean add(NioChannel channel, long timeout, int flag) {
+			if (size == infos.length) {
 				return false;
 			} else {
 				for (int i = 0; i < size; i++) {
-					if (channels[i] == channel) {
-						flags[i] = ChannelInfo.merge(flags[i], flag);
+					if (infos[i] != null && infos[i].channel == channel) {
+						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
 						return true;
 					}
 				}
-				channels[size] = channel;
-				timeouts[size] = timeout;
-				flags[size] = flag;
-				size++;
+
+				infos[size++] = new ChannelInfo(channel, timeout, flag);
 				return true;
 			}
 		}
@@ -911,9 +861,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void duplicate(ChannelList copy) {
 			copy.size = size;
 			copy.pos = pos;
-			System.arraycopy(channels, 0, copy.channels, 0, size);
-			System.arraycopy(timeouts, 0, copy.timeouts, 0, size);
-			System.arraycopy(flags, 0, copy.flags, 0, size);
+			System.arraycopy(infos, 0, copy.infos, 0, size);
 		}
 	}
 
@@ -1061,159 +1009,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			}
 
-		}
-	}
-
-	// ----------------------------------------------- SendfileData Inner Class
-
-	/**
-	 * SendfileData class.
-	 */
-	public static class SendfileData {
-		// File
-		protected String fileName;
-		protected File file;
-		// Range information
-		protected long start;
-		protected long end;
-		// The channel
-		protected NioChannel channel;
-		// Position
-		protected long pos;
-		// KeepAlive flag
-		protected boolean keepAlive;
-
-		/**
-		 * Getter for fileName
-		 * 
-		 * @return the fileName
-		 */
-		public String getFileName() {
-			return this.fileName;
-		}
-
-		/**
-		 * Setter for the fileName
-		 * 
-		 * @param fileName
-		 *            the fileName to set
-		 */
-		public void setFileName(String fileName) {
-			this.fileName = fileName;
-		}
-
-		/**
-		 * Getter for file
-		 * 
-		 * @return the file
-		 */
-		public File getFile() {
-			return this.file;
-		}
-
-		/**
-		 * Setter for the file
-		 * 
-		 * @param fd
-		 *            the file to set
-		 */
-		public void setFile(File fd) {
-			this.file = fd;
-		}
-
-		/**
-		 * Getter for start
-		 * 
-		 * @return the start
-		 */
-		public long getStart() {
-			return this.start;
-		}
-
-		/**
-		 * Setter for the start
-		 * 
-		 * @param start
-		 *            the start to set
-		 */
-		public void setStart(long start) {
-			this.start = start;
-		}
-
-		/**
-		 * Getter for end
-		 * 
-		 * @return the end
-		 */
-		public long getEnd() {
-			return this.end;
-		}
-
-		/**
-		 * Setter for the end
-		 * 
-		 * @param end
-		 *            the end to set
-		 */
-		public void setEnd(long end) {
-			this.end = end;
-		}
-
-		/**
-		 * Getter for channel
-		 * 
-		 * @return the channel
-		 */
-		public NioChannel getChannel() {
-			return this.channel;
-		}
-
-		/**
-		 * Setter for the channel
-		 * 
-		 * @param channel
-		 *            the channel to set
-		 */
-		public void setChannel(NioChannel channel) {
-			this.channel = channel;
-		}
-
-		/**
-		 * Getter for pos
-		 * 
-		 * @return the pos
-		 */
-		public long getPos() {
-			return this.pos;
-		}
-
-		/**
-		 * Setter for the pos
-		 * 
-		 * @param pos
-		 *            the pos to set
-		 */
-		public void setPos(long pos) {
-			this.pos = pos;
-		}
-
-		/**
-		 * Getter for keepAlive
-		 * 
-		 * @return the keepAlive
-		 */
-		public boolean isKeepAlive() {
-			return this.keepAlive;
-		}
-
-		/**
-		 * Setter for the keepAlive
-		 * 
-		 * @param keepAlive
-		 *            the keepAlive to set
-		 */
-		public void setKeepAlive(boolean keepAlive) {
-			this.keepAlive = keepAlive;
 		}
 	}
 
@@ -1442,7 +1237,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				closeChannel(channel);
 			}
 
-			this.recycle();			
+			this.recycle();
 		}
 
 		/**
@@ -1460,7 +1255,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void setStatus(SocketStatus status) {
 			this.status = status;
 		}
-		
+
 		/**
 		 * @param channel
 		 */

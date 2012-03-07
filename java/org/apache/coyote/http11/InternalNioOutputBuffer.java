@@ -30,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
+import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -303,7 +304,22 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		int len = leftover.getLength();
 		int start = leftover.getStart();
 		byte[] b = leftover.getBuffer();
-
+		int position = bbuf.position();
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		if(bbuf.remaining() >= leftover.getLength()) {
+			
+		}
+		
+		
+		
 		bbuf.clear();
 		bbuf.put(b, leftover.getOffset(), leftover.getLength()).flip();
 
@@ -333,42 +349,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			}
 		}
 
-		return true;
+		
+        bbuf.clear();
+        leftover.recycle();
 
-		// -------------------
-		/*
-		 * while (len > 0) { int thisTime = len; if (bbuf.position() ==
-		 * bbuf.capacity()) { int res = 0; bbuf.flip(); if (nonBlocking) {
-		 * nonBlockingWrite(bbuf); } else { while((res = blockingWrite(bbuf)) >
-		 * 0) { // Wait until all bytes are written, or the channel was closed }
-		 * }
-		 * 
-		 * if (res < 0) { // The channel was closed throw new
-		 * IOException(sm.getString("oob.failedwrite")); }
-		 * 
-		 * response.setLastWrite(res);
-		 * 
-		 * if (bbuf.position() < bbuf.limit()) { // Could not write all leftover
-		 * data: put back to write leftover.setOffset(start); return false; }
-		 * else { bbuf.clear(); } } if (thisTime > bbuf.capacity() -
-		 * bbuf.position()) { thisTime = bbuf.capacity() - bbuf.position(); }
-		 * 
-		 * 
-		 * 
-		 * bbuf.put(b, start, thisTime); len = len - thisTime; start = start +
-		 * thisTime; }
-		 * 
-		 * int pos = 0; int end = bbuf.position(); if (pos < end) { int res = 0;
-		 * while (pos < end) { // res = Socket.sendibb(socket, pos, end - pos);
-		 * // TODO update code to use channels if (res > 0) { pos += res; } else
-		 * { break; } } if (res < 0) { throw new
-		 * IOException(sm.getString("oob.failedwrite")); }
-		 * response.setLastWrite(res); } if (pos < end) { leftover.allocate(end
-		 * - pos, -1); bbuf.position(pos); bbuf.limit(end);
-		 * bbuf.get(leftover.getBuffer(), 0, end - pos); leftover.setEnd(end -
-		 * pos); bbuf.clear(); return false; } bbuf.clear(); leftover.recycle();
-		 * 
-		 * return true;
-		 */
+        return true;
 	}
 }
