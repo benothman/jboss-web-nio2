@@ -1597,6 +1597,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * 
 		 */
 		protected void init() {
+			/*
 			if (size <= 0) {
 				if (org.apache.tomcat.util.Constants.LOW_MEMORY) {
 					size = 128;
@@ -1604,6 +1605,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					size = (OS.IS_WIN32 || OS.IS_WIN64) ? (1 * 1024) : (16 * 1024);
 				}
 			}
+			*/
 			this.counter = new AtomicInteger(0);
 			this.fileDatas = new ConcurrentLinkedQueue<>();
 		}
