@@ -1619,6 +1619,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			final FileChannel fc = FileChannel.open(path, StandardOpenOption.READ).position(
 					data.pos);
 
+			final long total = data.end - data.pos;
+
 			final int BUFFER_SIZE = channel.getOption(StandardSocketOptions.SO_SNDBUF);
 			final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 			int nBytes = fc.read(buffer);
@@ -1636,6 +1638,13 @@ public class NioEndpoint extends AbstractEndpoint {
 						}
 
 						attachment.pos += result;
+						
+						if(attachment.pos >= attachment.end) {
+							// All requested bytes were sent
+							closeFile(fc);
+							return;
+						}
+						
 						boolean ok = true;
 
 						if (!buffer.hasRemaining()) {
@@ -1655,7 +1664,7 @@ public class NioEndpoint extends AbstractEndpoint {
 						}
 
 						if (ok) {
-							channel.write(buffer, data, this);
+							channel.write(buffer, attachment, this);
 						} else {
 							closeFile(fc);
 						}
