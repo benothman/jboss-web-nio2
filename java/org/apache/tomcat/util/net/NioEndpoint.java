@@ -1618,6 +1618,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected void destroy() {
 			this.fileDatas.clear();
+			// Unlock threads waiting for this monitor
+			this.mutex.notifyAll();
 		}
 
 		/**
