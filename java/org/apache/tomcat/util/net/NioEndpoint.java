@@ -1623,6 +1623,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @throws Exception
 		 */
 		private void sendFile(final SendfileData data) throws Exception {
+			System.out.println("**** " + getClass().getName()+"#sendFile(...)");
+			
 			data.pos = data.start;
 			final NioChannel channel = data.channel;
 			Path path = new File(data.fileName).toPath();
