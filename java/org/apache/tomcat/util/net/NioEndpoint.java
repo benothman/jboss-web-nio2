@@ -1546,6 +1546,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		protected int size;
 		protected ConcurrentLinkedQueue<SendfileData> fileDatas;
 		protected AtomicInteger counter;
+		private Object mutex;
+		
 
 		/**
 		 * @return the number of send file
@@ -1574,8 +1576,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Loop if poller is empty
 				while (this.counter.get() < 1) {
 					try {
-						synchronized (this) {
-							this.wait();
+						synchronized (this.mutex) {
+							this.mutex.wait();
 						}
 					} catch (InterruptedException e) {
 						// Ignore
@@ -1606,6 +1608,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			}
 			*/
+			this.mutex = new Object();
 			this.counter = new AtomicInteger(0);
 			this.fileDatas = new ConcurrentLinkedQueue<>();
 		}
@@ -1719,7 +1722,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			boolean b = this.fileDatas.offer(data);
 			if (b) {
 				this.counter.incrementAndGet();
-				this.notifyAll();
+				this.mutex.notifyAll();
 			}
 			return b;
 		}
