@@ -402,6 +402,21 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				pipelined = inputBuffer.nextRequest();
 				outputBuffer.nextRequest();
 			}
+			
+			// Do sendfile as needed: add socket to sendfile and end
+            if (sendfileData != null && !error) {
+                sendfileData.setChannel(channel);
+                sendfileData.setKeepAlive(keepAlive && !pipelined);
+                if (!endpoint.addSendfileData(sendfileData)) {
+                    if (sendfileData.getChannel() == null) {
+                        error = true;
+                    } else {
+                    	openChannel = true;
+                    }
+                    break;
+                }
+            }
+			
 			rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
 		}
 		rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
@@ -874,6 +889,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		contentDelimitation = false;
 		expectation = false;
 		sendfileData = null;
+		
 		if (sslEnabled) {
 			request.scheme().setString("https");
 		}
@@ -1143,7 +1159,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			sendfileData.setFileName(response.getSendfilePath());
 			sendfileData.setStart(response.getSendfileStart());
 			sendfileData.setEnd(response.getSendfileEnd());
-			endpoint.addSendfileData(sendfileData);
 		}
 
 		// Check for compression

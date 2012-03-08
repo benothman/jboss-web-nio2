@@ -156,7 +156,7 @@ public abstract class AbstractEndpoint {
 	/**
 	 * Use sendfile for sending static files.
 	 */
-	protected boolean useSendfile = Library.APR_HAS_SENDFILE;
+	protected boolean useSendfile = true;
 
 	/**
 	 * Reverse connection. In this proxied mode, the endpoint will not use a
