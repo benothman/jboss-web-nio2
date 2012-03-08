@@ -263,6 +263,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				acceptorThread.start();
 			}
 
+			System.out.println("****** useSendfile=" + useSendfile + " ******");
 			// Start sendfile thread
 			if (useSendfile) {
 				sendfile = new Sendfile();
@@ -1638,13 +1639,13 @@ public class NioEndpoint extends AbstractEndpoint {
 						}
 
 						attachment.pos += result;
-						
-						if(attachment.pos >= attachment.end) {
+
+						if (attachment.pos >= attachment.end) {
 							// All requested bytes were sent
 							closeFile(fc);
 							return;
 						}
-						
+
 						boolean ok = true;
 
 						if (!buffer.hasRemaining()) {
