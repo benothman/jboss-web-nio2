@@ -22,11 +22,17 @@
 
 package org.apache.tomcat.util.net;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.StandardSocketOptions;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 
+import org.apache.tomcat.jni.OS;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 import org.jboss.logging.Logger;
@@ -80,6 +87,11 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * SSL context.
 	 */
 	protected SSLContext sslContext;
+
+	/**
+	 * The static file sender.
+	 */
+	protected Sendfile sendfile;
 
 	/**
 	 * Create a new instance of {@code NioEndpoint}
@@ -250,6 +262,17 @@ public class NioEndpoint extends AbstractEndpoint {
 				acceptorThread.setDaemon(daemon);
 				acceptorThread.start();
 			}
+
+			// Start sendfile thread
+			if (useSendfile) {
+				sendfile = new Sendfile();
+				sendfile.init();
+				Thread sendfileThread = this.threadFactory.newThread(sendfile);
+				sendfileThread.setName(getName() + "-SendFile");
+				sendfileThread.setPriority(threadPriority);
+				sendfileThread.setDaemon(true);
+				sendfileThread.start();
+			}
 		}
 	}
 
@@ -294,6 +317,10 @@ public class NioEndpoint extends AbstractEndpoint {
 					worker.channel.close(true);
 				}
 			}
+		}
+
+		if (this.sendfile != null) {
+			sendfile.destroy();
 		}
 
 		this.serverSocketChannelFactory.destroy();
@@ -348,6 +375,17 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void addChannel(NioChannel channel, long timeout, int flags) {
 		this.channelList.add(channel, timeout, flags);
+	}
+
+	/**
+	 * Add a send file data to the queue of static files
+	 * 
+	 * @param data
+	 */
+	public void addSendfileData(SendfileData data) {
+		if (this.sendfile != null) {
+			this.sendfile.add(data);
+		}
 	}
 
 	/**
@@ -671,6 +709,16 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Set the <code>read</code> flag. If the parameter is true, the read
+		 * flag will have the value 1 else 0.
+		 * 
+		 * @param read
+		 */
+		public void read(boolean read) {
+			this.flags = (read ? (this.flags | READ) : (this.flags & 0xE));
+		}
+
+		/**
 		 * @return the read flag
 		 */
 		public boolean read() {
@@ -685,6 +733,16 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Set the <code>write</code> flag. If the parameter is true, the write
+		 * flag will have the value 1 else 0.
+		 * 
+		 * @param write
+		 */
+		public void write(boolean write) {
+			this.flags = (write ? (this.flags | WRITE) : (this.flags & 0xD));
+		}
+
+		/**
 		 * @return the resume flag
 		 */
 		public boolean resume() {
@@ -692,10 +750,30 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Set the <code>resume</code> flag. If the parameter is true, the
+		 * resume flag will have the value 1 else 0.
+		 * 
+		 * @param resume
+		 */
+		public void resume(boolean resume) {
+			this.flags = (resume ? (this.flags | RESUME) : (this.flags & 0xB));
+		}
+
+		/**
 		 * @return the wake up flag
 		 */
 		public boolean wakeup() {
 			return (flags & WAKEUP) == WAKEUP;
+		}
+
+		/**
+		 * Set the <code>wakeup</code> flag. If the parameter is true, the
+		 * wakeup flag will have the value 1 else 0.
+		 * 
+		 * @param wakeup
+		 */
+		public void wakeup(boolean wakeup) {
+			this.flags = (wakeup ? (this.flags | WAKEUP) : (this.flags & 0x7));
 		}
 
 		/**
@@ -1314,6 +1392,343 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (thread.getPriority() != this.threadPriority)
 				thread.setPriority(this.threadPriority);
 			return thread;
+		}
+	}
+
+	/**
+	 * SendfileData class.
+	 */
+	public static class SendfileData {
+		// File
+		protected String fileName;
+		// Range information
+		protected long start;
+		protected long end;
+		// The channel
+		protected NioChannel channel;
+		// Position
+		protected long pos;
+		// KeepAlive flag
+		protected boolean keepAlive;
+
+		/**
+		 * Getter for fileName
+		 * 
+		 * @return the fileName
+		 */
+		public String getFileName() {
+			return this.fileName;
+		}
+
+		/**
+		 * Setter for the fileName
+		 * 
+		 * @param fileName
+		 *            the fileName to set
+		 */
+		public void setFileName(String fileName) {
+			this.fileName = fileName;
+		}
+
+		/**
+		 * Getter for start
+		 * 
+		 * @return the start
+		 */
+		public long getStart() {
+			return this.start;
+		}
+
+		/**
+		 * Setter for the start
+		 * 
+		 * @param start
+		 *            the start to set
+		 */
+		public void setStart(long start) {
+			this.start = start;
+		}
+
+		/**
+		 * Getter for end
+		 * 
+		 * @return the end
+		 */
+		public long getEnd() {
+			return this.end;
+		}
+
+		/**
+		 * Setter for the end
+		 * 
+		 * @param end
+		 *            the end to set
+		 */
+		public void setEnd(long end) {
+			this.end = end;
+		}
+
+		/**
+		 * Getter for channel
+		 * 
+		 * @return the channel
+		 */
+		public NioChannel getChannel() {
+			return this.channel;
+		}
+
+		/**
+		 * Setter for the channel
+		 * 
+		 * @param channel
+		 *            the channel to set
+		 */
+		public void setChannel(NioChannel channel) {
+			this.channel = channel;
+		}
+
+		/**
+		 * Getter for pos
+		 * 
+		 * @return the pos
+		 */
+		public long getPos() {
+			return this.pos;
+		}
+
+		/**
+		 * Setter for the pos
+		 * 
+		 * @param pos
+		 *            the pos to set
+		 */
+		public void setPos(long pos) {
+			this.pos = pos;
+		}
+
+		/**
+		 * Getter for keepAlive
+		 * 
+		 * @return the keepAlive
+		 */
+		public boolean isKeepAlive() {
+			return this.keepAlive;
+		}
+
+		/**
+		 * Setter for the keepAlive
+		 * 
+		 * @param keepAlive
+		 *            the keepAlive to set
+		 */
+		public void setKeepAlive(boolean keepAlive) {
+			this.keepAlive = keepAlive;
+		}
+	}
+
+	/**
+	 * {@code Sendfile}
+	 * 
+	 * Created on Mar 7, 2012 at 4:04:59 PM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
+	 */
+	public class Sendfile implements Runnable {
+
+		protected int size;
+		protected ConcurrentLinkedQueue<SendfileData> fileDatas;
+		protected AtomicInteger counter;
+
+		/**
+		 * @return the number of send file
+		 */
+		public int getSendfileCount() {
+			return this.counter.get();
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Runnable#run()
+		 */
+		@Override
+		public void run() {
+
+			while (running) {
+				// Loop if endpoint is paused
+				while (paused) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// Ignore
+					}
+				}
+				// Loop if poller is empty
+				while (this.counter.get() < 1) {
+					try {
+						synchronized (this) {
+							this.wait();
+						}
+					} catch (InterruptedException e) {
+						// Ignore
+					}
+				}
+
+				try {
+					SendfileData data = this.poll();
+					if (data != null) {
+						sendFile(data);
+					}
+				} catch (Throwable th) {
+					// Ignore
+				}
+			}
+		}
+
+		/**
+		 * 
+		 */
+		protected void init() {
+			if (size <= 0) {
+				if (org.apache.tomcat.util.Constants.LOW_MEMORY) {
+					size = 128;
+				} else {
+					size = (OS.IS_WIN32 || OS.IS_WIN64) ? (1 * 1024) : (16 * 1024);
+				}
+			}
+			this.counter = new AtomicInteger(0);
+			this.fileDatas = new ConcurrentLinkedQueue<>();
+		}
+
+		/**
+		 * 
+		 */
+		protected void destroy() {
+			this.fileDatas.clear();
+		}
+
+		/**
+		 * 
+		 * @param data
+		 * @throws Exception
+		 */
+		private void sendFile(final SendfileData data) throws Exception {
+			data.pos = data.start;
+			final NioChannel channel = data.channel;
+			Path path = new File(data.fileName).toPath();
+			final FileChannel fc = FileChannel.open(path, StandardOpenOption.READ).position(
+					data.pos);
+
+			final int BUFFER_SIZE = channel.getOption(StandardSocketOptions.SO_SNDBUF);
+			final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+			int nBytes = fc.read(buffer);
+
+			if (nBytes >= 0) {
+				buffer.flip();
+				channel.write(buffer, data, new CompletionHandler<Integer, SendfileData>() {
+
+					@Override
+					public void completed(Integer result, SendfileData attachment) {
+						if (result < 0) { // Reach the end of stream
+							closeChannel(channel);
+							closeFile(fc);
+							return;
+						}
+
+						attachment.pos += result;
+						boolean ok = true;
+
+						if (!buffer.hasRemaining()) {
+							// This means that all data in the buffer has been
+							// written => Empty the buffer and read again
+							buffer.clear();
+							try {
+								if (fc.read(buffer) >= 0) {
+									buffer.flip();
+								} else {
+									// Reach the EOF
+									ok = false;
+								}
+							} catch (Throwable th) {
+								ok = false;
+							}
+						}
+
+						if (ok) {
+							channel.write(buffer, data, this);
+						} else {
+							closeFile(fc);
+						}
+					}
+
+					@Override
+					public void failed(Throwable exc, SendfileData attachment) {
+						closeChannel(channel);
+					}
+
+					/**
+					 * 
+					 * @param closeable
+					 */
+					private void closeFile(java.io.Closeable closeable) {
+						try {
+							closeable.close();
+						} catch (IOException e) {
+							// NOPE
+						}
+					}
+				});
+			}
+		}
+
+		/**
+		 * Add the sendfile data to the sendfile poller. Note that in most
+		 * cases, the initial non blocking calls to sendfile will return right
+		 * away, and will be handled asynchronously inside the kernel. As a
+		 * result, the poller will never be used.
+		 * 
+		 * @param data
+		 *            containing the reference to the data which should be snet
+		 * @return true if all the data has been sent right away, and false
+		 *         otherwise
+		 */
+		public boolean add(SendfileData data) {
+			if (data == null) {
+				return false;
+			}
+			boolean b = this.fileDatas.offer(data);
+			if (b) {
+				this.counter.incrementAndGet();
+				this.notifyAll();
+			}
+			return b;
+		}
+
+		/**
+		 * Retrieves and removes the head of this queue, or returns
+		 * <tt>null</tt> if this queue is empty.
+		 * 
+		 * @return the head of this queue, or <tt>null</tt> if this queue is
+		 *         empty
+		 */
+		protected SendfileData poll() {
+			SendfileData data = this.fileDatas.poll();
+			if (data != null) {
+				this.counter.decrementAndGet();
+			}
+			return data;
+		}
+
+		/**
+		 * Remove socket from the poller.
+		 * 
+		 * @param data
+		 *            the sendfile data which should be removed
+		 */
+		protected void remove(SendfileData data) {
+			if (this.fileDatas.remove(data)) {
+				this.counter.decrementAndGet();
+			}
 		}
 	}
 

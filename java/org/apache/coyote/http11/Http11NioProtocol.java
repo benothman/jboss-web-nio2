@@ -917,7 +917,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		 * @return the flags of the processor to be attached with the current
 		 *         channel
 		 */
-		private int getFlags(Http11NioProcessor proc) {
+		private static int getFlags(Http11NioProcessor proc) {
 			int read = proc.getReadNotifications() ? NioEndpoint.ChannelInfo.READ : 0;
 			int resume = proc.getResumeNotification() ? NioEndpoint.ChannelInfo.RESUME : 0;
 			int write = proc.getWriteNotification() ? NioEndpoint.ChannelInfo.WRITE : 0;

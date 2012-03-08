@@ -306,7 +306,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 									}
 
 									if (nBytes > 0) {
-										endpoint.processChannel(ch);
+										endpoint.processChannel(ch, null);
 									}
 								}
 
@@ -1143,6 +1143,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			sendfileData.setFileName(response.getSendfilePath());
 			sendfileData.setStart(response.getSendfileStart());
 			sendfileData.setEnd(response.getSendfileEnd());
+			endpoint.addSendfileData(sendfileData);
 		}
 
 		// Check for compression

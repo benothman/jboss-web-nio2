@@ -568,6 +568,9 @@ public class Http11AprProtocol implements ProtocolHandler, MBeanRegistration {
             this.proto = proto;
         }
 
+        /**
+         * 
+         */
         public SocketState event(long socket, SocketStatus status) {
             Http11AprProcessor result = connections.get(socket);
             
