@@ -1151,11 +1151,11 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		}
 
 		// Sendfile support
-		if (response.getSendfilePath() != null) {
+		if (response.getSendfilePath() != null && endpoint.getUseSendfile()) {
 			// No entity body sent here
 			outputBuffer.addActiveFilter(outputFilters[Constants.VOID_FILTER]);
 			contentDelimitation = true;
-			sendfileData = new NioEndpoint.SendfileData();
+			sendfileData = endpoint.getSendfileData();
 			sendfileData.setFileName(response.getSendfilePath());
 			sendfileData.setStart(response.getSendfileStart());
 			sendfileData.setEnd(response.getSendfileEnd());

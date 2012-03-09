@@ -30,8 +30,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -44,7 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 
-import org.apache.tomcat.jni.OS;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.jsse.NioJSSESocketChannelFactory;
 import org.jboss.logging.Logger;
@@ -590,6 +587,14 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @return if the send file is supported, peek up a {@link SendfileData} from
+	 *         the pool, else <tt>null</tt>
+	 */
+	public SendfileData getSendfileData() {
+		return this.sendfile != null ? this.sendfile.getSendfileData() : new SendfileData();
 	}
 
 	/**
@@ -1412,12 +1417,43 @@ public class NioEndpoint extends AbstractEndpoint {
 		// The channel
 		protected NioChannel channel;
 		// The file channel
-		protected FileChannel fileChannel;
+		protected java.nio.channels.FileChannel fileChannel;
 
 		// Position
 		protected long pos;
 		// KeepAlive flag
 		protected boolean keepAlive;
+
+		/**
+		 * Prepare the {@code SendfileData}
+		 * 
+		 * @throws Exception
+		 */
+		protected void setup() throws Exception {
+			this.pos = this.start;
+			java.nio.file.Path path = new File(this.fileName).toPath();
+			this.fileChannel = java.nio.channels.FileChannel.open(path, StandardOpenOption.READ)
+					.position(this.pos);
+		}
+
+		/**
+		 * Recycle this {@code SendfileData}
+		 */
+		protected void recycle() {
+			this.start = 0;
+			this.end = 0;
+			this.pos = 0;
+			this.channel = null;
+			this.keepAlive = false;
+			if (this.fileChannel != null && this.fileChannel.isOpen()) {
+				try {
+					this.fileChannel.close();
+				} catch (IOException e) {
+					// Ignore
+				}
+			}
+			this.fileChannel = null;
+		}
 
 		/**
 		 * Getter for fileName
@@ -1545,9 +1581,9 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		protected int size;
 		protected ConcurrentLinkedQueue<SendfileData> fileDatas;
+		protected ConcurrentLinkedQueue<SendfileData> recycledFileDatas;
 		protected AtomicInteger counter;
 		private Object mutex;
-		
 
 		/**
 		 * @return the number of send file
@@ -1600,26 +1636,43 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected void init() {
 			/*
-			if (size <= 0) {
-				if (org.apache.tomcat.util.Constants.LOW_MEMORY) {
-					size = 128;
-				} else {
-					size = (OS.IS_WIN32 || OS.IS_WIN64) ? (1 * 1024) : (16 * 1024);
-				}
-			}
-			*/
+			 * if (size <= 0) { if (org.apache.tomcat.util.Constants.LOW_MEMORY)
+			 * { size = 128; } else { size = (OS.IS_WIN32 || OS.IS_WIN64) ? (1 *
+			 * 1024) : (16 * 1024); } }
+			 */
 			this.mutex = new Object();
 			this.counter = new AtomicInteger(0);
 			this.fileDatas = new ConcurrentLinkedQueue<>();
+			this.recycledFileDatas = new ConcurrentLinkedQueue<>();
+		}
+
+		/**
+		 * Destroy the SendFile
+		 */
+		protected void destroy() {
+			synchronized (this.mutex) {
+				this.fileDatas.clear();
+				this.recycledFileDatas.clear();
+				// Unlock threads waiting for this monitor
+				this.mutex.notifyAll();
+			}
+		}
+
+		/**
+		 * @param data
+		 */
+		public void recycleSendfileData(SendfileData data) {
+			data.recycle();
+			this.recycledFileDatas.offer(data);
 		}
 
 		/**
 		 * 
+		 * @return
 		 */
-		protected void destroy() {
-			this.fileDatas.clear();
-			// Unlock threads waiting for this monitor
-			this.mutex.notifyAll();
+		public SendfileData getSendfileData() {
+			SendfileData data = this.recycledFileDatas.poll();
+			return data == null ? new SendfileData() : data;
 		}
 
 		/**
@@ -1628,13 +1681,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @throws Exception
 		 */
 		private void sendFile(final SendfileData data) throws Exception {
-			System.out.println("**** " + getClass().getName()+"#sendFile(...)");
-			
-			data.pos = data.start;
-			final NioChannel channel = data.channel;
-			Path path = new File(data.fileName).toPath();
-			data.fileChannel = FileChannel.open(path, StandardOpenOption.READ).position(data.pos);
+			System.out.println("**** " + getClass().getName() + "#sendFile(...)");
+			// Configure the send file data
+			data.setup();
 
+			final NioChannel channel = data.channel;
 			final int BUFFER_SIZE = channel.getOption(StandardSocketOptions.SO_SNDBUF);
 			final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 			int nBytes = data.fileChannel.read(buffer);
@@ -1654,8 +1705,8 @@ public class NioEndpoint extends AbstractEndpoint {
 						attachment.pos += result;
 
 						if (attachment.pos >= attachment.end) {
-							// All requested bytes were sent
-							closeFile(data.fileChannel);
+							// All requested bytes were sent, recycle it then
+							recycleSendfileData(attachment);
 							return;
 						}
 
@@ -1721,12 +1772,15 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (data == null) {
 				return false;
 			}
-			boolean b = this.fileDatas.offer(data);
-			if (b) {
-				this.counter.incrementAndGet();
-				this.mutex.notifyAll();
+			synchronized (this.mutex) {
+				if (this.fileDatas.offer(data)) {
+					this.counter.incrementAndGet();
+					this.mutex.notifyAll();
+					return true;
+				}
 			}
-			return b;
+
+			return false;
 		}
 
 		/**
@@ -1756,5 +1810,4 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 	}
-
 }
