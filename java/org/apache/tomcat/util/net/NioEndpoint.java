@@ -1333,7 +1333,9 @@ public class NioEndpoint extends AbstractEndpoint {
 		protected void recycle() {
 			this.channel = null;
 			this.status = null;
-			recycledChannelProcessors.offer(this);
+			if (recycledChannelProcessors != null) {
+				recycledChannelProcessors.offer(this);
+			}
 		}
 
 		/**
