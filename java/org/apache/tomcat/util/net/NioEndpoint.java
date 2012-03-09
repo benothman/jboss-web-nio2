@@ -260,7 +260,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				acceptorThread.start();
 			}
 
-			System.out.println("****** useSendfile=" + useSendfile + " ******");
 			// Start sendfile thread
 			if (useSendfile) {
 				sendfile = new Sendfile();
@@ -590,8 +589,8 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * @return if the send file is supported, peek up a {@link SendfileData} from
-	 *         the pool, else <tt>null</tt>
+	 * @return if the send file is supported, peek up a {@link SendfileData}
+	 *         from the pool, else <tt>null</tt>
 	 */
 	public SendfileData getSendfileData() {
 		return this.sendfile != null ? this.sendfile.getSendfileData() : new SendfileData();
@@ -1688,21 +1687,23 @@ public class NioEndpoint extends AbstractEndpoint {
 			final NioChannel channel = data.channel;
 			final int BUFFER_SIZE = channel.getOption(StandardSocketOptions.SO_SNDBUF);
 			final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
-			int nBytes = data.fileChannel.read(buffer);
+			int nr = data.fileChannel.read(buffer);
 
-			if (nBytes >= 0) {
+			if (nr >= 0) {
 				buffer.flip();
 				channel.write(buffer, data, new CompletionHandler<Integer, SendfileData>() {
 
 					@Override
-					public void completed(Integer result, SendfileData attachment) {
-						if (result < 0) { // Reach the end of stream
+					public void completed(Integer nw, SendfileData attachment) {
+						if (nw < 0) { // Reach the end of stream
 							closeChannel(channel);
 							closeFile(data.fileChannel);
 							return;
 						}
 
-						attachment.pos += result;
+						System.out.println("**** SendFile : " + nw + " ****");
+
+						attachment.pos += nw;
 
 						if (attachment.pos >= attachment.end) {
 							// All requested bytes were sent, recycle it then
@@ -1754,6 +1755,8 @@ public class NioEndpoint extends AbstractEndpoint {
 						}
 					}
 				});
+			} else {
+				recycleSendfileData(data);
 			}
 		}
 
