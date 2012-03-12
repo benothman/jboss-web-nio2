@@ -1706,8 +1706,6 @@ public class NioEndpoint extends AbstractEndpoint {
 							return;
 						}
 
-						System.out.println("**** SendFile : " + nw + " ****");
-
 						attachment.pos += nw;
 
 						if (attachment.pos >= attachment.end) {
