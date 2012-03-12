@@ -1611,7 +1611,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 				// Loop if poller is empty
-				while (this.counter.get() < 1) {
+				while (this.counter.get() < 1 && running) {
 					try {
 						synchronized (this.mutex) {
 							this.mutex.wait();
@@ -1652,6 +1652,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected void destroy() {
 			synchronized (this.mutex) {
+				this.counter.incrementAndGet();
 				this.fileDatas.clear();
 				this.recycledFileDatas.clear();
 				// Unlock threads waiting for this monitor
@@ -1668,8 +1669,10 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Poll the head of the recycled object list if it is not empty, else
+		 * create a new one.
 		 * 
-		 * @return
+		 * @return a {@code SendfileData}
 		 */
 		public SendfileData getSendfileData() {
 			SendfileData data = this.recycledFileDatas.poll();
