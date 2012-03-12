@@ -23,7 +23,6 @@ package org.apache.coyote.http11;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
@@ -299,8 +298,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	@Override
 	public boolean flushLeftover() throws IOException {
 
-		System.out.println("################ flushLeftover ###############");
-
 		int n = Math.min(leftover.getLength(), bbuf.remaining());
 		bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
 		leftover.setOffset(n);
@@ -312,7 +309,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					@Override
 					public void completed(Integer result, Void attachment) {
 						if (result < 0) {
-							failed(new IOException(sm.getString("oob.failedwrite"),new ClosedChannelException()), attachment);
+							failed(new IOException(sm.getString("oob.failedwrite")), attachment);
 							return;
 						}
 						response.setLastWrite(result);
