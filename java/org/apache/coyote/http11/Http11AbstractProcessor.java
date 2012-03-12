@@ -21,6 +21,7 @@
  */
 package org.apache.coyote.http11;
 
+import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -33,6 +34,8 @@ import org.apache.tomcat.util.buf.Ascii;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.net.SSLSupport;
+import org.apache.tomcat.util.net.SocketStatus;
+import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -211,7 +214,13 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	 * True if a resume has been requested.
 	 */
 	protected boolean resumeNotification = false;
+	/**
+	 * True if a read has been requested.
+	 */
 	protected boolean readNotifications = true;
+	/**
+	 * True if a write has been requested.
+	 */
 	protected boolean writeNotification = false;
 
 	/**
@@ -554,6 +563,18 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	 */
 	protected abstract void initializeFilters();
 
+	/**
+	 * Process pipelined HTTP requests using the specified input and output
+	 * streams.
+	 * 
+	 * @param status
+	 * @return a <tt>SocketState</tt>
+	 * 
+	 * @throws IOException
+	 *             error during an I/O operation
+	 */
+	public abstract SocketState event(SocketStatus status) throws IOException;
+	
 	/**
 	 * Reset flags of the Processor
 	 */

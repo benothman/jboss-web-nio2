@@ -194,15 +194,12 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		this.outputBuffer.setChannel(channel);
 	}
 
-	/**
-	 * Process pipelined HTTP requests using the specified input and output
-	 * streams.
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param status
-	 * @return a <tt>SocketState</tt>
-	 * 
-	 * @throws IOException
-	 *             error during an I/O operation
+	 * @see
+	 * org.apache.coyote.http11.Http11AbstractProcessor#event(org.apache.tomcat
+	 * .util.net.SocketStatus)
 	 */
 	public SocketState event(SocketStatus status) throws IOException {
 
@@ -402,21 +399,21 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				pipelined = inputBuffer.nextRequest();
 				outputBuffer.nextRequest();
 			}
-			
+
 			// Do sendfile as needed: add socket to sendfile and end
-            if (sendfileData != null && !error) {
-                sendfileData.setChannel(channel);
-                sendfileData.setKeepAlive(keepAlive && !pipelined);
-                if (!endpoint.addSendfileData(sendfileData)) {
-                    if (sendfileData.getChannel() == null) {
-                        error = true;
-                    } else {
-                    	openChannel = true;
-                    }
-                    break;
-                }
-            }
-			
+			if (sendfileData != null && !error) {
+				sendfileData.setChannel(channel);
+				sendfileData.setKeepAlive(keepAlive && !pipelined);
+				if (!endpoint.addSendfileData(sendfileData)) {
+					if (sendfileData.getChannel() == null) {
+						error = true;
+					} else {
+						openChannel = true;
+					}
+					break;
+				}
+			}
+
 			rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
 		}
 		rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
@@ -889,7 +886,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		contentDelimitation = false;
 		expectation = false;
 		sendfileData = null;
-		
+
 		if (sslEnabled) {
 			request.scheme().setString("https");
 		}

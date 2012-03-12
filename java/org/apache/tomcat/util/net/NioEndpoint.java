@@ -1610,8 +1610,8 @@ public class NioEndpoint extends AbstractEndpoint {
 						// Ignore
 					}
 				}
-				// Loop if poller is empty
-				while (this.counter.get() < 1 && running) {
+				// Loop while poller is empty
+				while (this.counter.get() < 1 && running && !paused) {
 					try {
 						synchronized (this.mutex) {
 							this.mutex.wait();
@@ -1621,26 +1621,23 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 
-				try {
-					SendfileData data = this.poll();
-					if (data != null) {
-						sendFile(data);
+				if (running && !paused) {
+					try {
+						SendfileData data = this.poll();
+						if (data != null) {
+							sendFile(data);
+						}
+					} catch (Throwable th) {
+						// Ignore
 					}
-				} catch (Throwable th) {
-					// Ignore
 				}
 			}
 		}
 
 		/**
-		 * 
+		 * Initialize the {@code Sendfile}
 		 */
 		protected void init() {
-			/*
-			 * if (size <= 0) { if (org.apache.tomcat.util.Constants.LOW_MEMORY)
-			 * { size = 128; } else { size = (OS.IS_WIN32 || OS.IS_WIN64) ? (1 *
-			 * 1024) : (16 * 1024); } }
-			 */
 			this.mutex = new Object();
 			this.counter = new AtomicInteger(0);
 			this.fileDatas = new ConcurrentLinkedQueue<>();
@@ -1652,6 +1649,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected void destroy() {
 			synchronized (this.mutex) {
+				// To unlock the
 				this.counter.incrementAndGet();
 				this.fileDatas.clear();
 				this.recycledFileDatas.clear();
@@ -1685,7 +1683,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @throws Exception
 		 */
 		private void sendFile(final SendfileData data) throws Exception {
-			System.out.println("**** " + getClass().getName() + "#sendFile(...)");
 			// Configure the send file data
 			data.setup();
 
@@ -1702,7 +1699,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					public void completed(Integer nw, SendfileData attachment) {
 						if (nw < 0) { // Reach the end of stream
 							closeChannel(channel);
-							closeFile(data.fileChannel);
+							closeFile(attachment.fileChannel);
 							return;
 						}
 
@@ -1721,7 +1718,7 @@ public class NioEndpoint extends AbstractEndpoint {
 							// written => Empty the buffer and read again
 							buffer.clear();
 							try {
-								if (data.fileChannel.read(buffer) >= 0) {
+								if (attachment.fileChannel.read(buffer) >= 0) {
 									buffer.flip();
 								} else {
 									// Reach the EOF
@@ -1735,7 +1732,7 @@ public class NioEndpoint extends AbstractEndpoint {
 						if (ok) {
 							channel.write(buffer, attachment, this);
 						} else {
-							closeFile(data.fileChannel);
+							closeFile(attachment.fileChannel);
 						}
 					}
 

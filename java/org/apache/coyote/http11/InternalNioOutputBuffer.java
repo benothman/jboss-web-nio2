@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
-import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -194,8 +194,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		if (!committed) {
 			this.bbuf.clear();
-			this.bbuf.put(Constants.ACK_BYTES).flip();			
-			if(this.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS) < 0) {
+			this.bbuf.put(Constants.ACK_BYTES).flip();
+			if (this.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS) < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
@@ -301,58 +301,42 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		System.out.println("################ flushLeftover ###############");
 
-		int len = leftover.getLength();
-		int start = leftover.getStart();
-		byte[] b = leftover.getBuffer();
-		int position = bbuf.position();
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		if(bbuf.remaining() >= leftover.getLength()) {
-			
-		}
-		
-		
-		
-		bbuf.clear();
-		bbuf.put(b, leftover.getOffset(), leftover.getLength()).flip();
+		int n = Math.min(leftover.getLength(), bbuf.remaining());
+		bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
+		leftover.setOffset(n);
+		final NioChannel ch = channel;
 
-		write(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+		ch.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, null,
+				new CompletionHandler<Integer, Void>() {
 
-		if (nonBlocking) {
-			nonBlockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
-		} else {
-			int res = 0;
-			while ((res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS)) > 0) {
-				// Wait until all bytes are written, or the channel was closed
-			}
+					@Override
+					public void completed(Integer result, Void attachment) {
+						if (result < 0) {
+							failed(new IOException(sm.getString("oob.failedwrite"),new ClosedChannelException()), attachment);
+							return;
+						}
+						response.setLastWrite(result);
+						if (!bbuf.hasRemaining()) {
+							bbuf.clear();
+							if (leftover.getLength() > 0) {
+								int n = Math.min(leftover.getLength(), bbuf.remaining());
+								bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
+								leftover.setOffset(n);
+							} else {
+								leftover.recycle();
+								return;
+							}
+						}
 
-			if (res < 0) { // The channel was closed
-				throw new IOException(sm.getString("oob.failedwrite"));
-			}
+						ch.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, null, this);
+					}
 
-			response.setLastWrite(res);
-			if (bbuf.position() < bbuf.limit()) {
-				// Could not write all leftover data: put back to write
-				leftover.setOffset(start);
-				return false;
-			} else {
-				bbuf.clear();
-				leftover.recycle();
-				return true;
-			}
-		}
+					@Override
+					public void failed(Throwable exc, Void attachment) {
+						close(ch);
+					}
+				});
 
-		
-        bbuf.clear();
-        leftover.recycle();
-
-        return true;
+		return true;
 	}
 }
