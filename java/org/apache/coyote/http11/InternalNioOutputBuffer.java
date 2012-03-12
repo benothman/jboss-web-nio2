@@ -298,9 +298,12 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	@Override
 	public boolean flushLeftover() throws IOException {
 
+		// Calculate the number of bytes that fit in the buffer
 		int n = Math.min(leftover.getLength(), bbuf.remaining());
+		// put bytes in the buffer
 		bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
-		leftover.setOffset(n);
+		// Update the offset
+		leftover.setOffset(leftover.getOffset() + n);
 		final NioChannel ch = channel;
 
 		ch.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, null,
@@ -318,13 +321,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 							if (leftover.getLength() > 0) {
 								int n = Math.min(leftover.getLength(), bbuf.remaining());
 								bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
-								leftover.setOffset(n);
+								leftover.setOffset(leftover.getOffset() + n);
 							} else {
 								leftover.recycle();
 								return;
 							}
 						}
-
+						// Write the remaining bytes
 						ch.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, null, this);
 					}
 
