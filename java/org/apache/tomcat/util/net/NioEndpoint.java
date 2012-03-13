@@ -29,6 +29,7 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
@@ -373,7 +374,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addChannel(NioChannel channel, long timeout, int flags) {
 		System.out.println("--- NioEndpoint#addChanel(" + channel + ", " + timeout + ", " + flags
 				+ ")");
-		this.channelList.add(channel, timeout, flags);
+		if(!this.channelList.add(channel, timeout, flags)) {
+			closeChannel(channel);
+		}
 	}
 
 	/**
@@ -939,7 +942,28 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 
-				infos[size++] = new ChannelInfo(channel, timeout, flag);
+				final ChannelInfo info = new ChannelInfo(channel, timeout, flag);
+				
+				if(info.read()) {
+					info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info, new CompletionHandler<Integer, ChannelInfo>() {
+
+						@Override
+						public void completed(Integer nBytes, ChannelInfo attachment) {
+							if(nBytes < 0) {
+								failed(new ClosedChannelException(), attachment);
+							} else {
+								processChannel(info.channel, SocketStatus.OPEN_READ);
+							}
+						}
+
+						@Override
+						public void failed(Throwable exc, ChannelInfo attachment) {
+							closeChannel(attachment.channel);
+						}
+					});
+				}
+				
+				infos[size++] = info;
 				return true;
 			}
 		}
