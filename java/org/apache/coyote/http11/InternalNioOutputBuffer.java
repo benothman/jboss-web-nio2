@@ -116,10 +116,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @return the number of bytes written, -1 in case of errors
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
-		System.out.println("****** " + getClass().getName() + "#blockingWrite(...) -> START ******");
+		System.out
+				.println("****** " + getClass().getName() + "#blockingWrite(timeout = "+timeout+") -> START ******");
 		try {
-			long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
-			return this.channel.writeBytes(buffer, writeTimeout, unit);
+			long wrTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
+			System.out.println("*** WRITE_TIMEOUT = " + wrTimeout + ", TIME_UNIT = " + unit
+					+ " ***");
+			return this.channel.writeBytes(buffer, wrTimeout, unit);
 		} catch (Exception e) {
 			log.warn("An error occurs when trying a blocking write");
 			log.error(e.getMessage(), e);
