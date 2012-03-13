@@ -23,6 +23,7 @@ package org.apache.coyote.http11;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
@@ -141,6 +142,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	private void nonBlockingWrite(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
 
+		System.out.println("****** " + getClass().getName() + "#nonBlockingWrite(...) ******");
+
 		final NioChannel ch = this.channel;
 		final long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 
@@ -149,7 +152,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			@Override
 			public void completed(Integer nBytes, NioChannel attachment) {
 				if (nBytes < 0) {
-					close(attachment);
+					failed(new ClosedChannelException(), attachment);
 					return;
 				}
 
@@ -160,7 +163,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
-				if (exc instanceof InterruptedByTimeoutException) {
+				if (exc instanceof InterruptedByTimeoutException || exc instanceof IOException) {
 					close(attachment);
 				}
 			}
@@ -242,24 +245,34 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// - If the call is asynchronous, throw an exception
 		// - If the call is synchronous, make regular blocking writes to flush
 		// the data
+
 		if (leftover.getLength() > 0) {
 			System.out.println("##### Step - 1 #####");
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
 				System.out.println("##### Step - 2 #####");
 
-				ByteBuffer bb = ByteBuffer.allocateDirect(leftover.getLength());
-				bb.put(leftover.getBuffer(), leftover.getOffset(), leftover.getEnd()).flip();
-				res = blockingWrite(bb, writeTimeout, TimeUnit.MILLISECONDS);
-				leftover.recycle();
-				// Send current buffer
-				if (res > 0 && bbuf.position() > 0) {
-					bbuf.flip();
+				while (leftover.getLength() > 0) {
+					// Calculate the maximum number of bytes that can fit in the
+					// buffer
+					int n = Math.min(bbuf.remaining(), leftover.getLength());
+					int off = leftover.getOffset();
+					// Put bytes into the buffer
+					bbuf.put(leftover.getBuffer(), off, n).flip();
+					// Update the offset of the leftover ByteChunck
+					leftover.setOffset(off + n);
 					while (bbuf.hasRemaining()) {
 						res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+						if (res < 0) {
+							break;
+						}
+					}
+					bbuf.clear();
+					if (res < 0) {
+						throw new IOException(sm.getString("oob.failedwrite"));
 					}
 				}
-				bbuf.clear();
+				leftover.recycle();
 			} else {
 				throw new IOException(sm.getString("oob.backlog"));
 			}
