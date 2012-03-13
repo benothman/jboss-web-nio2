@@ -867,9 +867,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				}
 
 				SocketState state = processor.process(channel);
-				if (processor.keepAlive) {
-
-				}
+				
 				if (state == SocketState.LONG) {
 					// Associate the connection with the processor. The next
 					// request

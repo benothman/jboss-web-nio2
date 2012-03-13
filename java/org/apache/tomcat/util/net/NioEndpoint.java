@@ -371,6 +371,8 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param flags
 	 */
 	public void addChannel(NioChannel channel, long timeout, int flags) {
+		System.out.println("--- NioEndpoint#addChanel(" + channel + ", " + timeout + ", " + flags
+				+ ")");
 		this.channelList.add(channel, timeout, flags);
 	}
 

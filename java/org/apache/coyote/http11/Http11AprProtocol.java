@@ -619,6 +619,9 @@ public class Http11AprProtocol implements ProtocolHandler, MBeanRegistration {
             return state;
         }
         
+        /**
+         * 
+         */
         public SocketState process(long socket) {
             Http11AprProcessor processor = recycledProcessors.poll();
             try {
