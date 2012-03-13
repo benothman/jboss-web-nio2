@@ -116,6 +116,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @return the number of bytes written, -1 in case of errors
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
+		System.out.println("****** " + getClass().getName() + "#blockingWrite(...) ******");
 		try {
 			long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 			return this.channel.writeBytes(buffer, writeTimeout, unit);
@@ -240,7 +241,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	protected void flushBuffer() throws IOException {
 		System.out.println("############## flushBuffer ##############");
 		int res = 0;
-		
+
 		// If there are still leftover bytes here, this means the user did a
 		// direct flush:
 		// - If the call is asynchronous, throw an exception
@@ -280,7 +281,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 
 		if (bbuf.position() > 0) {
-			System.out.println("############## flushBuffer - 2 ##############");
+			System.out.println("############## flushBuffer - 2, nonBlocking = " + nonBlocking
+					+ " ##############");
 			bbuf.flip();
 
 			if (nonBlocking) {
