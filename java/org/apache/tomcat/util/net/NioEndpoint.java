@@ -1346,6 +1346,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			Handler.SocketState state = (status == null ? handler.process(channel) : handler.event(
 					channel, status));
 
+			System.out.println("*** NioEndpoint -> " + state);
+			
 			if (state == SocketState.CLOSED) {
 				closeChannel(channel);
 			}
