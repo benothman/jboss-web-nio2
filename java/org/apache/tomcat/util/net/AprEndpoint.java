@@ -1835,6 +1835,7 @@ public class AprEndpoint {
 						}
 						SocketInfo info = localAddList.get();
 						while (info != null) {
+							// Wakeup event
 							if (info.wakeup()) {
 								// Resume event if socket is present in the
 								// poller
@@ -1844,7 +1845,8 @@ public class AprEndpoint {
 										if (!processSocket(info.socket, SocketStatus.OPEN_CALLBACK)) {
 											Socket.destroy(info.socket);
 										}
-									} else {
+									} 
+									else {
 										int events = ((info.read()) ? Poll.APR_POLLIN : 0)
 												| ((info.write()) ? Poll.APR_POLLOUT : 0);
 										if (!addToPoller(info.socket, events)) {
@@ -1861,7 +1863,10 @@ public class AprEndpoint {
 										}
 									}
 								}
-							} else if (info.read() || info.write()) {
+							} 
+							
+							// Read OR Write events
+							else if (info.read() || info.write()) {
 								if (info.resume()) {
 									// Resume event
 									timeouts.remove(info.socket);
@@ -1869,7 +1874,8 @@ public class AprEndpoint {
 									if (!processSocket(info.socket, SocketStatus.OPEN_CALLBACK)) {
 										Socket.destroy(info.socket);
 									}
-								} else {
+								} 
+								else {
 									// Store timeout
 									if (event) {
 										removeFromPoller(info.socket);
@@ -1889,7 +1895,10 @@ public class AprEndpoint {
 												+ info.timeout);
 									}
 								}
-							} else {
+							} 
+							
+							// Others
+							else {
 								// This is either a resume or a suspend.
 								if (event) {
 									if (info.resume()) {

@@ -25,10 +25,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -826,17 +830,38 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					if (state != SocketState.LONG) {
 						connections.remove(channel);
 						recycledProcessors.offer(result);
-						// if (proto.endpoint.isRunning() && state ==
-						// SocketState.OPEN) {
-						// proto.endpoint.getPoller().add(channel);
-						// }
+						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
+							final NioChannel ch = channel;
+							ch.awaitRead(proto.endpoint.getSoTimeout(), TimeUnit.MILLISECONDS,
+									proto.endpoint, new CompletionHandler<Integer, NioEndpoint>() {
 
-						// TODO
+										@Override
+										public void completed(Integer nBytes, NioEndpoint endpoint) {
+											System.out.println("***** awaitRead - complete *****");
+											if (nBytes < 0) {
+												// Reach the end of the stream
+												endpoint.closeChannel(ch);
+												return;
+											}
 
+											if (nBytes > 0) {
+												endpoint.processChannel(ch, null);
+											}
+										}
+
+										@Override
+										public void failed(Throwable exc, NioEndpoint endpoint) {
+											if (exc instanceof InterruptedByTimeoutException) {
+												endpoint.closeChannel(ch);
+											}
+										}
+									});
+						}
 					} else {
 						if (proto.endpoint.isRunning()) {
 							proto.endpoint.addChannel(channel, result.getTimeout(),
-									getFlags(result));
+									result.getReadNotifications(), result.getWriteNotification(),
+									result.getResumeNotification(), false);
 						}
 					}
 					result.endProcessing();
@@ -867,7 +892,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				}
 
 				SocketState state = processor.process(channel);
-				
+
 				if (state == SocketState.LONG) {
 					// Associate the connection with the processor. The next
 					// request
@@ -880,7 +905,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						state = event(channel, SocketStatus.OPEN_READ);
 					} else {
 						proto.endpoint.addChannel(channel, processor.getTimeout(),
-								getFlags(processor));
+								processor.getReadNotifications(), false,
+								processor.getResumeNotification(), false);
 					}
 				} else {
 					recycledProcessors.offer(processor);
@@ -909,21 +935,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 			}
 			recycledProcessors.offer(processor);
 			return SocketState.CLOSED;
-		}
-
-		/**
-		 * Calculate the processor flags to be attached with a channel
-		 * 
-		 * @param proc
-		 * @return the flags of the processor to be attached with the current
-		 *         channel
-		 */
-		private static int getFlags(Http11NioProcessor proc) {
-			int read = proc.getReadNotifications() ? NioEndpoint.ChannelInfo.READ : 0;
-			int resume = proc.getResumeNotification() ? NioEndpoint.ChannelInfo.RESUME : 0;
-			int write = proc.getWriteNotification() ? NioEndpoint.ChannelInfo.WRITE : 0;
-
-			return (read | resume | write);
 		}
 
 		/**

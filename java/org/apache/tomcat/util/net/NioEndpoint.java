@@ -31,6 +31,7 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -365,6 +366,36 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * Add specified socket and associated pool to the poller. The socket will
+	 * be added to a temporary array, and polled first after a maximum amount of
+	 * time equal to pollTime (in most cases, latency will be much lower,
+	 * however). Note: If both read and write are false, the socket will only be
+	 * checked for timeout; if the socket was already present in the poller, a
+	 * callback event will be generated and the socket will be removed from the
+	 * poller.
+	 * 
+	 * @param channel
+	 *            to add to the poller
+	 * @param timeout
+	 *            to use for this connection
+	 * @param read
+	 *            to do read polling
+	 * @param write
+	 *            to do write polling
+	 * @param resume
+	 *            to send a callback event
+	 * @param wakeup
+	 */
+	public void addChannel(NioChannel channel, long timeout, boolean read, boolean write,
+			boolean resume, boolean wakeup) {
+
+		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
+				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
+
+		addChannel(channel, timeout, flags);
+	}
+
+	/**
 	 * 
 	 * 
 	 * @param channel
@@ -372,9 +403,18 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param flags
 	 */
 	public void addChannel(NioChannel channel, long timeout, int flags) {
-		System.out.println("--- NioEndpoint#addChanel(" + channel + ", " + timeout + ", " + flags
-				+ ")");
-		if(!this.channelList.add(channel, timeout, flags)) {
+
+		long eventTimeout = timeout < 0 ? soTimeout : timeout;
+
+		if (eventTimeout <= 0) {
+			// Always put a timeout in
+			eventTimeout = Integer.MAX_VALUE;
+		}
+
+		System.out.println("--- NioEndpoint#addChanel(" + channel + ", " + eventTimeout + ", "
+				+ flags + ")");
+
+		if (!this.channelList.add(channel, eventTimeout, flags)) {
 			closeChannel(channel);
 		}
 	}
@@ -803,81 +843,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 	}
 
-	// --------------------------------------------- ChannelTimeouts Inner Class
-
-	/**
-	 * Channel list class, used to avoid using a possibly large amount of
-	 * objects with very little actual use.
-	 */
-	public class ChannelTimeouts {
-		protected int size;
-
-		protected NioChannel[] channels;
-		protected long[] timeouts;
-		protected TimeUnit[] units;
-		protected int pos = 0;
-
-		/**
-		 * Create a new instance of {@code ChannelTimeouts}
-		 * 
-		 * @param size
-		 */
-		public ChannelTimeouts(int size) {
-			this.size = 0;
-			channels = new NioChannel[size];
-			timeouts = new long[size];
-		}
-
-		/**
-		 * @param channel
-		 * @param timeout
-		 * @param unit
-		 */
-		public void add(NioChannel channel, long timeout, TimeUnit unit) {
-			channels[size] = channel;
-			timeouts[size] = timeout;
-			units[size] = unit;
-			size++;
-		}
-
-		/**
-		 * @param channel
-		 * @return true of the channel has been removed successfully else false
-		 */
-		public boolean remove(NioChannel channel) {
-			for (int i = 0; i < size; i++) {
-				if (channels[i] == channel) {
-					channels[i] = channels[size - 1];
-					timeouts[i] = timeouts[size - 1];
-					units[i] = units[size - 1];
-					size--;
-					return true;
-				}
-			}
-			return false;
-		}
-
-		/**
-		 * @param date
-		 * @return the channel having a timeout less than the given date
-		 */
-		public NioChannel check(long date) {
-			while (pos < size) {
-				if (date >= timeouts[pos]) {
-					NioChannel result = channels[pos];
-					channels[pos] = channels[size - 1];
-					timeouts[pos] = timeouts[size - 1];
-					size--;
-					return result;
-				}
-				pos++;
-			}
-			pos = 0;
-			return null;
-		}
-
-	}
-
 	// ------------------------------------------------ ChannelList Inner Class
 
 	/**
@@ -923,6 +888,46 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Remove the channel from the list
+		 * 
+		 * @param channel
+		 *            the channel to be removed
+		 * @return <tt>true</tt> if the channel was successfully removed, else
+		 *         <tt>false</tt>
+		 */
+		public boolean remove(NioChannel channel) {
+			if (channel != null) {
+				for (int i = 0; i < size; i++) {
+					if (infos[i].channel == channel) {
+						infos[i] = infos[size - 1];
+						size--;
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		/**
+		 * Remove the {@code ChannelInfo} from the list
+		 * 
+		 * @param info
+		 *            the {@code ChannelInfo} to remove
+		 */
+		public void remove(ChannelInfo info) {
+			if (info != null) {
+				for (int i = 0; i < size; i++) {
+					if (infos[i] == info) {
+						infos[i] = infos[size - 1];
+						size--;
+						break;
+					}
+				}
+			}
+		}
+
+		/**
 		 * Add the channel to the list of channels
 		 * 
 		 * @param channel
@@ -935,35 +940,67 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (size == infos.length) {
 				return false;
 			} else {
+				ChannelInfo tmp = null;
 				for (int i = 0; i < size; i++) {
 					if (infos[i] != null && infos[i].channel == channel) {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
-						return true;
+						tmp = infos[i];
+						break;
 					}
 				}
 
-				final ChannelInfo info = new ChannelInfo(channel, timeout, flag);
-				
-				if(info.read()) {
-					info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info, new CompletionHandler<Integer, ChannelInfo>() {
-
-						@Override
-						public void completed(Integer nBytes, ChannelInfo attachment) {
-							if(nBytes < 0) {
-								failed(new ClosedChannelException(), attachment);
-							} else {
-								processChannel(info.channel, SocketStatus.OPEN_READ);
-							}
-						}
-
-						@Override
-						public void failed(Throwable exc, ChannelInfo attachment) {
-							closeChannel(attachment.channel);
-						}
-					});
+				final ChannelInfo info = tmp != null ? tmp
+						: new ChannelInfo(channel, timeout, flag);
+				if (tmp == null) {
+					infos[size++] = info;
 				}
-				
-				infos[size++] = info;
+
+				System.out.println("info.resume = " + info.resume() + ", info.read = "
+						+ info.read() + ", info.write = " + info.write() + ", info.wakeup = "
+						+ info.wakeup());
+
+				if (info.resume()) {
+					if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
+						remove(info);
+						closeChannel(channel);
+					}
+
+				}
+
+				if (info.wakeup()) {
+					remove(info);
+
+				} else if (info.read() || info.write()) {
+					info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info,
+							new CompletionHandler<Integer, ChannelInfo>() {
+
+								@Override
+								public void completed(Integer nBytes, ChannelInfo attachment) {
+									if (nBytes < 0) {
+										failed(new ClosedChannelException(), attachment);
+									} else {
+										processChannel(info.channel, SocketStatus.OPEN_READ);
+									}
+								}
+
+								@Override
+								public void failed(Throwable exc, ChannelInfo attachment) {
+									remove(attachment);
+									if (exc instanceof InterruptedByTimeoutException) {
+										processChannel(info.channel, SocketStatus.TIMEOUT);
+									} else if (exc instanceof ClosedChannelException) {
+										processChannel(info.channel, SocketStatus.DISCONNECT);
+									} else {
+										processChannel(info.channel, SocketStatus.ERROR);
+									}
+								}
+							});
+
+					// TODO
+				} else {
+
+				}
+
 				return true;
 			}
 		}
@@ -1347,7 +1384,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					channel, status));
 
 			System.out.println("*** NioEndpoint -> " + state);
-			
+
 			if (state == SocketState.CLOSED) {
 				closeChannel(channel);
 			}
