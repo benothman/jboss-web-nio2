@@ -116,8 +116,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @return the number of bytes written, -1 in case of errors
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
-		System.out.println("****** " + getClass().getName() + "#blockingWrite(timeout = " + timeout
-				+ ") -> START ******");
 		try {
 			long wrTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 			return this.channel.writeBytes(buffer, wrTimeout, unit);
@@ -128,10 +126,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			if (e instanceof TimeoutException) {
 				close(channel);
 			}
-		} finally {
-			System.out.println("****** " + getClass().getName()
-					+ "#blockingWrite(...) -> END ******");
 		}
+		
 		return -1;
 	}
 
@@ -243,7 +239,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#flushBuffer()
 	 */
 	protected void flushBuffer() throws IOException {
-		System.out.println("****** flushBuffer#1 ******");
 		int res = 0;
 
 		// If there are still leftover bytes here, this means the user did a
@@ -284,7 +279,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 
 		if (bbuf.position() > 0) {
-			System.out.println("****** flushBuffer#2, nonBlocking = " + nonBlocking + " ******");
 			bbuf.flip();
 
 			if (nonBlocking) {
