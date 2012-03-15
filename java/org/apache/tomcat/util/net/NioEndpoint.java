@@ -986,7 +986,13 @@ public class NioEndpoint extends AbstractEndpoint {
 								@Override
 								public void failed(Throwable exc, ChannelInfo attachment) {
 									if (exc instanceof InterruptedByTimeoutException) {
-										processChannel(info.channel, SocketStatus.ERROR);
+
+										boolean b = processChannel(info.channel,
+												SocketStatus.TIMEOUT);
+										System.out.println("-----> TIMEOUT, process = " + b);
+										if (!b) {
+											closeChannel(info.channel);
+										}
 									} else if (exc instanceof ClosedChannelException) {
 										remove(attachment);
 										processChannel(info.channel, SocketStatus.DISCONNECT);
@@ -1381,8 +1387,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		@Override
 		public void run() {
 
-			Handler.SocketState state = ((status == null) ? handler.process(channel) : handler.event(
-					channel, status));
+			Handler.SocketState state = ((status == null) ? handler.process(channel) : handler
+					.event(channel, status));
 
 			if (state == SocketState.CLOSED) {
 				closeChannel(channel);
