@@ -945,6 +945,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					if (infos[i] != null && infos[i].channel == channel) {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
 						tmp = infos[i];
+						tmp.timeout = timeout;
 						break;
 					}
 				}

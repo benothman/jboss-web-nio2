@@ -867,6 +867,9 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					result.endProcessing();
 				}
 			}
+			
+			System.out.println("---> "+ getClass().getName()+"#event(...) -> state = " + state);
+			
 			return state;
 		}
 
