@@ -1835,7 +1835,8 @@ public class AprEndpoint {
 						}
 						SocketInfo info = localAddList.get();
 						while (info != null) {
-							// Wakeup event
+						
+							// *** Wakeup event ***
 							if (info.wakeup()) {
 								// Resume event if socket is present in the
 								// poller
@@ -1865,7 +1866,7 @@ public class AprEndpoint {
 								}
 							} 
 							
-							// Read OR Write events
+							// *** Read OR Write events ***
 							else if (info.read() || info.write()) {
 								if (info.resume()) {
 									// Resume event
@@ -1897,7 +1898,7 @@ public class AprEndpoint {
 								}
 							} 
 							
-							// Others
+							// *** Others ***
 							else {
 								// This is either a resume or a suspend.
 								if (event) {

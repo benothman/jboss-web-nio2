@@ -949,8 +949,8 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 
-				final ChannelInfo info = tmp != null ? tmp
-						: new ChannelInfo(channel, timeout, flag);
+				final ChannelInfo info = ((tmp != null) ? tmp : new ChannelInfo(channel, timeout,
+						flag));
 				if (tmp == null) {
 					infos[size++] = info;
 				}
@@ -985,12 +985,13 @@ public class NioEndpoint extends AbstractEndpoint {
 
 								@Override
 								public void failed(Throwable exc, ChannelInfo attachment) {
-									remove(attachment);
 									if (exc instanceof InterruptedByTimeoutException) {
 										processChannel(info.channel, SocketStatus.TIMEOUT);
 									} else if (exc instanceof ClosedChannelException) {
+										remove(attachment);
 										processChannel(info.channel, SocketStatus.DISCONNECT);
 									} else {
+										remove(attachment);
 										processChannel(info.channel, SocketStatus.ERROR);
 									}
 								}
@@ -1380,10 +1381,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		@Override
 		public void run() {
 
-			Handler.SocketState state = (status == null ? handler.process(channel) : handler.event(
+			Handler.SocketState state = ((status == null) ? handler.process(channel) : handler.event(
 					channel, status));
-
-			System.out.println("*** NioEndpoint -> " + state);
 
 			if (state == SocketState.CLOSED) {
 				closeChannel(channel);
@@ -1401,6 +1400,16 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (recycledChannelProcessors != null) {
 				recycledChannelProcessors.offer(this);
 			}
+		}
+
+		/**
+		 * 
+		 * @param channel
+		 * @param status
+		 */
+		protected void setup(NioChannel channel, SocketStatus status) {
+			this.channel = channel;
+			this.status = status;
 		}
 
 		/**
