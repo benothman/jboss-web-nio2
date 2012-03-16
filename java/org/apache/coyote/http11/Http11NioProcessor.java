@@ -45,6 +45,7 @@ import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
+import org.apache.tomcat.util.net.NioEndpoint.ChannelInfo;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.SocketStatus;
@@ -760,8 +761,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		// done
 		// when the channel gets back to the poller
 		if (!eventProcessing && !resumeNotification) {
-			// endpoint.getEventPoller().add(channel, timeout,
-			// ChannelInfo.RESUME);
+			endpoint.addEventChannel(channel, keepAliveTimeout, false, false, true, true);
 		}
 		resumeNotification = true;
 	}
@@ -776,8 +776,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		// done
 		// when the channel gets back to the poller
 		if (!eventProcessing && !writeNotification) {
-			// endpoint.getEventPoller().add(channel, timeout,
-			// ChannelInfo.WRITE);
+			endpoint.addEventChannel(channel, timeout, false, true, false, true);
 		}
 		writeNotification = true;
 	}
@@ -878,8 +877,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			timeoutEvent(param);
 		}
 	}
-
-	// ------------------------------------------------------ Protected Methods
 
 	/*
 	 * (non-Javadoc)

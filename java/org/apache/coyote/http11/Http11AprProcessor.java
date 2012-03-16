@@ -1025,7 +1025,6 @@ public class Http11AprProcessor implements ActionHook {
 
         if (actionCode == ActionCode.ACTION_COMMIT) {
             // Commit current response
-
             if (response.isCommitted())
                 return;
 
