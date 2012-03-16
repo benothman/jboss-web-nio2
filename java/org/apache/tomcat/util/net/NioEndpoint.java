@@ -386,13 +386,13 @@ public class NioEndpoint extends AbstractEndpoint {
 	 *            to send a callback event
 	 * @param wakeup
 	 */
-	public void addChannel(NioChannel channel, long timeout, boolean read, boolean write,
+	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
 
 		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
 				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
 
-		addChannel(channel, timeout, flags);
+		addEventChannel(channel, timeout, flags);
 	}
 
 	/**
@@ -402,7 +402,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param timeout
 	 * @param flags
 	 */
-	public void addChannel(NioChannel channel, long timeout, int flags) {
+	public void addEventChannel(NioChannel channel, long timeout, int flags) {
 
 		long eventTimeout = timeout < 0 ? soTimeout : timeout;
 
@@ -411,8 +411,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			eventTimeout = Integer.MAX_VALUE;
 		}
 
-		System.out.println("--- NioEndpoint#addChanel(" + channel + ", " + eventTimeout + ", "
-				+ flags + ")");
+		System.out.println("--- NioEndpoint#addEventChannel(" + channel + ", " + eventTimeout
+				+ ", " + flags + ")");
 
 		if (!this.channelList.add(channel, eventTimeout, flags)) {
 			closeChannel(channel);
@@ -763,6 +763,13 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * @return the read flag
+		 */
+		public boolean read() {
+			return (flags & READ) == READ;
+		}
+
+		/**
 		 * Set the <code>read</code> flag. If the parameter is true, the read
 		 * flag will have the value 1 else 0.
 		 * 
@@ -770,13 +777,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		public void read(boolean read) {
 			this.flags = (read ? (this.flags | READ) : (this.flags & 0xE));
-		}
-
-		/**
-		 * @return the read flag
-		 */
-		public boolean read() {
-			return (flags & READ) == READ;
 		}
 
 		/**
@@ -842,8 +842,6 @@ public class NioEndpoint extends AbstractEndpoint {
 					| ((flag1 & RESUME) | (flag2 & RESUME)) | ((flag1 & WAKEUP) & (flag2 & WAKEUP));
 		}
 	}
-
-	// ------------------------------------------------ ChannelList Inner Class
 
 	/**
 	 * Channel list class, used to avoid using a possibly large amount of
@@ -940,20 +938,21 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (size == infos.length) {
 				return false;
 			} else {
-				ChannelInfo tmp = null;
+				ChannelInfo info = null;
 				for (int i = 0; i < size; i++) {
 					if (infos[i] != null && infos[i].channel == channel) {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
-						tmp = infos[i];
-						tmp.timeout = timeout;
+						info = infos[i];
+						info.timeout = timeout;
 						break;
 					}
 				}
 
-				final ChannelInfo info = ((tmp != null) ? tmp : new ChannelInfo(channel, timeout,
-						flag));
-				if (tmp == null) {
+				if (info == null) {
+					info = new ChannelInfo(channel, timeout, flag);
 					infos[size++] = info;
+					System.out.println("+++++ Adding new event channel to the list : "
+							+ info.channel + " +++++");
 				}
 
 				System.out.println("info.resume = " + info.resume() + ", info.read = "
@@ -963,7 +962,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				if (info.resume()) {
 					if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
 						remove(info);
-						closeChannel(channel);
+						closeChannel(info.channel);
 					}
 
 				}
@@ -980,7 +979,7 @@ public class NioEndpoint extends AbstractEndpoint {
 									if (nBytes < 0) {
 										failed(new ClosedChannelException(), attachment);
 									} else {
-										processChannel(info.channel, SocketStatus.OPEN_READ);
+										processChannel(attachment.channel, SocketStatus.OPEN_READ);
 									}
 								}
 
@@ -988,18 +987,18 @@ public class NioEndpoint extends AbstractEndpoint {
 								public void failed(Throwable exc, ChannelInfo attachment) {
 									if (exc instanceof InterruptedByTimeoutException) {
 
-										boolean b = processChannel(info.channel,
+										boolean b = processChannel(attachment.channel,
 												SocketStatus.TIMEOUT);
 										System.out.println("-----> TIMEOUT, process = " + b);
 										if (!b) {
-											closeChannel(info.channel);
+											closeChannel(attachment.channel);
 										}
 									} else if (exc instanceof ClosedChannelException) {
 										remove(attachment);
-										processChannel(info.channel, SocketStatus.DISCONNECT);
+										processChannel(attachment.channel, SocketStatus.DISCONNECT);
 									} else {
 										remove(attachment);
-										processChannel(info.channel, SocketStatus.ERROR);
+										processChannel(attachment.channel, SocketStatus.ERROR);
 									}
 								}
 							});
@@ -1211,20 +1210,20 @@ public class NioEndpoint extends AbstractEndpoint {
 		/**
 		 * Process the specified {@code org.apache.tomcat.util.net.NioChannel}
 		 * 
-		 * @param asyncChannel
+		 * @param channel
 		 *            the {@code org.apache.tomcat.util.net.NioChannel}
 		 * @return a channel state
 		 */
-		public SocketState process(NioChannel asyncChannel);
+		public SocketState process(NioChannel channel);
 
 		/**
 		 * Process the specified {@code org.apache.tomcat.util.net.NioChannel}
 		 * 
-		 * @param asyncChannel
+		 * @param channel
 		 * @param status
 		 * @return a channel state
 		 */
-		public SocketState event(NioChannel asyncChannel, SocketStatus status);
+		public SocketState event(NioChannel channel, SocketStatus status);
 
 	}
 
@@ -1303,8 +1302,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 	}
 
-	// -------------------------------- ChannelWithOptionsProcessor Inner Class
-
 	/**
 	 * {@code ChannelWithOptionsProcessor}
 	 * <p>
@@ -1347,8 +1344,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			channel = null;
 		}
 	}
-
-	// ------------------------------------------- ChannelProcessor Inner Class
 
 	/**
 	 * {@code ChannelProcessor}
@@ -1500,7 +1495,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		protected NioChannel channel;
 		// The file channel
 		protected java.nio.channels.FileChannel fileChannel;
-
 		// Position
 		protected long pos;
 		// KeepAlive flag
@@ -1509,9 +1503,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		/**
 		 * Prepare the {@code SendfileData}
 		 * 
+		 * @throws IOException
+		 * 
 		 * @throws Exception
 		 */
-		protected void setup() throws Exception {
+		protected void setup() throws IOException {
 			this.pos = this.start;
 			java.nio.file.Path path = new File(this.fileName).toPath();
 			this.fileChannel = java.nio.channels.FileChannel.open(path, StandardOpenOption.READ)
@@ -1719,6 +1715,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * Initialize the {@code Sendfile}
 		 */
 		protected void init() {
+			this.size = maxThreads;
 			this.mutex = new Object();
 			this.counter = new AtomicInteger(0);
 			this.fileDatas = new ConcurrentLinkedQueue<>();
@@ -1787,7 +1784,7 @@ public class NioEndpoint extends AbstractEndpoint {
 						attachment.pos += nw;
 
 						if (attachment.pos >= attachment.end) {
-							// All requested bytes were sent, recycle it then
+							// All requested bytes were sent, recycle it
 							recycleSendfileData(attachment);
 							return;
 						}
@@ -1848,22 +1845,21 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * result, the poller will never be used.
 		 * 
 		 * @param data
-		 *            containing the reference to the data which should be snet
+		 *            containing the reference to the data which should be sent
 		 * @return true if all the data has been sent right away, and false
 		 *         otherwise
 		 */
 		public boolean add(SendfileData data) {
-			if (data == null) {
-				return false;
-			}
-			synchronized (this.mutex) {
-				if (this.fileDatas.offer(data)) {
-					this.counter.incrementAndGet();
-					this.mutex.notifyAll();
-					return true;
+			if (data != null && this.counter.get() < this.size) {
+				synchronized (this.mutex) {
+					if (this.fileDatas.offer(data)) {
+						this.counter.incrementAndGet();
+						this.mutex.notifyAll();
+						return true;
+					}
 				}
 			}
-
+			
 			return false;
 		}
 

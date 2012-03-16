@@ -1163,6 +1163,8 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			sendfileData.setFileName(response.getSendfilePath());
 			sendfileData.setStart(response.getSendfileStart());
 			sendfileData.setEnd(response.getSendfileEnd());
+			sendfileData.setKeepAlive(keepAlive);
+			
 		}
 
 		// Check for compression

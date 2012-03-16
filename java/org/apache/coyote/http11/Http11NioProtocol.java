@@ -832,7 +832,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						recycledProcessors.offer(result);
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
-							ch.awaitRead(proto.endpoint.getSoTimeout(), TimeUnit.MILLISECONDS,
+							ch.awaitRead(proto.getSoTimeout(), TimeUnit.MILLISECONDS,
 									proto.endpoint, new CompletionHandler<Integer, NioEndpoint>() {
 
 										@Override
@@ -859,7 +859,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						}
 					} else {
 						if (proto.endpoint.isRunning()) {
-							proto.endpoint.addChannel(channel, result.getTimeout(),
+							proto.endpoint.addEventChannel(channel, result.getTimeout(),
 									result.getReadNotifications(), result.getWriteNotification(),
 									result.getResumeNotification(), false);
 						}
@@ -907,7 +907,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						// Call a read event right away
 						state = event(channel, SocketStatus.OPEN_READ);
 					} else {
-						proto.endpoint.addChannel(channel, processor.getTimeout(),
+						proto.endpoint.addEventChannel(channel, processor.getTimeout(),
 								processor.getReadNotifications(), false,
 								processor.getResumeNotification(), false);
 					}
