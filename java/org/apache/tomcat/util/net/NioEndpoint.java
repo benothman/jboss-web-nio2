@@ -346,6 +346,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				channel.setOption(StandardSocketOptions.TCP_NODELAY, tcpNoDelay);
 			}
 
+			channel.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);	
+			
 			// Initialize the channel
 			serverSocketChannelFactory.initChannel(channel);
 			// Start SSL handshake if SSL is enabled
@@ -987,12 +989,8 @@ public class NioEndpoint extends AbstractEndpoint {
 								public void failed(Throwable exc, ChannelInfo attachment) {
 									if (exc instanceof InterruptedByTimeoutException) {
 
-										boolean b = processChannel(attachment.channel,
-												SocketStatus.TIMEOUT);
-										System.out.println("-----> TIMEOUT, process = " + b);
-										if (!b) {
-											closeChannel(attachment.channel);
-										}
+										processChannel(attachment.channel, SocketStatus.TIMEOUT);
+										closeChannel(attachment.channel);
 									} else if (exc instanceof ClosedChannelException) {
 										remove(attachment);
 										processChannel(attachment.channel, SocketStatus.DISCONNECT);
@@ -1859,7 +1857,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 			}
-			
+
 			return false;
 		}
 

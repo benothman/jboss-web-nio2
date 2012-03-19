@@ -37,6 +37,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.ConnectionPendingException;
 import java.nio.channels.InterruptedByTimeoutException;
+import java.nio.channels.NetworkChannel;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
 import java.nio.channels.ShutdownChannelGroupException;
@@ -148,7 +149,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
-public class NioChannel implements AsynchronousByteChannel {
+public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 	private static final AtomicLong counter = new AtomicLong();
 	protected AsynchronousSocketChannel channel;
@@ -1047,26 +1048,62 @@ public class NioChannel implements AsynchronousByteChannel {
 	}
 
 	/**
+	 * Sets the value of a socket option.
+	 * 
 	 * @param name
+	 *            The socket option name
 	 * @param value
+	 *            The value of the socket option. A value of {@code null} may be
+	 *            a valid value for some socket options.
+	 * 
+	 * @return This channel
+	 * 
+	 * @throws UnsupportedOperationException
+	 *             If the socket option is not supported by this channel
+	 * @throws IllegalArgumentException
+	 *             If the value is not a valid value for this socket option
+	 * @throws ClosedChannelException
+	 *             If this channel is closed
 	 * @throws IOException
+	 *             If an I/O error occurs
+	 * 
+	 * @see java.net.StandardSocketOptions
 	 */
-	public <T> void setOption(SocketOption<T> name, T value) throws IOException {
+	public <T> NioChannel setOption(SocketOption<T> name, T value) throws IOException {
 		this.channel.setOption(name, value);
+		return this;
 	}
 
 	/**
+	 * Returns the value of a socket option.
+	 * 
 	 * @param name
-	 *            the option name
-	 * @return the socket option, if any, having the specified name
+	 *            The socket option
+	 * 
+	 * @return The value of the socket option. A value of {@code null} may be a
+	 *         valid value for some socket options.
+	 * 
+	 * @throws UnsupportedOperationException
+	 *             If the socket option is not supported by this channel
+	 * @throws ClosedChannelException
+	 *             If this channel is closed
 	 * @throws IOException
+	 *             If an I/O error occurs
+	 * 
+	 * @see java.net.StandardSocketOptions
 	 */
 	public <T> T getOption(SocketOption<T> name) throws IOException {
 		return this.channel.getOption(name);
 	}
 
 	/**
-	 * @return the set of supported options
+	 * Returns a set of the socket options supported by this channel.
+	 * 
+	 * <p>
+	 * This method will continue to return the set of options even after the
+	 * channel has been closed.
+	 * 
+	 * @return A set of the socket options supported by this channel
 	 */
 	public Set<SocketOption<?>> supportedOptions() {
 		return this.channel.supportedOptions();
