@@ -369,7 +369,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				nRead = blockingRead(bbuf, readTimeout, unit);
 				if (nRead > 0) {
 					bbuf.flip();
-					bbuf.get(buf, pos, nRead);					
+					bbuf.get(buf, pos, nRead);
 					lastValid = pos + nRead;
 				} else {
 					if ((-nRead) == Status.EAGAIN) {
@@ -403,7 +403,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 					System.out.println("Client request -> ");
 					System.out.println(new String(buf, pos, nRead));
-					
+
 					lastValid = pos + nRead;
 				} else if (nRead <= 0) {
 					if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
@@ -462,10 +462,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 		final NioChannel ch = this.channel;
 		final long readTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
+		System.out.println("----- Starting a non-blocking read -----");
 		ch.read(bb, readTimeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
 
 			@Override
 			public void completed(Integer nBytes, NioChannel attachment) {
+				System.out.println("------ Non-blocking read complete (n = " + nBytes + ") ------");
 				if (nBytes < 0) {
 					close(attachment);
 				}
@@ -480,6 +482,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
+				System.out.println("------ Non-blocking read fails (Ex: " + exc.getMessage()
+						+ ") ------");
 				if (exc instanceof InterruptedByTimeoutException) {
 					close(attachment);
 				}
