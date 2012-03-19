@@ -1519,6 +1519,11 @@ public class AprEndpoint {
 			return connectionCount;
 		}
 
+		/**
+		 * Create a new instance of {@code Poller}
+		 * 
+		 * @param event
+		 */
 		public Poller(boolean event) {
 			this.event = event;
 		}
@@ -1797,7 +1802,6 @@ public class AprEndpoint {
 			int maintain = 0;
 			// Loop until we receive a shutdown command
 			while (running) {
-
 				// Loop if endpoint is paused
 				while (paused) {
 					try {
@@ -1835,7 +1839,7 @@ public class AprEndpoint {
 						}
 						SocketInfo info = localAddList.get();
 						while (info != null) {
-						
+
 							// *** Wakeup event ***
 							if (info.wakeup()) {
 								// Resume event if socket is present in the
@@ -1846,8 +1850,7 @@ public class AprEndpoint {
 										if (!processSocket(info.socket, SocketStatus.OPEN_CALLBACK)) {
 											Socket.destroy(info.socket);
 										}
-									} 
-									else {
+									} else {
 										int events = ((info.read()) ? Poll.APR_POLLIN : 0)
 												| ((info.write()) ? Poll.APR_POLLOUT : 0);
 										if (!addToPoller(info.socket, events)) {
@@ -1864,8 +1867,8 @@ public class AprEndpoint {
 										}
 									}
 								}
-							} 
-							
+							}
+
 							// *** Read OR Write events ***
 							else if (info.read() || info.write()) {
 								if (info.resume()) {
@@ -1875,8 +1878,7 @@ public class AprEndpoint {
 									if (!processSocket(info.socket, SocketStatus.OPEN_CALLBACK)) {
 										Socket.destroy(info.socket);
 									}
-								} 
-								else {
+								} else {
 									// Store timeout
 									if (event) {
 										removeFromPoller(info.socket);
@@ -1896,8 +1898,8 @@ public class AprEndpoint {
 												+ info.timeout);
 									}
 								}
-							} 
-							
+							}
+
 							// *** Others ***
 							else {
 								// This is either a resume or a suspend.
