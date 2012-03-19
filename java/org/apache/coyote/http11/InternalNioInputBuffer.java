@@ -36,6 +36,7 @@ import org.apache.tomcat.jni.Status;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
+import org.apache.tomcat.util.net.SocketStatus;
 
 /**
  * {@code InternalNioInputBuffer}
@@ -477,6 +478,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					bb.get(buf, pos, nBytes);
 					lastValid = pos + nBytes;
 					System.out.println("Client request -> " + new String(buf, pos, nBytes));
+					endpoint.processChannel(attachment, SocketStatus.OPEN_CALLBACK);
 				}
 			}
 
