@@ -990,7 +990,7 @@ public class NioEndpoint extends AbstractEndpoint {
 									if (exc instanceof InterruptedByTimeoutException) {
 
 										processChannel(attachment.channel, SocketStatus.TIMEOUT);
-										closeChannel(attachment.channel);
+										//closeChannel(attachment.channel);
 									} else if (exc instanceof ClosedChannelException) {
 										remove(attachment);
 										processChannel(attachment.channel, SocketStatus.DISCONNECT);
