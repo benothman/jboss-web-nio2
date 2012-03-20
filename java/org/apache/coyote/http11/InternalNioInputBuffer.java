@@ -25,6 +25,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
@@ -466,7 +467,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		System.out.println("----- Starting a non-blocking read -----");
 		ch.read(bb, readTimeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
 
-			@Override	
+			@Override
 			public void completed(Integer nBytes, NioChannel attachment) {
 				System.out.println("------ Non-blocking read complete (n = " + nBytes + ") ------");
 				if (nBytes < 0) {
@@ -487,7 +488,15 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				System.out.println("------ Non-blocking read fails (Ex: " + exc.getMessage()
 						+ ") ------");
 				if (exc instanceof InterruptedByTimeoutException) {
+					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+					endpoint.removeEventChannel(attachment);
 					close(attachment);
+				} else if (exc instanceof ClosedChannelException) {
+					endpoint.removeEventChannel(attachment);
+					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+				} else {
+					endpoint.removeEventChannel(attachment);
+					endpoint.processChannel(attachment, SocketStatus.ERROR);
 				}
 			}
 		});

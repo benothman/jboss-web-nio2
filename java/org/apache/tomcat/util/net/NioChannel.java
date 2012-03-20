@@ -1097,6 +1097,36 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
+	 * Check if a read operation is in progress or not.
+	 * 
+	 * @return <tt>true</tt> if a read operation is already in progress, else
+	 *         <tt>false</tt>
+	 */
+	public boolean isReadPending() {
+		try {
+			this.channel.read(ByteBuffer.allocate(0));
+			return false;
+		} catch (ReadPendingException rpe) {
+			return true;
+		}
+	}
+
+	/**
+	 * Check if a write operation is in progress or not.
+	 * 
+	 * @return <tt>true</tt> if a write operation is already in progress, else
+	 *         <tt>false</tt>
+	 */
+	public boolean isWritePending() {
+		try {
+			this.channel.write(ByteBuffer.allocate(0));
+			return false;
+		} catch (WritePendingException wpe) {
+			return true;
+		}
+	}
+
+	/**
 	 * Returns a set of the socket options supported by this channel.
 	 * 
 	 * <p>

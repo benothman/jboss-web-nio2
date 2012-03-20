@@ -34,6 +34,7 @@ import org.apache.coyote.Response;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
+import org.apache.tomcat.util.net.SocketStatus;
 
 /**
  * {@code InternalNioOutputBuffer}
@@ -127,7 +128,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				close(channel);
 			}
 		}
-		
+
 		return -1;
 	}
 
@@ -164,8 +165,16 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
-				if (exc instanceof InterruptedByTimeoutException || exc instanceof IOException) {
+				if (exc instanceof InterruptedByTimeoutException) {
+					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+					endpoint.removeEventChannel(attachment);
 					close(attachment);
+				} else if (exc instanceof ClosedChannelException) {
+					endpoint.removeEventChannel(attachment);
+					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+				} else {
+					endpoint.removeEventChannel(attachment);
+					endpoint.processChannel(attachment, SocketStatus.ERROR);
 				}
 			}
 		});
@@ -247,10 +256,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// - If the call is synchronous, make regular blocking writes to flush
 		// the data
 		if (leftover.getLength() > 0) {
-			System.out.println("***** Step #1 *****");
+			System.out.println("***** flushBuffer - Step #1 *****");
 			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
-				System.out.println("***** Step #2 *****");
+				System.out.println("***** flushBuffer - Step #1.1 *****");
 
 				while (leftover.getLength() > 0) {
 					// Calculate the maximum number of bytes that can fit in the
@@ -279,6 +288,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 
 		if (bbuf.position() > 0) {
+			System.out.println("***** flushBuffer - Step #2 *****");
 			bbuf.flip();
 
 			if (nonBlocking) {

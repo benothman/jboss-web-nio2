@@ -346,8 +346,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				channel.setOption(StandardSocketOptions.TCP_NODELAY, tcpNoDelay);
 			}
 
-			channel.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);	
-			
+			channel.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
+
 			// Initialize the channel
 			serverSocketChannelFactory.initChannel(channel);
 			// Start SSL handshake if SSL is enabled
@@ -418,6 +418,17 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		if (!this.channelList.add(channel, eventTimeout, flags)) {
 			closeChannel(channel);
+		}
+	}
+
+	/**
+	 * Remove the channel from the list of venet channels
+	 * 
+	 * @param channel
+	 */
+	public void removeEventChannel(NioChannel channel) {
+		if (channel != null) {
+			this.channelList.remove(channel);
 		}
 	}
 
@@ -957,9 +968,9 @@ public class NioEndpoint extends AbstractEndpoint {
 							+ info.channel + " +++++");
 				}
 
-				System.out.println("info.resume = " + info.resume() + ", info.read = "
+				System.out.println("++++++ info.resume = " + info.resume() + ", info.read = "
 						+ info.read() + ", info.write = " + info.write() + ", info.wakeup = "
-						+ info.wakeup());
+						+ info.wakeup() + " ++++++");
 
 				if (info.resume()) {
 					if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
@@ -972,7 +983,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				if (info.wakeup()) {
 					remove(info);
 
-				} else if (info.read() || info.write()) {
+				} else if (info.read()) {
 					info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info,
 							new CompletionHandler<Integer, ChannelInfo>() {
 
@@ -999,10 +1010,14 @@ public class NioEndpoint extends AbstractEndpoint {
 									}
 								}
 							});
-
-					// TODO
+				} else if (info.write()) {
+					if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
+						remove(info.channel);
+						closeChannel(info.channel);
+					}
 				} else {
-
+					remove(info.channel);
+					processChannel(info.channel, SocketStatus.ERROR);
 				}
 
 				return true;
