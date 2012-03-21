@@ -212,13 +212,16 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 * Perform a write operation. The operation may be blocking or non-blocking
 	 * depending on the value of {@code nonBlocking} flag.
 	 * 
-	 * @param buffer the buffer containing the data to write
-	 * @param timeout a timeout for the operation
-	 * @param unit The time unit of the timeout
+	 * @param buffer
+	 *            the buffer containing the data to write
+	 * @param timeout
+	 *            a timeout for the operation
+	 * @param unit
+	 *            The time unit of the timeout
 	 * @return
 	 */
 	protected abstract int write(final ByteBuffer buffer, final long timeout, final TimeUnit unit);
-	
+
 	/**
 	 * Add an output filter to the filter library.
 	 * 
@@ -473,15 +476,20 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *            data to be written
 	 */
 	protected void write(MessageBytes mb) {
+		if (mb == null) {
+			return;
+		}
 
-		if (mb.getType() == MessageBytes.T_BYTES) {
-			ByteChunk bc = mb.getByteChunk();
-			write(bc);
-		} else if (mb.getType() == MessageBytes.T_CHARS) {
-			CharChunk cc = mb.getCharChunk();
-			write(cc);
-		} else {
+		switch (mb.getType()) {
+		case MessageBytes.T_BYTES:
+			write(mb.getByteChunk());
+			break;
+		case MessageBytes.T_CHARS:
+			write(mb.getCharChunk());
+			break;
+		default:
 			write(mb.toString());
+			break;
 		}
 	}
 
@@ -509,7 +517,6 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *            data to be written
 	 */
 	protected void write(CharChunk cc) {
-
 		int start = cc.getStart();
 		int end = cc.getEnd();
 		char[] cbuf = cc.getBuffer();
@@ -550,9 +557,9 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 *            data to be written
 	 */
 	protected void write(String s) {
-
-		if (s == null)
+		if (s == null) {
 			return;
+		}
 
 		// From the Tomcat 3.3 HTTP/1.0 connector
 		int len = s.length();
@@ -562,11 +569,11 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 			// but is the only consistent approach within the current
 			// servlet framework. It must suffice until servlet output
 			// streams properly encode their output.
-			if ((c <= 31) && (c != 9)) {
-				c = ' ';
-			} else if (c == 127) {
+
+			if ((c <= 31 && c != 9) || c == 127) {
 				c = ' ';
 			}
+
 			buf[pos++] = (byte) c;
 		}
 	}

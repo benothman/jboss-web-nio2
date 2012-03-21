@@ -231,7 +231,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		// If non blocking (event) and there are leftover bytes,
 		// and lastWrite was 0 -> error
-		if (leftover.getLength() > 0 && !(Http11AprProcessor.containerThread.get() == Boolean.TRUE)) {
+		if (leftover.getLength() > 0 && !(Http11NioProcessor.containerThread.get() == Boolean.TRUE)) {
 			throw new IOException(sm.getString("oob.backlog"));
 		}
 
@@ -257,7 +257,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// the data
 		if (leftover.getLength() > 0) {
 			System.out.println("***** flushBuffer - Step #1 *****");
-			if (Http11AprProcessor.containerThread.get() == Boolean.TRUE) {
+			if (Http11NioProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
 				System.out.println("***** flushBuffer - Step #1.1 *****");
 

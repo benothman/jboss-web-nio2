@@ -532,7 +532,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	private void flush() {
 		try {
 			outputBuffer.flush();
-			// outputBuffer.flushLeftover();
 		} catch (IOException e) {
 			// Set error flag
 			error = true;
@@ -724,7 +723,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 */
 	private void beginEvent(Object param) {
 		event = true;
-		// Set socket to non blocking mode
+		// Set channel to non blocking mode
 		if (param == Boolean.TRUE) {
 			outputBuffer.setNonBlocking(true);
 			inputBuffer.setNonBlocking(true);

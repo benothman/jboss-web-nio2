@@ -54,7 +54,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.SessionTrackingMode;
 
 import org.apache.catalina.Context;
-import org.apache.catalina.Globals;
 import org.apache.catalina.Manager;
 import org.apache.catalina.Session;
 import org.apache.catalina.Wrapper;
@@ -216,7 +215,7 @@ public class CoyoteAdapter
                         }
                     }
                     break;
-                case OPEN_WRITE:
+				case OPEN_WRITE:
                     if (!request.isEventMode()) {
                         // The event has been closed asynchronously, so call end instead of
                         // read to cleanup the pipeline

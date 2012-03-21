@@ -413,7 +413,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					} else if ((-nRead) == Status.EAGAIN && nonBlocking) {
 						// As asynchronous reads are forbidden, this test is not
 						// useful
-						// && (Http11AprProcessor.containerThread.get() ==
+						// && (Http11NioProcessor.containerThread.get() ==
 						// Boolean.TRUE)
 						if (available) {
 							nRead = 0;
@@ -479,7 +479,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					bb.get(buf, pos, nBytes);
 					lastValid = pos + nBytes;
 					System.out.println("Client request -> " + new String(buf, pos, nBytes));
-					endpoint.processChannel(attachment, SocketStatus.OPEN_CALLBACK);
+					endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
 				}
 			}
 
