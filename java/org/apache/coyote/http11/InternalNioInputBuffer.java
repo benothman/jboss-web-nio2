@@ -465,41 +465,44 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		final NioChannel ch = this.channel;
 		final long readTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 		System.out.println("----- Starting a non-blocking read -----");
-		ch.read(bb, readTimeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
+		if (!ch.isReadPending()) {
+			ch.read(bb, readTimeout, unit, ch, new CompletionHandler<Integer, NioChannel>() {
 
-			@Override
-			public void completed(Integer nBytes, NioChannel attachment) {
-				System.out.println("------ Non-blocking read complete (n = " + nBytes + ") ------");
-				if (nBytes < 0) {
-					close(attachment);
+				@Override
+				public void completed(Integer nBytes, NioChannel attachment) {
+					System.out.println("------ Non-blocking read complete (n = " + nBytes
+							+ ") ------");
+					if (nBytes < 0) {
+						close(attachment);
+					}
+
+					if (nBytes > 0) {
+						bb.flip();
+						bb.get(buf, pos, nBytes);
+						lastValid = pos + nBytes;
+						System.out.println("Client request -> " + new String(buf, pos, nBytes));
+						endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
+					}
 				}
 
-				if (nBytes > 0) {
-					bb.flip();
-					bb.get(buf, pos, nBytes);
-					lastValid = pos + nBytes;
-					System.out.println("Client request -> " + new String(buf, pos, nBytes));
-					endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
+				@Override
+				public void failed(Throwable exc, NioChannel attachment) {
+					System.out.println("------ Non-blocking read fails (Ex: " + exc.getMessage()
+							+ ") ------");
+					if (exc instanceof InterruptedByTimeoutException) {
+						endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+						endpoint.removeEventChannel(attachment);
+						close(attachment);
+					} else if (exc instanceof ClosedChannelException) {
+						endpoint.removeEventChannel(attachment);
+						endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+					} else {
+						endpoint.removeEventChannel(attachment);
+						endpoint.processChannel(attachment, SocketStatus.ERROR);
+					}
 				}
-			}
-
-			@Override
-			public void failed(Throwable exc, NioChannel attachment) {
-				System.out.println("------ Non-blocking read fails (Ex: " + exc.getMessage()
-						+ ") ------");
-				if (exc instanceof InterruptedByTimeoutException) {
-					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-					endpoint.removeEventChannel(attachment);
-					close(attachment);
-				} else if (exc instanceof ClosedChannelException) {
-					endpoint.removeEventChannel(attachment);
-					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-				} else {
-					endpoint.removeEventChannel(attachment);
-					endpoint.processChannel(attachment, SocketStatus.ERROR);
-				}
-			}
-		});
+			});
+		}
 	}
 
 	/**
