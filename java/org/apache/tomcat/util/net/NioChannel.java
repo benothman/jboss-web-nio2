@@ -168,7 +168,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public static final int OP_STATUS_ERROR = -4;
 
-	private static final AtomicLong counter = new AtomicLong();
+	private static final AtomicLong counter = new AtomicLong(0);
 	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
