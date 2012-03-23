@@ -27,7 +27,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
@@ -117,19 +116,19 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @return the number of bytes written, -1 in case of errors
 	 */
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
+		int nw = 0;
 		try {
 			long wrTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
-			return this.channel.writeBytes(buffer, wrTimeout, unit);
+			nw = this.channel.writeBytes(buffer, wrTimeout, unit);
+			if (nw < 0) {
+				close(channel);
+			}
 		} catch (Exception e) {
 			log.warn("An error occurs when trying a blocking write");
 			log.error(e.getMessage(), e);
-
-			if (e instanceof TimeoutException) {
-				close(channel);
-			}
 		}
 
-		return -1;
+		return nw;
 	}
 
 	/**

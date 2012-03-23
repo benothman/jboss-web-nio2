@@ -409,6 +409,10 @@ public final class Request {
 	 * InputStream, this interface allows the app to process data in place,
 	 * without copy.
 	 * 
+	 * @param chunk
+	 * @return the number of bytes read
+	 * @throws IOException
+	 * 
 	 */
 	public int doRead(ByteChunk chunk) throws IOException {
 		int n = inputBuffer.doRead(chunk, this);
@@ -420,6 +424,7 @@ public final class Request {
 
 	// -------------------- debug --------------------
 
+	@Override
 	public String toString() {
 		return "R( " + requestURI().toString() + ")";
 	}

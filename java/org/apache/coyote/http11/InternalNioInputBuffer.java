@@ -402,44 +402,15 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				if (nRead > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nRead);
+					lastValid = pos + nRead;
 
 					System.out.println("Client request -> ");
 					System.out.println(new String(buf, pos, nRead));
 
-					lastValid = pos + nRead;
-				} else if (nRead <= 0) {
-					if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
-						throw new SocketTimeoutException(sm.getString("iib.failedread"));
-					} else if ((-nRead) == Status.EAGAIN && nonBlocking) {
-						// As asynchronous reads are forbidden, this test is not
-						// useful
-						// && (Http11NioProcessor.containerThread.get() ==
-						// Boolean.TRUE)
-						if (available) {
-							nRead = 0;
-						} else {
-							// In this specific situation, perform the read
-							// again in
-							// blocking mode (the user is not
-							// using available and simply wants to read all
-							// data)
-							nRead = blockingRead(bbuf, readTimeout, unit);
-
-							if (nRead > 0) {
-								bbuf.flip();
-								bbuf.get(buf, pos, nRead);
-								lastValid = pos + nRead;
-							} else if (nRead <= 0) {
-								if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
-									throw new SocketTimeoutException(sm.getString("iib.failedread"));
-								} else {
-									throw new IOException(sm.getString("iib.failedread"));
-								}
-							}
-						}
-					} else {
-						throw new IOException(sm.getString("iib.failedread"));
-					}
+				} else if (nRead == NioChannel.OP_STATUS_CLOSED) {
+					throw new IOException(sm.getString("iib.failedread"));
+				} else if (nRead == NioChannel.OP_STATUS_READ_TIMEOUT) {
+					throw new SocketTimeoutException(sm.getString("iib.failedread"));
 				}
 			}
 		}
@@ -513,18 +484,19 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 *         reached
 	 */
 	private int blockingRead(ByteBuffer bb, long timeout, TimeUnit unit) {
+		int nr = 0;
 		try {
 			long readTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
-			return this.channel.readBytes(bb, readTimeout, unit);
+			nr = this.channel.readBytes(bb, readTimeout, unit);
+			if (nr < 0) {
+				close(channel);
+			}
 		} catch (Exception e) {
 			if (log.isDebugEnabled()) {
 				log.debug("An error occurs when trying a blocking read " + e.getMessage());
 			}
-			if (e instanceof TimeoutException) {
-				close(channel);
-			}
 		}
-		return -1;
+		return nr;
 	}
 
 	// ------------------------------------- ChannelInputBuffer Inner Class

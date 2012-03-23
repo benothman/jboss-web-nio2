@@ -550,6 +550,8 @@ public class Request implements HttpServletRequest {
 
 	/**
 	 * Read bytes into the low level buffer.
+	 * @return 
+	 * @throws IOException 
 	 */
 	public int read() throws IOException {
 		return (inputBuffer.realReadBytes(null, 0, 0));

@@ -151,6 +151,23 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
+	/**
+	 * Channel closed status code
+	 */
+	public static final int OP_STATUS_CLOSED = -1;
+	/**
+	 * Read timeout status code
+	 */
+	public static final int OP_STATUS_READ_TIMEOUT = -2;
+	/**
+	 * Write timeout status code
+	 */
+	public static final int OP_STATUS_WRITE_TIMEOUT = -3;
+	/**
+	 * Read/write operation error code
+	 */
+	public static final int OP_STATUS_ERROR = -4;
+
 	private static final AtomicLong counter = new AtomicLong();
 	protected AsynchronousSocketChannel channel;
 	private long id;
@@ -385,7 +402,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
-	 * Retrieve data, if any, from the internal buffer and clear the later
+	 * Retrieve data, if any, from the internal buffer, put it in the
+	 * <tt>dst</tt> buffer and clear the internal buffer
 	 * 
 	 * @param dst
 	 *            the destination buffer
@@ -474,9 +492,9 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 	/**
 	 * Try to close this channel. If the channel is already closed or the
-	 * {@code force} parameter is false, nothing will happen. This method have
-	 * an impact only and only if the channel is open and the {@code force}
-	 * parameter is <tt>true</tt>
+	 * {@code force} parameter is false, nothing will happen. This method has an
+	 * impact only if the channel is open and the {@code force} parameter is
+	 * <tt>true</tt>
 	 * 
 	 * @param force
 	 *            a boolean value indicating if we need to force closing the
@@ -528,17 +546,31 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 *            the read timeout
 	 * @param unit
 	 *            the timeout unit
-	 * @return The number of bytes read
+	 * @return The possible returned values are :
+	 *         <ul>
+	 *         <li>The number of bytes read if the operation was succeed</li>
+	 *         <li>{@link NioChannel#OP_STATUS_CLOSED} if the channel is closed</li>
+	 *         <li>{@link NioChannel#OP_STATUS_READ_TIMEOUT} if the operation
+	 *         was timed out</li>
+	 *         </ul>
 	 * @throws Exception
-	 * @throws TimeoutException
-	 *             if the read operation is timed out
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
 	public int readBytes(final ByteBuffer dst, final long timeout, final TimeUnit unit)
 			throws Exception {
-		int x = this.reset(dst);
-		return (x + this.channel.read(dst).get(timeout, unit));
+		try {
+			int x = this.reset(dst);
+			return (x + this.channel.read(dst).get(timeout, unit));
+		} catch (Exception exp) {
+			if (exp instanceof ClosedChannelException) {
+				return OP_STATUS_CLOSED;
+			} else if (exp instanceof TimeoutException) {
+				return OP_STATUS_READ_TIMEOUT;
+			} else {
+				throw exp;
+			}
+		}
 	}
 
 	/*
@@ -722,12 +754,12 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * stored by default in the internal buffer (By default, just one byte).
 	 * </p>
 	 * <p>
-	 * The byte read using this will be available for the next read operation.
-	 * That is, When attempting to read after receiving a read notification
-	 * saying that there is data available on this stream, the byte will be
-	 * first copied in the destination byte buffer and then perform the read
-	 * operation which may be a blocking or non-blocking operation. So the user
-	 * does not have to do that manually.
+	 * The byte read using this method will be available for the next read
+	 * operation. That is, When attempting to read after receiving a read
+	 * notification saying that there is data available on this stream, the byte
+	 * will be first copied in the destination byte buffer and then perform the
+	 * read operation which may be a blocking or non-blocking operation. So the
+	 * user does not have to do that manually.
 	 * </p>
 	 * 
 	 * @param timeout
@@ -821,7 +853,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
-	 * Write a sequence of bytes in blocking mode
+	 * Write a sequence of bytes in blocking mode.
 	 * 
 	 * @param src
 	 *            the buffer containing the bytes to write
@@ -829,14 +861,29 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 *            the read timeout
 	 * @param unit
 	 *            the timeout unit
-	 * @return The number of bytes written
+	 * @return The possible returned values are :
+	 *         <ul>
+	 *         <li>The number of bytes written if the operation was succeed</li>
+	 *         <li>{@link NioChannel#OP_STATUS_CLOSED} if the channel is closed</li>
+	 *         <li>{@link NioChannel#OP_STATUS_WRITE_TIMEOUT} if the operation
+	 *         was timed out</li>
+	 *         </ul>
 	 * @throws Exception
-	 * @throws TimeoutException
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
-		return this.channel.write(src).get(timeout, unit);
+		try {
+			return this.channel.write(src).get(timeout, unit);
+		} catch (Exception exp) {
+			if (exp instanceof ClosedChannelException) {
+				return OP_STATUS_CLOSED;
+			} else if (exp instanceof TimeoutException) {
+				return OP_STATUS_WRITE_TIMEOUT;
+			} else {
+				throw exp;
+			}
+		}
 	}
 
 	/*

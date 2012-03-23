@@ -29,7 +29,6 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -111,12 +110,7 @@ public class SecureNioChannel extends NioChannel {
 	 * @see org.apache.tomcat.util.net.NioChannel#readBytes(java.nio.ByteBuffer)
 	 */
 	public int readBytes(ByteBuffer dst) throws Exception {
-		try {
-			return readBytes(dst, Integer.MAX_VALUE, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			e.printStackTrace();
-			return -1;
-		}
+		return readBytes(dst, Integer.MAX_VALUE, TimeUnit.SECONDS);
 	}
 
 	/*
@@ -129,12 +123,12 @@ public class SecureNioChannel extends NioChannel {
 		if (this.netInBuffer.position() == 0) {
 			int x = super.readBytes(this.netInBuffer, timeout, unit);
 			if (x < 0) {
-				return -1;
+				return x;
 			}
 		}
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
-		
+
 		return read;
 	}
 
@@ -272,12 +266,7 @@ public class SecureNioChannel extends NioChannel {
 	 * org.apache.tomcat.util.net.NioChannel#writeBytes(java.nio.ByteBuffer)
 	 */
 	public int writeBytes(ByteBuffer src) throws Exception {
-		try {
-			return writeBytes(src, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
-		} catch (TimeoutException e) {
-			e.printStackTrace();
-			return -1;
-		}
+		return writeBytes(src, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
 	}
 
 	/*
@@ -296,9 +285,9 @@ public class SecureNioChannel extends NioChannel {
 
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
-			int x = this.channel.write(this.netOutBuffer).get(timeout, unit);
+			int x = super.writeBytes(this.netOutBuffer, timeout, unit);
 			if (x < 0) {
-				return -1;
+				return x;
 			}
 		}
 

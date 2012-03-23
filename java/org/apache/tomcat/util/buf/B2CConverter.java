@@ -47,6 +47,8 @@ public class B2CConverter {
 
     /**
      * Create a decoder for the specified charset.
+     * @param charset 
+     * @throws IOException 
      */
     public B2CConverter(String charset)
         throws IOException {

@@ -1139,33 +1139,27 @@ public class NioEndpoint extends AbstractEndpoint {
 			// Process requests until we receive a shutdown signal
 			while (running) {
 				try {
-					// Wait for the next socket to be assigned
-					// long socket = await();
+					// Wait for the next channel to be assigned
 					NioChannel channel = await();
 					if (channel == null)
 						continue;
 
 					if (!deferAccept && options) {
-						if (setChannelOptions(channel)) {
-							// getPoller().add(socket);
-						} else {
-							// Close socket and pool only if it wasn't closed
-							// already
+						if (!setChannelOptions(channel)) {
+							// Close the channel only if it wasn't closed already
 							channel.close();
 						}
 					} else {
-						// Process the request from this socket
+						// Process the request from this channel
 						if ((status != null)
 								&& (handler.event(channel, status) == Handler.SocketState.CLOSED)) {
-							// Close socket and pool only if it wasn't closed
-							// already by the parent pool
-							channel.close();
+							// Close channel right away
+							closeChannel(channel);
 						} else if ((status == null)
 								&& ((options && !setChannelOptions(channel)) || handler
 										.process(channel) == Handler.SocketState.CLOSED)) {
-							// Close socket and pool only if it wasn't closed
-							// already by the parent pool
-							channel.close();
+							// Close channel right away
+							closeChannel(channel);
 						}
 					}
 				} catch (Exception exp) {
@@ -1180,8 +1174,6 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		}
 	}
-
-	// ------------------------------------------------ Handler Inner Interface
 
 	/**
 	 * {@code Handler}
@@ -1238,8 +1230,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		public SocketState event(NioChannel channel, SocketStatus status);
 
 	}
-
-	// ------------------------------------------------- WorkerStack Inner Class
 
 	/**
 	 * {@code WorkerStack}
