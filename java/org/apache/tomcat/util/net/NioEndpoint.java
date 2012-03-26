@@ -78,8 +78,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	protected Handler handler = null;
 
-	protected ChannelList channelList;
-
 	private EventPoller eventPoller;
 
 	protected NioServerSocketChannelFactory serverSocketChannelFactory = null;
@@ -121,7 +119,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @return the number of connection
 	 */
 	public int getKeepAliveCount() {
-		return channelList.size();
+		return this.eventPoller.channelList.size();
 	}
 
 	/**
@@ -231,8 +229,6 @@ public class NioEndpoint extends AbstractEndpoint {
 						+ (address == null ? "<null>" : address.toString()) + ":" + port);
 			}
 		}
-
-		this.channelList = new ChannelList(this.maxThreads);
 
 		initialized = true;
 	}
@@ -426,7 +422,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		System.out.println("--- NioEndpoint#addEventChannel(" + channel + ", " + eventTimeout
 				+ ", " + flags + ")");
 
-		if (!this.channelList.add(channel, eventTimeout, flags)) {
+		if (!this.eventPoller.add(channel, eventTimeout, flags)) {
 			closeChannel(channel);
 		}
 	}
@@ -438,7 +434,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void removeEventChannel(NioChannel channel) {
 		if (channel != null) {
-			this.channelList.remove(channel);
+			this.eventPoller.remove(channel);
 		}
 	}
 
@@ -1509,6 +1505,13 @@ public class NioEndpoint extends AbstractEndpoint {
 
 				maintain();
 			}
+		}
+
+		/**
+		 * @param channel
+		 */
+		public void remove(NioChannel channel) {
+			this.channelList.remove(channel);
 		}
 
 		/**
