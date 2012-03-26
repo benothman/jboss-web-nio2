@@ -203,9 +203,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 */
 	public SocketState event(SocketStatus status) throws IOException {
 
-		System.out.println("****** " + getClass().getName() + "#event(...) -> status : " + status
-				+ " ******");
-		System.out.println("******** " + getClass().getName() + " -> Step #1 ********");
 		RequestInfo rp = request.getRequestProcessor();
 		try {
 			// If processing a write event, must flush any leftover bytes first
@@ -238,8 +235,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			response.setStatus(500);
 			error = true;
 		}
-		
-		System.out.println("******** " + getClass().getName() + " -> Step #2 ********");
 		
 		rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
 

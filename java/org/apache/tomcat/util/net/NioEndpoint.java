@@ -991,8 +991,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				if (info == null) {
 					info = new ChannelInfo(channel, date, flag);
 					infos[size++] = info;
-					System.out.println("+++++ Adding new event channel to the list : "
-							+ info.channel + " +++++");
 				}
 
 				System.out.println("++++++ info.resume = " + info.resume() + ", info.read = "
@@ -1025,14 +1023,13 @@ public class NioEndpoint extends AbstractEndpoint {
 
 							@Override
 							public void failed(Throwable exc, ChannelInfo attachment) {
+								remove(attachment);
 								if (exc instanceof InterruptedByTimeoutException) {
 									processChannel(attachment.channel, SocketStatus.TIMEOUT);
 									closeChannel(attachment.channel);
 								} else if (exc instanceof ClosedChannelException) {
-									remove(attachment);
 									processChannel(attachment.channel, SocketStatus.DISCONNECT);
 								} else {
-									remove(attachment);
 									processChannel(attachment.channel, SocketStatus.ERROR);
 								}
 							}

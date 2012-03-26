@@ -257,11 +257,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		// - If the call is synchronous, make regular blocking writes to flush
 		// the data
 		if (leftover.getLength() > 0) {
-			System.out.println("***** flushBuffer - Step #1 *****");
 			if (Http11NioProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
-				System.out.println("***** flushBuffer - Step #1.1 *****");
-
 				while (leftover.getLength() > 0) {
 					// Calculate the maximum number of bytes that can fit in the
 					// buffer
@@ -289,7 +286,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		}
 
 		if (bbuf.position() > 0) {
-			System.out.println("***** flushBuffer - Step #2 *****");
 			bbuf.flip();
 
 			if (nonBlocking) {
@@ -321,7 +317,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	@Override
 	public boolean flushLeftover() throws IOException {
-		System.out.println("############## flushLeftover  ##############");
 		// Calculate the number of bytes that fit in the buffer
 		int n = Math.min(leftover.getLength(), bbuf.remaining());
 		// put bytes in the buffer
