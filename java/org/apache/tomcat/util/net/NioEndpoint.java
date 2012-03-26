@@ -80,6 +80,8 @@ public class NioEndpoint extends AbstractEndpoint {
 
 	protected ChannelList channelList;
 
+	private EventPoller eventPoller;
+
 	protected NioServerSocketChannelFactory serverSocketChannelFactory = null;
 
 	/**
@@ -272,6 +274,14 @@ public class NioEndpoint extends AbstractEndpoint {
 				sendfileThread.setDaemon(true);
 				sendfileThread.start();
 			}
+
+			// Starting the event poller
+			this.eventPoller = new EventPoller();
+			this.eventPoller.init();
+			Thread eventPollerThread = this.threadFactory.newThread(this.eventPoller);
+			eventPollerThread.setName(getName() + "-EventPoller");
+			eventPollerThread.setDaemon(true);
+			eventPollerThread.start();
 		}
 	}
 
@@ -939,6 +949,26 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * 
+		 * @param date
+		 * @return
+		 */
+		public ChannelInfo check(long date) {
+			while (pos < size) {
+				if (date >= infos[pos].timeout) {
+					ChannelInfo result = infos[pos];
+					infos[pos] = infos[size - 1];
+					size--;
+					return result;
+				}
+				pos++;
+			}
+			pos = 0;
+
+			return null;
+		}
+
+		/**
 		 * Add the channel to the list of channels
 		 * 
 		 * @param channel
@@ -952,17 +982,18 @@ public class NioEndpoint extends AbstractEndpoint {
 				return false;
 			} else {
 				ChannelInfo info = null;
+				long date = timeout + System.currentTimeMillis();
 				for (int i = 0; i < size; i++) {
 					if (infos[i] != null && infos[i].channel == channel) {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
 						info = infos[i];
-						info.timeout = timeout;
+						info.timeout = date;
 						break;
 					}
 				}
 
 				if (info == null) {
-					info = new ChannelInfo(channel, timeout, flag);
+					info = new ChannelInfo(channel, date, flag);
 					infos[size++] = info;
 					System.out.println("+++++ Adding new event channel to the list : "
 							+ info.channel + " +++++");
@@ -985,34 +1016,31 @@ public class NioEndpoint extends AbstractEndpoint {
 
 				} else if (info.read()) {
 					if (!info.channel.isReadPending()) {
-						info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info,
-								new CompletionHandler<Integer, ChannelInfo>() {
+						info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
 
-									@Override
-									public void completed(Integer nBytes, ChannelInfo attachment) {
-										if (nBytes < 0) {
-											failed(new ClosedChannelException(), attachment);
-										} else {
-											processChannel(attachment.channel,
-													SocketStatus.OPEN_READ);
-										}
-									}
+							@Override
+							public void completed(Integer nBytes, ChannelInfo attachment) {
+								if (nBytes < 0) {
+									failed(new ClosedChannelException(), attachment);
+								} else {
+									processChannel(attachment.channel, SocketStatus.OPEN_READ);
+								}
+							}
 
-									@Override
-									public void failed(Throwable exc, ChannelInfo attachment) {
-										if (exc instanceof InterruptedByTimeoutException) {
-											processChannel(attachment.channel, SocketStatus.TIMEOUT);
-											//closeChannel(attachment.channel);
-										} else if (exc instanceof ClosedChannelException) {
-											remove(attachment);
-											processChannel(attachment.channel,
-													SocketStatus.DISCONNECT);
-										} else {
-											remove(attachment);
-											processChannel(attachment.channel, SocketStatus.ERROR);
-										}
-									}
-								});
+							@Override
+							public void failed(Throwable exc, ChannelInfo attachment) {
+								if (exc instanceof InterruptedByTimeoutException) {
+									processChannel(attachment.channel, SocketStatus.TIMEOUT);
+									closeChannel(attachment.channel);
+								} else if (exc instanceof ClosedChannelException) {
+									remove(attachment);
+									processChannel(attachment.channel, SocketStatus.DISCONNECT);
+								} else {
+									remove(attachment);
+									processChannel(attachment.channel, SocketStatus.ERROR);
+								}
+							}
+						});
 					}
 				} else if (info.write()) {
 					if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
@@ -1434,6 +1462,105 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void setChannel(NioChannel channel) {
 			this.channel = channel;
 		}
+	}
+
+	/**
+	 * {@code EventPoller}
+	 * 
+	 * Created on Mar 26, 2012 at 12:51:53 PM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
+	 */
+	public class EventPoller implements Runnable {
+
+		/**
+		 * Last run of maintain. Maintain will run usually every 5s.
+		 */
+		protected long lastMaintain = System.currentTimeMillis();
+
+		protected ChannelList channelList;
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Runnable#run()
+		 */
+		@Override
+		public void run() {
+			while (running) {
+				// Loop if endpoint is paused
+				while (paused) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// Ignore
+					}
+				}
+
+				while (this.channelList.size < 1) {
+					synchronized (this) {
+						try {
+							this.wait(10000);
+						} catch (InterruptedException e) {
+							// NOPE
+						}
+					}
+				}
+
+				maintain();
+			}
+		}
+
+		/**
+		 * 
+		 */
+		public void init() {
+			this.channelList = new ChannelList(maxThreads);
+		}
+
+		/**
+		 * 
+		 */
+		public void destroy() {
+			this.channelList = null;
+		}
+
+		/**
+		 * Add the channel to the list of channels
+		 * 
+		 * @param channel
+		 * @param timeout
+		 * @param flag
+		 * @return <tt>true</tt> if the channel is added successfully else
+		 *         <tt>false</tt>
+		 */
+		public boolean add(NioChannel channel, long timeout, int flag) {
+			return this.channelList.add(channel, timeout, flag);
+		}
+
+		/**
+		 * 
+		 */
+		public void maintain() {
+			long date = System.currentTimeMillis();
+			// Maintain runs at most once every 5s, although it will likely get
+			// called more
+			if ((date - lastMaintain) < 5000L) {
+				return;
+			} else {
+				lastMaintain = date;
+			}
+
+			ChannelInfo info = this.channelList.check(date);
+			while (info != null) {
+				if (!processChannel(info.channel, SocketStatus.TIMEOUT)) {
+					closeChannel(info.channel);
+				}
+
+				info = this.channelList.check(date);
+			}
+		}
+
 	}
 
 	/**
