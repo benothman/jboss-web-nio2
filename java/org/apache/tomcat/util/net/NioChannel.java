@@ -152,6 +152,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 	/**
+	 * 
+	 */
+	public static final int OP_STATUS_NORMAL = 0;
+
+	/**
 	 * Channel closed status code
 	 */
 	public static final int OP_STATUS_CLOSED = -1;
@@ -163,10 +168,21 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Write timeout status code
 	 */
 	public static final int OP_STATUS_WRITE_TIMEOUT = -3;
+
+	/**
+	 * Read pending status code
+	 */
+	public static final int OP_STATUS_READ_PENDING = -4;
+
+	/**
+	 * Write pending status code
+	 */
+	public static final int OP_STATUS_WRITE_PENDING = -5;
+
 	/**
 	 * Read/write operation error code
 	 */
-	public static final int OP_STATUS_ERROR = -4;
+	public static final int OP_STATUS_ERROR = -17;
 
 	private static final AtomicLong counter = new AtomicLong(0);
 	protected AsynchronousSocketChannel channel;
