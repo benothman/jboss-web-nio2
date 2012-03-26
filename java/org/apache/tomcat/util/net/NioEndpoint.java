@@ -593,9 +593,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	 *         <tt>false</tt>
 	 */
 	private boolean addChannel(NioChannel channel) {
-		if (this.counter.get() < this.maxThreads) {
+		if (this.counter.get() < this.maxThreads && channel.isOpen()) {
 			if (this.connections.get(channel.getId()) == null
-					|| !this.connections.get(channel.getId()).isOpen()) {
+					|| this.connections.get(channel.getId()).isClosed()) {
 				this.connections.put(channel.getId(), channel);
 				this.counter.incrementAndGet();
 				return true;
@@ -984,32 +984,36 @@ public class NioEndpoint extends AbstractEndpoint {
 					remove(info);
 
 				} else if (info.read()) {
-					info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info,
-							new CompletionHandler<Integer, ChannelInfo>() {
+					if (!info.channel.isReadPending()) {
+						info.channel.awaitRead(timeout, TimeUnit.MILLISECONDS, info,
+								new CompletionHandler<Integer, ChannelInfo>() {
 
-								@Override
-								public void completed(Integer nBytes, ChannelInfo attachment) {
-									if (nBytes < 0) {
-										failed(new ClosedChannelException(), attachment);
-									} else {
-										processChannel(attachment.channel, SocketStatus.OPEN_READ);
+									@Override
+									public void completed(Integer nBytes, ChannelInfo attachment) {
+										if (nBytes < 0) {
+											failed(new ClosedChannelException(), attachment);
+										} else {
+											processChannel(attachment.channel,
+													SocketStatus.OPEN_READ);
+										}
 									}
-								}
 
-								@Override
-								public void failed(Throwable exc, ChannelInfo attachment) {
-									if (exc instanceof InterruptedByTimeoutException) {
-										processChannel(attachment.channel, SocketStatus.TIMEOUT);
-										closeChannel(attachment.channel);
-									} else if (exc instanceof ClosedChannelException) {
-										remove(attachment);
-										processChannel(attachment.channel, SocketStatus.DISCONNECT);
-									} else {
-										remove(attachment);
-										processChannel(attachment.channel, SocketStatus.ERROR);
+									@Override
+									public void failed(Throwable exc, ChannelInfo attachment) {
+										if (exc instanceof InterruptedByTimeoutException) {
+											processChannel(attachment.channel, SocketStatus.TIMEOUT);
+											closeChannel(attachment.channel);
+										} else if (exc instanceof ClosedChannelException) {
+											remove(attachment);
+											processChannel(attachment.channel,
+													SocketStatus.DISCONNECT);
+										} else {
+											remove(attachment);
+											processChannel(attachment.channel, SocketStatus.ERROR);
+										}
 									}
-								}
-							});
+								});
+					}
 				} else if (info.write()) {
 					if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
 						remove(info.channel);
@@ -1146,7 +1150,8 @@ public class NioEndpoint extends AbstractEndpoint {
 
 					if (!deferAccept && options) {
 						if (!setChannelOptions(channel)) {
-							// Close the channel only if it wasn't closed already
+							// Close the channel only if it wasn't closed
+							// already
 							channel.close();
 						}
 					} else {

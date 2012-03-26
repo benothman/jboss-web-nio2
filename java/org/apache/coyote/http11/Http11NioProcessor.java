@@ -302,7 +302,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 
 								@Override
 								public void completed(Integer nBytes, NioChannel attachment) {
-									System.out.println("***** awaitRead - complete *****");
 									if (nBytes < 0) {
 										// Reach the end of the stream
 										closeChannel(ch);

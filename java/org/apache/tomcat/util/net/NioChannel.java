@@ -458,14 +458,23 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		return this.channel.provider();
 	}
 
-	/*
-	 * (non-Javadoc)
+	/**
+	 * Tells whether or not this channel is open. </p>
 	 * 
-	 * @see java.nio.channels.Channel#isOpen()
+	 * @return <tt>true</tt> if, and only if, this channel is open
 	 */
 	@Override
 	public boolean isOpen() {
 		return this.channel.isOpen();
+	}
+
+	/**
+	 * Tells whether or not this channel is closed. </p>
+	 * 
+	 * @return <tt>true</tt> if, and only if, this channel is closed
+	 */
+	public boolean isClosed() {
+		return !isOpen();
 	}
 
 	/**
