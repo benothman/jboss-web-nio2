@@ -159,6 +159,8 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 				if (buffer.hasRemaining()) {
 					attachment.write(buffer, writeTimeout, unit, attachment, this);
+				} else {
+					buffer.clear();
 				}
 			}
 

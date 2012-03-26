@@ -142,8 +142,6 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 			bbuf = ByteBuffer.allocateDirect((headerBufferSize / 1500 + 1) * 1500);
 		}
 
-		System.out.println("+++++++ Internal output buffer size = " + bbuf.capacity() + " +++++++");
-
 		outputBuffer = new OutputBufferImpl();
 		filterLibrary = new OutputFilter[0];
 		activeFilters = new OutputFilter[0];
