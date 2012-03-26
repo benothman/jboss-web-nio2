@@ -180,6 +180,16 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	public static final int OP_STATUS_WRITE_PENDING = -5;
 
 	/**
+	 * 
+	 */
+	public static final int OP_STATUS_READ_KILLED = -6;
+
+	/**
+	 * 
+	 */
+	public static final int OP_STATUS_WRITE_KILLED = -7;
+
+	/**
 	 * Read/write operation error code
 	 */
 	public static final int OP_STATUS_ERROR = -17;
@@ -804,7 +814,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-
+		
+		
 		// Clear the internal buffer
 		this.buffer.clear();
 		// Perform an asynchronous read operation using the internal buffer
