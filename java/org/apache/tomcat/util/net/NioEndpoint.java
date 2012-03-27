@@ -170,14 +170,14 @@ public class NioEndpoint extends AbstractEndpoint {
 			return;
 		}
 
-		if(this.soTimeout < 0) {
+		if (this.soTimeout < 0) {
 			this.soTimeout = DEFAULT_SO_TIMEOUT;
 		}
-		
-		if(this.keepAliveTimeout < 0) {
+
+		if (this.keepAliveTimeout < 0) {
 			this.keepAliveTimeout = this.soTimeout;
 		}
-		
+
 		// Initialize thread count defaults for acceptor
 		if (acceptorThreadCount <= 0) {
 			acceptorThreadCount = 1;
@@ -404,7 +404,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
-		
+
 		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
 				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
 
@@ -421,11 +421,11 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addEventChannel(NioChannel channel, long timeout, int flags) {
 
 		System.out.println("NioEndpoint#keepAliveTimeout = " + this.keepAliveTimeout);
-		long eventTimeout = timeout < 0 ? soTimeout : timeout;
+		long eventTimeout = timeout <= 0 ? keepAliveTimeout : timeout;
 
 		if (eventTimeout <= 0) {
 			// Always put a timeout in
-			eventTimeout = Integer.MAX_VALUE;
+			eventTimeout = soTimeout > 0 ? soTimeout : Integer.MAX_VALUE;
 		}
 
 		System.out.println("--- NioEndpoint#addEventChannel(" + channel + ", " + eventTimeout
@@ -1482,8 +1482,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void remove(ChannelInfo info) {
 			this.channelList.remove(info);
 		}
-		
-		
+
 		/**
 		 * 
 		 */
