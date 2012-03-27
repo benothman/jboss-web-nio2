@@ -995,8 +995,8 @@ public class NioEndpoint extends AbstractEndpoint {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
 						info = infos[i];
 						info.timeout = date;
-						info.resume(false);
-						System.out.println("+--+--+--+--+--+ Channel already in the channel list +--+--+--+--+--+");
+						System.out
+								.println("+--+--+--+--+--+ Channel already in the channel list +--+--+--+--+--+");
 						break;
 					}
 				}
@@ -1433,6 +1433,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		protected long lastMaintain = System.currentTimeMillis();
 
 		protected ChannelList channelList;
+		protected ChannelList localList;
 
 		/*
 		 * (non-Javadoc)
@@ -1461,6 +1462,11 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 
+				synchronized (this) {
+					this.channelList.duplicate(localList);
+					this.channelList.clear();
+				}
+
 				maintain();
 				try {
 					Thread.sleep(1000);
@@ -1485,17 +1491,19 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
-		 * 
+		 * Initialize the event poller
 		 */
 		public void init() {
 			this.channelList = new ChannelList(maxThreads);
+			this.localList = new ChannelList(maxThreads);
 		}
 
 		/**
-		 * 
+		 * Destroy the event poller
 		 */
 		public void destroy() {
 			this.channelList = null;
+			this.localList = null;
 		}
 
 		/**
@@ -1568,7 +1576,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
-		 * 
+		 * Check timeouts and raise timeout event
 		 */
 		public void maintain() {
 			long date = System.currentTimeMillis();
@@ -1582,7 +1590,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 
 			ChannelInfo info = null;
-			while ((info = this.channelList.check(date)) != null) {
+			while ((info = this.localList.check(date)) != null) {
 				if (!processChannel(info.channel, SocketStatus.TIMEOUT)) {
 					closeChannel(info.channel);
 				}

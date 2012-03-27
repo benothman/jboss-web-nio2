@@ -1686,6 +1686,7 @@ public class AprEndpoint {
 		 *            to do write polling
 		 * @param resume
 		 *            to send a callback event
+		 * @param wakeup 
 		 */
 		public void add(long socket, int timeout, boolean read, boolean write, boolean resume,
 				boolean wakeup) {
