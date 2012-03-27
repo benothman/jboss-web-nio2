@@ -427,9 +427,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			eventTimeout = soTimeout > 0 ? soTimeout : Integer.MAX_VALUE;
 		}
 
-		System.out.println("--- NioEndpoint#addEventChannel(" + channel + ", " + eventTimeout
-				+ ", " + flags + ")");
-
 		if (!this.eventPoller.add(channel, eventTimeout, flags)) {
 			closeChannel(channel);
 		}
@@ -995,8 +992,6 @@ public class NioEndpoint extends AbstractEndpoint {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
 						info = infos[i];
 						info.timeout = date;
-						System.out
-								.println("+--+--+--+--+--+ Channel already in the channel list +--+--+--+--+--+");
 						break;
 					}
 				}
@@ -1518,10 +1513,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		public boolean add(NioChannel channel, long timeout, int flag) {
 			final ChannelInfo info = this.channelList.add(channel, timeout, flag);
 			if (info != null) {
-				System.out.println("++++++ info.resume = " + info.resume() + ", info.read = "
-						+ info.read() + ", info.write = " + info.write() + ", info.wakeup = "
-						+ info.wakeup() + " ++++++");
-
 				if (info.resume()) {
 					if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
 						this.channelList.remove(info);
