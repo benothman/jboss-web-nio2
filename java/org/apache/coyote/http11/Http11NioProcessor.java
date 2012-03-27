@@ -43,6 +43,7 @@ import org.apache.tomcat.util.buf.HexUtils;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
 import org.apache.tomcat.util.http.MimeHeaders;
+import org.apache.tomcat.util.net.CompletionHandlerAdapter;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
 import org.apache.tomcat.util.net.NioEndpoint.Handler.SocketState;
@@ -293,7 +294,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// incoming data
 
 					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
-							new CompletionHandler<Integer, NioChannel>() {
+							new CompletionHandlerAdapter<Integer, NioChannel>() {
 
 								@Override
 								public void completed(Integer nBytes, NioChannel attachment) {

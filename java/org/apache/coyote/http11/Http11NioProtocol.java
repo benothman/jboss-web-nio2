@@ -899,7 +899,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						// Call a read event right away
 						state = event(channel, SocketStatus.OPEN_READ);
 					} else {
-						proto.endpoint.addEventChannel(channel, processor.getTimeout(),
+						proto.endpoint.addEventChannel(channel, proto.endpoint.getKeepAliveTimeout(),//processor.getTimeout(),
 								processor.getReadNotifications(), false,
 								processor.getResumeNotification(), false);
 					}

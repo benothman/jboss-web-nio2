@@ -420,7 +420,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void addEventChannel(NioChannel channel, long timeout, int flags) {
 
-		System.out.println("NioEndpoint#keepAliveTimeout = " + this.keepAliveTimeout);
 		long eventTimeout = timeout <= 0 ? keepAliveTimeout : timeout;
 
 		if (eventTimeout <= 0) {
