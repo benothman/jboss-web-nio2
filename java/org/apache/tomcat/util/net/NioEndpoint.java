@@ -1564,7 +1564,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		public void maintain() {
 			long date = System.currentTimeMillis();
-			System.out.println("EventPoller#maintain() --> START (date = " + date + ")");
+			System.out.println("EventPoller#maintain() --> date = " + date);
 			// Maintain runs at most once every 5s, although it will likely get
 			// called more
 			if ((date - lastMaintain) < 5000L) {
@@ -1579,9 +1579,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					closeChannel(info.channel);
 				}
 			}
-			System.out.println("EventPoller#maintain() --> END");
 		}
-
 	}
 
 	/**

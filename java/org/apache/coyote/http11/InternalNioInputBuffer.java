@@ -450,7 +450,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 						bb.flip();
 						bb.get(buf, pos, nBytes);
 						lastValid = pos + nBytes;
-						System.out.println("Client request -> " + new String(buf, pos, nBytes));
 						endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
 					}
 				}
