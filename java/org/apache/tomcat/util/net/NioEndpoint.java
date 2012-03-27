@@ -995,6 +995,7 @@ public class NioEndpoint extends AbstractEndpoint {
 						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
 						info = infos[i];
 						info.timeout = date;
+						System.out.println("+--+--+--+--+--+ Channel already in the channel list +--+--+--+--+--+");
 						break;
 					}
 				}
