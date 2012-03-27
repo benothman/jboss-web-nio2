@@ -1449,6 +1449,9 @@ public class NioEndpoint extends AbstractEndpoint {
 
 				while (this.channelList.size < 1) {
 					synchronized (this) {
+						if (soTimeout > 0 && running) {
+							maintain();
+						}
 						try {
 							this.wait(10000);
 						} catch (InterruptedException e) {
@@ -1460,13 +1463,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				synchronized (this) {
 					this.channelList.duplicate(localList);
 					this.channelList.clear();
-				}
-
-				maintain();
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// NOPE
 				}
 			}
 		}
