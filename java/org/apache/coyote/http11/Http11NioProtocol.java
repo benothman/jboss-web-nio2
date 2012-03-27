@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Iterator;
@@ -829,15 +830,13 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						recycledProcessors.offer(result);
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
-							ch.awaitRead(proto.getSoTimeout(), TimeUnit.MILLISECONDS,
+							ch.awaitRead(proto.getKeepAliveTimeout(), TimeUnit.MILLISECONDS,
 									proto.endpoint, new CompletionHandler<Integer, NioEndpoint>() {
 
 										@Override
 										public void completed(Integer nBytes, NioEndpoint endpoint) {
-											System.out.println("***** awaitRead - complete *****");
 											if (nBytes < 0) {
-												// Reach the end of the stream
-												endpoint.closeChannel(ch);
+												failed(new ClosedByInterruptException(), endpoint);
 												return;
 											}
 
@@ -848,9 +847,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 										@Override
 										public void failed(Throwable exc, NioEndpoint endpoint) {
-											if (exc instanceof InterruptedByTimeoutException) {
-												endpoint.closeChannel(ch);
-											}
+											endpoint.closeChannel(ch);
 										}
 									});
 						}
@@ -864,7 +861,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					result.endProcessing();
 				}
 			}
-						
+
 			return state;
 		}
 
