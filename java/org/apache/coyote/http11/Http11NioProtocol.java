@@ -853,7 +853,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						}
 					} else {
 						if (proto.endpoint.isRunning()) {
-							proto.endpoint.addEventChannel(channel, result.getTimeout(),
+							proto.endpoint.addEventChannel(channel, result.endpoint.getKeepAliveTimeout(),
 									result.getReadNotifications(), result.getWriteNotification(),
 									result.getResumeNotification(), false);
 						}
