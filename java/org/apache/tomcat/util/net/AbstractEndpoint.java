@@ -40,6 +40,11 @@ public abstract class AbstractEndpoint {
 	protected static StringManager sm = StringManager.getManager("org.apache.tomcat.util.net.res");
 
 	/**
+	 * The default socket timeout = 60 sec
+	 */
+	protected static final int DEFAULT_SO_TIMEOUT = 60 * 1000;
+
+	/**
 	 * Running state of the endpoint.
 	 */
 	protected volatile boolean running = false;

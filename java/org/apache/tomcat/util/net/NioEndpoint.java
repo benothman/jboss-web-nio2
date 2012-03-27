@@ -170,6 +170,14 @@ public class NioEndpoint extends AbstractEndpoint {
 			return;
 		}
 
+		if(this.soTimeout < 0) {
+			this.soTimeout = DEFAULT_SO_TIMEOUT;
+		}
+		
+		if(this.keepAliveTimeout < 0) {
+			this.keepAliveTimeout = this.soTimeout;
+		}
+		
 		// Initialize thread count defaults for acceptor
 		if (acceptorThreadCount <= 0) {
 			acceptorThreadCount = 1;
@@ -374,7 +382,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * Add specified socket and associated pool to the poller. The socket will
+	 * Add specified channel and associated pool to the poller. The added will
 	 * be added to a temporary array, and polled first after a maximum amount of
 	 * time equal to pollTime (in most cases, latency will be much lower,
 	 * however). Note: If both read and write are false, the socket will only be
@@ -396,7 +404,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
-
+		
 		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
 				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
 
@@ -412,6 +420,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public void addEventChannel(NioChannel channel, long timeout, int flags) {
 
+		System.out.println("NioEndpoint#keepAliveTimeout = " + this.keepAliveTimeout);
 		long eventTimeout = timeout < 0 ? soTimeout : timeout;
 
 		if (eventTimeout <= 0) {
@@ -1453,10 +1462,9 @@ public class NioEndpoint extends AbstractEndpoint {
 
 				maintain();
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					// NOPE
 				}
 			}
 		}

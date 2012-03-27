@@ -434,14 +434,11 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 		final NioChannel ch = this.channel;
 		// final long readTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
-		System.out.println("----- Starting a non-blocking read -----");
 		if (!ch.isReadPending()) {
 			ch.read(bb, ch, new CompletionHandler<Integer, NioChannel>() {
 
 				@Override
 				public void completed(Integer nBytes, NioChannel attachment) {
-					System.out.println("------ Non-blocking read complete (n = " + nBytes
-							+ ") ------");
 					if (nBytes < 0) {
 						failed(new ClosedChannelException(), attachment);
 					}
@@ -456,8 +453,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 				@Override
 				public void failed(Throwable exc, NioChannel attachment) {
-					System.out.println("------ Non-blocking read fails (Ex: " + exc.getMessage()
-							+ ") ------");
 					if (exc instanceof InterruptedByTimeoutException) {
 						endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
 						endpoint.removeEventChannel(attachment);
