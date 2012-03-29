@@ -1427,8 +1427,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected long lastMaintain = System.currentTimeMillis();
 
-		protected ChannelList channelList;
-		protected ChannelList localList;
+		protected ConcurrentHashMap<Long, ChannelInfo> channelList;
+		private Object mutex;
 
 		/*
 		 * (non-Javadoc)
@@ -1447,119 +1447,26 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 
-				while (this.channelList.size < 1) {
-					synchronized (this) {
-						if (soTimeout > 0 && running) {
-							maintain();
-						}
+				while (this.channelList.size() < 1 && running) {
+					synchronized (this.mutex) {
 						try {
-							this.wait(10000);
+							this.mutex.wait(10000);
 						} catch (InterruptedException e) {
 							// NOPE
 						}
 					}
 				}
 
-				synchronized (this) {
-					this.channelList.duplicate(localList);
-					this.channelList.clear();
+				while (this.channelList.size() > 0 && running) {
+					maintain();
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						// NOPE
+					}
 				}
+
 			}
-		}
-
-		/**
-		 * @param channel
-		 */
-		public void remove(NioChannel channel) {
-			this.channelList.remove(channel);
-		}
-
-		/**
-		 * @param info
-		 */
-		public void remove(ChannelInfo info) {
-			this.channelList.remove(info);
-		}
-
-		/**
-		 * Initialize the event poller
-		 */
-		public void init() {
-			this.channelList = new ChannelList(maxThreads);
-			this.localList = new ChannelList(maxThreads);
-		}
-
-		/**
-		 * Destroy the event poller
-		 */
-		public void destroy() {
-			this.channelList = null;
-			this.localList = null;
-		}
-
-		/**
-		 * Add the channel to the list of channels
-		 * 
-		 * @param channel
-		 * @param timeout
-		 * @param flag
-		 * @return <tt>true</tt> if the channel is added successfully else
-		 *         <tt>false</tt>
-		 */
-		public boolean add(NioChannel channel, long timeout, int flag) {
-			final ChannelInfo info = this.channelList.add(channel, timeout, flag);
-			if (info != null) {
-				if (info.resume()) {
-					if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
-						this.channelList.remove(info);
-						closeChannel(info.channel);
-					}
-
-				}
-
-				if (info.wakeup()) {
-					remove(info);
-
-				} else if (info.read()) {
-					if (!info.channel.isReadPending()) {
-						info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
-
-							@Override
-							public void completed(Integer nBytes, ChannelInfo attachment) {
-								if (nBytes < 0) {
-									failed(new ClosedChannelException(), attachment);
-								} else {
-									processChannel(attachment.channel, SocketStatus.OPEN_READ);
-								}
-							}
-
-							@Override
-							public void failed(Throwable exc, ChannelInfo attachment) {
-								remove(attachment);
-								if (exc instanceof InterruptedByTimeoutException) {
-									processChannel(attachment.channel, SocketStatus.TIMEOUT);
-									closeChannel(attachment.channel);
-								} else if (exc instanceof ClosedChannelException) {
-									processChannel(attachment.channel, SocketStatus.DISCONNECT);
-								} else {
-									processChannel(attachment.channel, SocketStatus.ERROR);
-								}
-							}
-						});
-					}
-				} else if (info.write()) {
-					if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
-						remove(info.channel);
-						closeChannel(info.channel);
-					}
-				} else {
-					remove(info.channel);
-					processChannel(info.channel, SocketStatus.ERROR);
-				}
-				return true;
-			}
-
-			return false;
 		}
 
 		/**
@@ -1576,12 +1483,124 @@ public class NioEndpoint extends AbstractEndpoint {
 				lastMaintain = date;
 			}
 
-			ChannelInfo info = null;
-			while ((info = this.localList.check(date)) != null) {
-				if (!processChannel(info.channel, SocketStatus.TIMEOUT)) {
+			for (ChannelInfo info : this.channelList.values()) {
+				if (date >= info.timeout) {
+					this.channelList.remove(info.channel.getId());
+					if (!processChannel(info.channel, SocketStatus.TIMEOUT)) {
+						closeChannel(info.channel);
+					}
+				}
+			}
+		}
+
+		/**
+		 * @param channel
+		 */
+		public void remove(NioChannel channel) {
+			this.channelList.remove(channel.getId());
+		}
+
+		/**
+		 * @param info
+		 */
+		public void remove(ChannelInfo info) {
+			this.channelList.remove(info.channel.getId());
+		}
+
+		/**
+		 * Initialize the event poller
+		 */
+		public void init() {
+			this.mutex = new Object();
+			this.channelList = new ConcurrentHashMap<>(maxThreads);
+		}
+
+		/**
+		 * Destroy the event poller
+		 */
+		public void destroy() {
+			synchronized (this.mutex) {
+				this.channelList.clear();
+				this.mutex.notifyAll();
+			}
+		}
+
+		/**
+		 * Add the channel to the list of channels
+		 * 
+		 * @param channel
+		 * @param timeout
+		 * @param flag
+		 * @return <tt>true</tt> if the channel is added successfully else
+		 *         <tt>false</tt>
+		 */
+		public boolean add(NioChannel channel, long timeout, int flag) {
+			if (this.channelList.size() > maxThreads) {
+				return false;
+			}
+
+			ChannelInfo info = this.channelList.get(channel.getId());
+			long date = timeout + System.currentTimeMillis();
+			if (info == null) {
+				info = new ChannelInfo(channel, date, flag);
+				this.channelList.put(info.channel.getId(), info);
+			} else {
+				info.timeout = date;
+				info.flags = ChannelInfo.merge(info.flags, flag);
+			}
+
+			if (info.resume()) {
+				if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
+					this.channelList.remove(info);
 					closeChannel(info.channel);
 				}
 			}
+
+			if (info.wakeup()) {
+				remove(info);
+				// TODO
+			} else if (info.read()) {
+				if (!info.channel.isReadPending()) {
+					info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
+
+						@Override
+						public void completed(Integer nBytes, ChannelInfo attachment) {
+							if (nBytes < 0) {
+								failed(new ClosedChannelException(), attachment);
+							} else {
+								processChannel(attachment.channel, SocketStatus.OPEN_READ);
+							}
+						}
+
+						@Override
+						public void failed(Throwable exc, ChannelInfo attachment) {
+							remove(attachment);
+							if (exc instanceof InterruptedByTimeoutException) {
+								processChannel(attachment.channel, SocketStatus.TIMEOUT);
+								closeChannel(attachment.channel);
+							} else if (exc instanceof ClosedChannelException) {
+								processChannel(attachment.channel, SocketStatus.DISCONNECT);
+							} else {
+								processChannel(attachment.channel, SocketStatus.ERROR);
+							}
+						}
+					});
+				}
+			} else if (info.write()) {
+				if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
+					remove(info.channel);
+					closeChannel(info.channel);
+				}
+			} else {
+				remove(info.channel);
+				processChannel(info.channel, SocketStatus.ERROR);
+			}
+			
+			// Wake up all waiting threads
+			synchronized (this.mutex) {
+				this.mutex.notifyAll();
+			}
+			return true;
 		}
 	}
 
