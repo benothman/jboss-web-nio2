@@ -665,6 +665,11 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
+		
+		if(isReadPending()) {
+			return;
+		}
+		
 		final int x = this.reset(dst);
 		this.channel.read(dst, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
