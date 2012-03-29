@@ -72,6 +72,42 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	protected NioEndpoint endpoint = null;
 
 	/**
+	 * 
+	 */
+	private final CompletionHandler<Integer, NioChannel> completionHandler = new CompletionHandler<Integer, NioChannel>() {
+
+		@Override
+		public void completed(Integer nBytes, NioChannel attachment) {
+			if (nBytes < 0) {
+				failed(new ClosedChannelException(), attachment);
+			}
+
+			if (nBytes > 0) {
+				bbuf.flip();
+				bbuf.get(buf, pos, nBytes);
+				lastValid = pos + nBytes;
+				endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
+			}
+		}
+
+		@Override
+		public void failed(Throwable exc, NioChannel attachment) {
+			if (exc instanceof InterruptedByTimeoutException) {
+				endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+				endpoint.removeEventChannel(attachment);
+				close(attachment);
+			} else if (exc instanceof ClosedChannelException) {
+				endpoint.removeEventChannel(attachment);
+				endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+			} else {
+				endpoint.removeEventChannel(attachment);
+				endpoint.processChannel(attachment, SocketStatus.ERROR);
+			}
+		}
+	};
+	
+	
+	/**
 	 * Create a new instance of {@code InternalNioInputBuffer}
 	 * 
 	 * @param request
@@ -434,37 +470,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 		final NioChannel ch = this.channel;
 		if (!ch.isReadPending()) {
-			ch.read(bb, ch, new CompletionHandler<Integer, NioChannel>() {
-
-				@Override
-				public void completed(Integer nBytes, NioChannel attachment) {
-					if (nBytes < 0) {
-						failed(new ClosedChannelException(), attachment);
-					}
-
-					if (nBytes > 0) {
-						bb.flip();
-						bb.get(buf, pos, nBytes);
-						lastValid = pos + nBytes;
-						endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
-					}
-				}
-
-				@Override
-				public void failed(Throwable exc, NioChannel attachment) {
-					if (exc instanceof InterruptedByTimeoutException) {
-						endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-						endpoint.removeEventChannel(attachment);
-						close(attachment);
-					} else if (exc instanceof ClosedChannelException) {
-						endpoint.removeEventChannel(attachment);
-						endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-					} else {
-						endpoint.removeEventChannel(attachment);
-						endpoint.processChannel(attachment, SocketStatus.ERROR);
-					}
-				}
-			});
+			ch.read(bb, ch, this.completionHandler);
 		}
 	}
 

@@ -280,7 +280,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 
 			// Starting the event poller
-			this.eventPoller = new EventPoller();
+			this.eventPoller = new EventPoller(this.maxThreads);
 			this.eventPoller.init();
 			Thread eventPollerThread = this.threadFactory.newThread(this.eventPoller);
 			eventPollerThread.setName(getName() + "-EventPoller");
@@ -1429,6 +1429,16 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		protected ConcurrentHashMap<Long, ChannelInfo> channelList;
 		private Object mutex;
+		private int size;
+
+		/**
+		 * Create a new instance of {@code EventPoller}
+		 * 
+		 * @param size
+		 */
+		public EventPoller(int size) {
+			this.size = size;
+		}
 
 		/*
 		 * (non-Javadoc)
@@ -1512,7 +1522,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		public void init() {
 			this.mutex = new Object();
-			this.channelList = new ConcurrentHashMap<>(maxThreads);
+			this.channelList = new ConcurrentHashMap<>(this.size);
 		}
 
 		/**
@@ -1535,12 +1545,12 @@ public class NioEndpoint extends AbstractEndpoint {
 		 *         <tt>false</tt>
 		 */
 		public boolean add(NioChannel channel, long timeout, int flag) {
-			if (this.channelList.size() > maxThreads) {
+			if (this.channelList.size() > this.size) {
 				return false;
 			}
 
-			ChannelInfo info = this.channelList.get(channel.getId());
 			long date = timeout + System.currentTimeMillis();
+			ChannelInfo info = this.channelList.get(channel.getId());
 			if (info == null) {
 				info = new ChannelInfo(channel, date, flag);
 				this.channelList.put(info.channel.getId(), info);
@@ -1551,7 +1561,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			if (info.resume()) {
 				if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
-					this.channelList.remove(info);
+					remove(info);
 					closeChannel(info.channel);
 				}
 			}
@@ -1595,7 +1605,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				remove(info.channel);
 				processChannel(info.channel, SocketStatus.ERROR);
 			}
-			
+
 			// Wake up all waiting threads
 			synchronized (this.mutex) {
 				this.mutex.notifyAll();

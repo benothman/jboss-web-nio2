@@ -62,8 +62,7 @@ public class CompletionHandlerAdapter<V, A> implements CompletionHandler<V, A> {
 	 */
 	@Override
 	public void completed(V result, A attachment) {
-		// TODO Auto-generated method stub
-
+		// Nothing to do
 	}
 
 	/*
@@ -74,7 +73,7 @@ public class CompletionHandlerAdapter<V, A> implements CompletionHandler<V, A> {
 	 */
 	@Override
 	public void failed(Throwable exc, A attachment) {
-		//
+		// Nothing to do
 	}
 
 }
