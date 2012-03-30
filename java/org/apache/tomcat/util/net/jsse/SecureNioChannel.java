@@ -27,8 +27,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.ReadPendingException;
+import java.nio.channels.WritePendingException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -120,14 +123,37 @@ public class SecureNioChannel extends NioChannel {
 	 * long, java.util.concurrent.TimeUnit)
 	 */
 	public int readBytes(ByteBuffer dst, long timeout, TimeUnit unit) throws Exception {
+
+		// The handshake is completed
+		checkHandshake();
+
+		if (isReadPending()) {
+			throw new ReadPendingException();
+		}
+
+		enableReading(false);
+
 		if (this.netInBuffer.position() == 0) {
-			int x = super.readBytes(this.netInBuffer, timeout, unit);
-			if (x < 0) {
-				return x;
+			try {
+				this.reset(this.netInBuffer);
+				int x = this.channel.read(this.netInBuffer).get(timeout, unit);
+				if(x < 0) {
+					throw new ClosedChannelException();
+				}
+			} catch (Exception exp) {
+				enableReading();
+				if (exp instanceof ClosedChannelException) {
+					return OP_STATUS_CLOSED;
+				} else if (exp instanceof TimeoutException) {
+					return OP_STATUS_READ_TIMEOUT;
+				} else {
+					throw exp;
+				}
 			}
 		}
 		// Unwrap the data read
 		int read = this.unwrap(this.netInBuffer, dst);
+		enableReading();
 
 		return read;
 	}
@@ -155,6 +181,14 @@ public class SecureNioChannel extends NioChannel {
 	public <A> void read(final ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
+		// The handshake is completed
+		checkHandshake();
+
+		if (isReadPending()) {
+			throw new ReadPendingException();
+		}
+
+		enableReading(false);
 		this.reset(this.netInBuffer);
 
 		this.channel.read(this.netInBuffer, timeout, unit, attachment,
@@ -172,6 +206,7 @@ public class SecureNioChannel extends NioChannel {
 							int read = unwrap(netInBuffer, dst);
 							// If everything is OK, so complete
 							handler.completed(read, attach);
+							enableReading();
 						} catch (Exception e) {
 							// The operation must fails
 							handler.failed(e, attach);
@@ -181,6 +216,7 @@ public class SecureNioChannel extends NioChannel {
 					@Override
 					public void failed(Throwable exc, A attach) {
 						handler.failed(exc, attach);
+						enableReading();
 					}
 				});
 	}
@@ -196,10 +232,8 @@ public class SecureNioChannel extends NioChannel {
 	public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, long timeout,
 			TimeUnit unit, A attachment, final CompletionHandler<Long, ? super A> handler) {
 
-		if (!handshakeComplete) {
-			throw new IllegalStateException(
-					"Handshake incomplete, you must complete handshake before writing data.");
-		}
+		// The handshake is completed
+		checkHandshake();
 
 		if (handler == null) {
 			throw new NullPointerException("'handler' parameter is null");
@@ -213,14 +247,21 @@ public class SecureNioChannel extends NioChannel {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
 		}
 
+		if (isReadPending()) {
+			throw new ReadPendingException();
+		}
+
+		enableReading(false);
+
 		this.reset(netInBuffers[0]);
-		super.read(netInBuffers, 0, length, timeout, unit, attachment,
+
+		this.channel.read(netInBuffers, 0, length, timeout, unit, attachment,
 				new CompletionHandler<Long, A>() {
 
 					@Override
 					public void completed(Long nBytes, A attach) {
 						if (nBytes < 0) {
-							handler.failed(new ClosedChannelException(), attach);
+							failed(new ClosedChannelException(), attach);
 							return;
 						}
 
@@ -235,10 +276,12 @@ public class SecureNioChannel extends NioChannel {
 						}
 
 						handler.completed(read, attach);
+						enableReading();
 					}
 
 					@Override
 					public void failed(Throwable exc, A attach) {
+						enableReading();
 						handler.failed(exc, attach);
 					}
 				});
@@ -277,6 +320,14 @@ public class SecureNioChannel extends NioChannel {
 	 * long, java.util.concurrent.TimeUnit)
 	 */
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
+
+		// The handshake is completed
+		checkHandshake();
+
+		if (isWritePending()) {
+			throw new WritePendingException();
+		}
+		enableWriting(false);
 		// Clear the output buffer
 		this.netOutBuffer.compact();
 		// the number of bytes written
@@ -285,11 +336,23 @@ public class SecureNioChannel extends NioChannel {
 
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
-			int x = super.writeBytes(this.netOutBuffer, timeout, unit);
-			if (x < 0) {
-				return x;
+			try {
+				int x = this.channel.write(netOutBuffer).get(timeout, unit);
+				if (x < 0) {
+					throw new ClosedChannelException();
+				}
+			} catch (Exception exp) {
+				enableWriting();
+				if (exp instanceof ClosedChannelException) {
+					return OP_STATUS_CLOSED;
+				} else if (exp instanceof TimeoutException) {
+					return OP_STATUS_WRITE_TIMEOUT;
+				} else {
+					throw exp;
+				}
 			}
 		}
+		enableWriting();
 
 		return written;
 	}
@@ -317,6 +380,14 @@ public class SecureNioChannel extends NioChannel {
 	public <A> void write(final ByteBuffer src, long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
+		// The handshake is completed
+		checkHandshake();
+
+		if (isWritePending()) {
+			throw new WritePendingException();
+		}
+		enableWriting(false);
+
 		try {
 			// Prepare the output buffer
 			this.netOutBuffer.clear();
@@ -332,21 +403,23 @@ public class SecureNioChannel extends NioChannel {
 						public void completed(Integer nBytes, A attach) {
 							if (nBytes < 0) {
 								handler.failed(new ClosedChannelException(), attach);
-								return;
+							} else {
+								enableWriting();
+								// Call the handler completed method with the
+								// consumed bytes number
+								handler.completed(written, attach);
 							}
-
-							// Call the handler completed method with the
-							// consumed bytes number
-							handler.completed(written, attach);
 						}
 
 						@Override
 						public void failed(Throwable exc, A attach) {
+							enableWriting();
 							handler.failed(exc, attach);
 						}
 					});
 
 		} catch (Throwable exp) {
+			enableWriting();
 			handler.failed(exp, attachment);
 		}
 	}
@@ -362,10 +435,8 @@ public class SecureNioChannel extends NioChannel {
 	public <A> void write(final ByteBuffer[] srcs, int offset, int length, long timeout,
 			TimeUnit unit, A attachment, final CompletionHandler<Long, ? super A> handler) {
 
-		if (!handshakeComplete()) {
-			throw new IllegalStateException(
-					"Handshake incomplete, you must complete handshake before writing data.");
-		}
+		// The handshake is completed
+		checkHandshake();
 
 		if (handler == null) {
 			throw new NullPointerException("'handler' parameter is null");
@@ -373,6 +444,11 @@ public class SecureNioChannel extends NioChannel {
 		if ((offset < 0) || (length < 0) || (offset > srcs.length - length)) {
 			throw new IndexOutOfBoundsException();
 		}
+
+		if (isWritePending()) {
+			throw new WritePendingException();
+		}
+		enableWriting(false);
 
 		ByteBuffer[] netOutBuffers = new ByteBuffer[length];
 		int size = getSSLSession().getPacketBufferSize();
@@ -385,6 +461,7 @@ public class SecureNioChannel extends NioChannel {
 				written += wrap(srcs[offset + i], netOutBuffers[i]);
 				netOutBuffers[i].flip();
 			} catch (Throwable exp) {
+				enableWriting();
 				handler.failed(exp, attachment);
 				return;
 			}
@@ -399,14 +476,16 @@ public class SecureNioChannel extends NioChannel {
 					public void completed(Long nBytes, A attach) {
 						if (nBytes < 0) {
 							handler.failed(new ClosedChannelException(), attach);
-							return;
+						} else {
+							enableWriting();
+							// If everything is OK, so complete
+							handler.completed(res, attach);
 						}
-						// If everything is OK, so complete
-						handler.completed(res, attach);
 					}
 
 					@Override
 					public void failed(Throwable exc, A attach) {
+						enableWriting();
 						handler.failed(exc, attach);
 					}
 				});
@@ -621,6 +700,16 @@ public class SecureNioChannel extends NioChannel {
 			doHandshake();
 		} catch (Exception e) {
 			throw new SSLException(e);
+		}
+	}
+
+	/**
+	 * Check whether the handshake is already complete or not
+	 */
+	private void checkHandshake() {
+		if (!handshakeComplete) {
+			throw new IllegalStateException(
+					"Handshake incomplete, you must complete handshake before read/write data.");
 		}
 	}
 

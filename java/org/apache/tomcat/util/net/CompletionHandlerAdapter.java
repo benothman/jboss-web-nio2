@@ -22,6 +22,8 @@
 package org.apache.tomcat.util.net;
 
 import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * {@code CompletionHandlerAdapter}
@@ -38,20 +40,43 @@ import java.nio.channels.CompletionHandler;
  * to other completion handlers.
  * </p>
  * 
- * @param <V> The result type of the I/O operation
- * @param <A> The type of the object attached to the I/O operation
+ * @param <V>
+ *            The result type of the I/O operation
+ * @param <A>
+ *            The type of the object attached to the I/O operation
  * 
- * Created on Mar 27, 2012 at 10:27:33 AM
+ *            Created on Mar 27, 2012 at 10:27:33 AM
  * 
  * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
  */
 public class CompletionHandlerAdapter<V, A> implements CompletionHandler<V, A> {
+
+	private Collection<CompletionHandler<? extends V, ? extends A>> handlers;
 
 	/**
 	 * Create a new instance of {@code CompletionHandlerAdapter}
 	 */
 	public CompletionHandlerAdapter() {
 		super();
+	}
+
+	/**
+	 * Create a new instance of {@code CompletionHandlerAdapter}
+	 * 
+	 * @param handler
+	 */
+	public CompletionHandlerAdapter(CompletionHandler<? extends V, ? extends A> handler) {
+		this.handlers = new ArrayList<CompletionHandler<? extends V, ? extends A>>();
+		this.handlers.add(handler);
+	}
+
+	/**
+	 * Create a new instance of {@code CompletionHandlerAdapter}
+	 * 
+	 * @param handlers
+	 */
+	public CompletionHandlerAdapter(Collection<CompletionHandler<? extends V, ? extends A>> handlers) {
+		this.handlers = handlers;
 	}
 
 	/*
@@ -62,7 +87,11 @@ public class CompletionHandlerAdapter<V, A> implements CompletionHandler<V, A> {
 	 */
 	@Override
 	public void completed(V result, A attachment) {
-		// Nothing to do
+		if (this.handlers != null) {
+			for (CompletionHandler handler : this.handlers) {
+				handler.completed(result, attachment);
+			}
+		}
 	}
 
 	/*
@@ -73,7 +102,11 @@ public class CompletionHandlerAdapter<V, A> implements CompletionHandler<V, A> {
 	 */
 	@Override
 	public void failed(Throwable exc, A attachment) {
-		// Nothing to do
+		if (this.handlers != null) {
+			for (CompletionHandler handler : this.handlers) {
+				handler.failed(exc, attachment);
+			}
+		}
 	}
 
 }

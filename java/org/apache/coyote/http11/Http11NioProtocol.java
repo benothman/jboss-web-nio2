@@ -799,14 +799,14 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		@Override
 		public SocketState event(NioChannel channel, SocketStatus status) {
 
-			Http11NioProcessor result = connections.get(channel);
+			Http11NioProcessor processor = connections.get(channel);
 
 			SocketState state = SocketState.CLOSED;
-			if (result != null) {
-				result.startProcessing();
+			if (processor != null) {
+				processor.startProcessing();
 				// Call the appropriate event
 				try {
-					state = result.event(status);
+					state = processor.event(status);
 				} catch (java.net.SocketException e) {
 					// SocketExceptions are normal
 					Http11NioProtocol.log.debug(
@@ -827,7 +827,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				} finally {
 					if (state != SocketState.LONG) {
 						connections.remove(channel);
-						recycledProcessors.offer(result);
+						recycledProcessors.offer(processor);
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
 							ch.awaitRead(proto.getKeepAliveTimeout(), TimeUnit.MILLISECONDS,
@@ -837,10 +837,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 										public void completed(Integer nBytes, NioEndpoint endpoint) {
 											if (nBytes < 0) {
 												failed(new ClosedByInterruptException(), endpoint);
-												return;
-											}
-
-											if (nBytes > 0) {
+											} else {
 												endpoint.processChannel(ch, null);
 											}
 										}
@@ -853,12 +850,13 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						}
 					} else {
 						if (proto.endpoint.isRunning()) {
-							proto.endpoint.addEventChannel(channel, result.endpoint.getKeepAliveTimeout(),
-									result.getReadNotifications(), result.getWriteNotification(),
-									result.getResumeNotification(), false);
+							proto.endpoint.addEventChannel(channel,
+									processor.endpoint.getKeepAliveTimeout(),
+									processor.getReadNotifications(), processor.getWriteNotification(),
+									processor.getResumeNotification(), false);
 						}
 					}
-					result.endProcessing();
+					processor.endProcessing();
 				}
 			}
 
@@ -899,7 +897,9 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						// Call a read event right away
 						state = event(channel, SocketStatus.OPEN_READ);
 					} else {
-						proto.endpoint.addEventChannel(channel, proto.endpoint.getKeepAliveTimeout(),//processor.getTimeout(),
+						proto.endpoint.addEventChannel(
+								channel,
+								proto.endpoint.getKeepAliveTimeout(),// processor.getTimeout(),
 								processor.getReadNotifications(), false,
 								processor.getResumeNotification(), false);
 					}

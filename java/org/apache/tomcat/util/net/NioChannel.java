@@ -198,6 +198,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
+	private boolean reading = false;
+	private boolean writing = false;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
@@ -552,8 +554,15 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	@Deprecated
 	@Override
 	public Future<Integer> read(ByteBuffer dst) {
+		if (reading) {
+			throw new ReadPendingException();
+		}
+		enableReading(false);
+		this.reading = true;
 		this.reset(dst);
-		return this.channel.read(dst);
+		Future<Integer> f = this.channel.read(dst);
+		enableReading();
+		return f;
 	}
 
 	/**
@@ -594,7 +603,11 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public int readBytes(final ByteBuffer dst, final long timeout, final TimeUnit unit)
 			throws Exception {
+		if (reading) {
+			throw new ReadPendingException();
+		}
 		try {
+			enableReading(false);
 			int x = this.reset(dst);
 			return (x + this.channel.read(dst).get(timeout, unit));
 		} catch (Exception exp) {
@@ -605,6 +618,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			} else {
 				throw exp;
 			}
+		} finally {
+			enableReading();
 		}
 	}
 
@@ -665,22 +680,26 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		
-		if(isReadPending()) {
-			return;
+		if (reading) {
+			throw new ReadPendingException();
 		}
-		
+		// Disable reading
+		enableReading(false);
 		final int x = this.reset(dst);
 		this.channel.read(dst, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
 			@Override
 			public void completed(Integer result, A attach) {
 				handler.completed(result + x, attach);
+				// Enable reading
+				enableReading();
 			}
 
 			@Override
 			public void failed(Throwable exc, A attach) {
 				handler.failed(exc, attach);
+				// Enable reading
+				enableReading();
 			}
 		});
 	}
@@ -770,6 +789,10 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void read(ByteBuffer[] dsts, int offset, int length, long timeout, TimeUnit unit,
 			A attachment, final CompletionHandler<Long, ? super A> handler) {
+		if (reading) {
+			throw new ReadPendingException();
+		}
+		enableReading(false);
 		// Retrieve bytes, if any, from the internal buffer
 		final int x = this.reset(dsts[0]);
 
@@ -779,11 +802,13 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 					@Override
 					public void completed(Long result, A attach) {
 						handler.completed(result + x, attach);
+						enableReading();
 					}
 
 					@Override
 					public void failed(Throwable exc, A attach) {
 						handler.failed(exc, attach);
+						enableReading();
 					}
 				});
 	}
@@ -819,12 +844,28 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void awaitRead(long timeout, TimeUnit unit, final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		
-		
+		if (reading) {
+			throw new ReadPendingException();
+		}
+		enableReading(false);
 		// Clear the internal buffer
 		this.buffer.clear();
 		// Perform an asynchronous read operation using the internal buffer
-		this.channel.read(this.buffer, timeout, unit, attachment, handler);
+		this.channel.read(this.buffer, timeout, unit, attachment,
+				new CompletionHandler<Integer, A>() {
+
+					@Override
+					public void completed(Integer result, A attachment) {
+						handler.completed(result, attachment);
+						enableReading();
+					}
+
+					@Override
+					public void failed(Throwable exc, A attachment) {
+						handler.failed(exc, attachment);
+						enableReading();
+					}
+				});
 	}
 
 	/**
@@ -862,7 +903,13 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	@Deprecated
 	@Override
 	public Future<Integer> write(ByteBuffer src) {
-		return this.channel.write(src);
+		if (writing) {
+			throw new WritePendingException();
+		}
+		enableWriting(false);
+		Future<Integer> future = this.channel.write(src);
+		enableWriting();
+		return future;
 	}
 
 	/**
@@ -914,7 +961,11 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * @throws InterruptedException
 	 */
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
+		if (writing) {
+			throw new WritePendingException();
+		}
 		try {
+			enableWriting(false);
 			return this.channel.write(src).get(timeout, unit);
 		} catch (Exception exp) {
 			if (exp instanceof ClosedChannelException) {
@@ -924,6 +975,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			} else {
 				throw exp;
 			}
+		} finally {
+			enableWriting();
 		}
 	}
 
@@ -981,8 +1034,25 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 *             If the channel group has terminated
 	 */
 	public <A> void write(ByteBuffer src, long timeout, TimeUnit unit, A attachment,
-			CompletionHandler<Integer, ? super A> handler) {
-		this.channel.write(src, timeout, unit, attachment, handler);
+			final CompletionHandler<Integer, ? super A> handler) {
+		if (writing) {
+			throw new WritePendingException();
+		}
+		enableWriting(false);
+		this.channel.write(src, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
+
+			@Override
+			public void completed(Integer result, A attachment) {
+				handler.completed(result, attachment);
+				enableWriting();
+			}
+
+			@Override
+			public void failed(Throwable exc, A attachment) {
+				handler.failed(exc, attachment);
+				enableWriting();
+			}
+		});
 	}
 
 	/**
@@ -1065,8 +1135,28 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 *             If the channel group has terminated
 	 */
 	public <A> void write(ByteBuffer[] srcs, int offset, int length, long timeout, TimeUnit unit,
-			A attachment, CompletionHandler<Long, ? super A> handler) {
-		this.channel.write(srcs, offset, length, timeout, unit, attachment, handler);
+			A attachment, final CompletionHandler<Long, ? super A> handler) {
+		
+		if (writing) {
+			throw new WritePendingException();
+		}
+		
+		enableWriting(false);
+		this.channel.write(srcs, offset, length, timeout, unit, attachment,
+				new CompletionHandler<Long, A>() {
+
+					@Override
+					public void completed(Long result, A attachment) {
+						handler.completed(result, attachment);
+						enableWriting();
+					}
+
+					@Override
+					public void failed(Throwable exc, A attachment) {
+						handler.failed(exc, attachment);
+						enableWriting();
+					}
+				});
 	}
 
 	/**
@@ -1185,18 +1275,45 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
+	 * Enable/Disable read operations
+	 * 
+	 * @param enabled
+	 */
+	protected final void enableReading(boolean enabled) {
+		this.reading = !enabled;
+	}
+
+	/**
+	 * Enable read operations
+	 */
+	protected final void enableReading() {
+		enableReading(true);
+	}
+
+	/**
+	 * Enable/Disable write operations
+	 * 
+	 * @param enabled
+	 */
+	protected final void enableWriting(boolean enabled) {
+		this.writing = !enabled;
+	}
+
+	/**
+	 * Enable write operations
+	 */
+	protected final void enableWriting() {
+		enableWriting(true);
+	}
+
+	/**
 	 * Check if a read operation is in progress or not.
 	 * 
 	 * @return <tt>true</tt> if a read operation is already in progress, else
 	 *         <tt>false</tt>
 	 */
 	public boolean isReadPending() {
-		try {
-			this.channel.read(ByteBuffer.allocate(0));
-			return false;
-		} catch (ReadPendingException rpe) {
-			return true;
-		}
+		return this.reading;
 	}
 
 	/**
@@ -1206,12 +1323,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 *         <tt>false</tt>
 	 */
 	public boolean isWritePending() {
-		try {
-			this.channel.write(ByteBuffer.allocate(0));
-			return false;
-		} catch (WritePendingException wpe) {
-			return true;
-		}
+		return this.writing;
 	}
 
 	/**

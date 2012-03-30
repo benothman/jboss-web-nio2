@@ -1585,10 +1585,7 @@ public class NioEndpoint extends AbstractEndpoint {
 						@Override
 						public void failed(Throwable exc, ChannelInfo attachment) {
 							remove(attachment);
-							if (exc instanceof InterruptedByTimeoutException) {
-								processChannel(attachment.channel, SocketStatus.TIMEOUT);
-								closeChannel(attachment.channel);
-							} else if (exc instanceof ClosedChannelException) {
+							if (exc instanceof ClosedChannelException) {
 								processChannel(attachment.channel, SocketStatus.DISCONNECT);
 							} else {
 								processChannel(attachment.channel, SocketStatus.ERROR);
