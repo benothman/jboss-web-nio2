@@ -558,7 +558,6 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			throw new ReadPendingException();
 		}
 		enableReading(false);
-		this.reading = true;
 		this.reset(dst);
 		Future<Integer> f = this.channel.read(dst);
 		enableReading();
@@ -690,16 +689,16 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 			@Override
 			public void completed(Integer result, A attach) {
-				handler.completed(result + x, attach);
 				// Enable reading
 				enableReading();
+				handler.completed(result + x, attach);
 			}
 
 			@Override
 			public void failed(Throwable exc, A attach) {
-				handler.failed(exc, attach);
 				// Enable reading
 				enableReading();
+				handler.failed(exc, attach);
 			}
 		});
 	}
@@ -801,14 +800,14 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 					@Override
 					public void completed(Long result, A attach) {
-						handler.completed(result + x, attach);
 						enableReading();
+						handler.completed(result + x, attach);
 					}
 
 					@Override
 					public void failed(Throwable exc, A attach) {
-						handler.failed(exc, attach);
 						enableReading();
+						handler.failed(exc, attach);
 					}
 				});
 	}
@@ -856,14 +855,14 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 					@Override
 					public void completed(Integer result, A attachment) {
-						handler.completed(result, attachment);
 						enableReading();
+						handler.completed(result, attachment);
 					}
 
 					@Override
 					public void failed(Throwable exc, A attachment) {
-						handler.failed(exc, attachment);
 						enableReading();
+						handler.failed(exc, attachment);
 					}
 				});
 	}
@@ -1043,14 +1042,14 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 			@Override
 			public void completed(Integer result, A attachment) {
-				handler.completed(result, attachment);
 				enableWriting();
+				handler.completed(result, attachment);
 			}
 
 			@Override
 			public void failed(Throwable exc, A attachment) {
-				handler.failed(exc, attachment);
 				enableWriting();
+				handler.failed(exc, attachment);
 			}
 		});
 	}
@@ -1147,14 +1146,14 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 					@Override
 					public void completed(Long result, A attachment) {
-						handler.completed(result, attachment);
 						enableWriting();
+						handler.completed(result, attachment);
 					}
 
 					@Override
 					public void failed(Throwable exc, A attachment) {
-						handler.failed(exc, attachment);
 						enableWriting();
+						handler.failed(exc, attachment);
 					}
 				});
 	}
