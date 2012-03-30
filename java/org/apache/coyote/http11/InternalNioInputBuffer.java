@@ -465,7 +465,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	private void nonBlockingRead(final ByteBuffer bb, long timeout, TimeUnit unit) {
 
 		final NioChannel ch = this.channel;
-		System.out.println("nonBlockingRead ---> ch.isReadPending() : " + ch.isReadPending());
 		if (!ch.isReadPending()) {
 			ch.read(bb, ch, this.completionHandler);
 		}

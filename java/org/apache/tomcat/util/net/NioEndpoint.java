@@ -1943,10 +1943,14 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @throws Exception
 		 */
 		private void sendFile(final SendfileData data) throws Exception {
+			if(data.channel.isWritePending()) {
+				add(data);
+				return;
+			}
 			// Configure the send file data
 			data.setup();
-
-			final NioChannel channel = data.channel;
+			
+			final NioChannel channel = data.channel;			
 			final int BUFFER_SIZE = channel.getOption(StandardSocketOptions.SO_SNDBUF);
 			final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 			int nr = data.fileChannel.read(buffer);

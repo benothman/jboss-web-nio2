@@ -149,37 +149,40 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		final NioChannel ch = this.channel;
 		final long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 
-		ch.write(buffer, writeTimeout, unit, ch,
-				new CompletionHandlerAdapter<Integer, NioChannel>() {
+		if (!ch.isWritePending()) {
 
-					@Override
-					public void completed(Integer nBytes, NioChannel attachment) {
-						if (nBytes < 0) {
-							failed(new ClosedChannelException(), attachment);
-							return;
+			ch.write(buffer, writeTimeout, unit, ch,
+					new CompletionHandlerAdapter<Integer, NioChannel>() {
+
+						@Override
+						public void completed(Integer nBytes, NioChannel attachment) {
+							if (nBytes < 0) {
+								failed(new ClosedChannelException(), attachment);
+								return;
+							}
+
+							if (buffer.hasRemaining()) {
+								attachment.write(buffer, writeTimeout, unit, attachment, this);
+							} else {
+								// Clear the buffer when all bytes are written
+								buffer.clear();
+							}
 						}
 
-						if (buffer.hasRemaining()) {
-							attachment.write(buffer, writeTimeout, unit, attachment, this);
-						} else {
-							// Clear the buffer when all bytes are written
-							buffer.clear();
+						@Override
+						public void failed(Throwable exc, NioChannel attachment) {
+							endpoint.removeEventChannel(attachment);
+							if (exc instanceof InterruptedByTimeoutException) {
+								endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+								close(attachment);
+							} else if (exc instanceof ClosedChannelException) {
+								endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+							} else {
+								endpoint.processChannel(attachment, SocketStatus.ERROR);
+							}
 						}
-					}
-
-					@Override
-					public void failed(Throwable exc, NioChannel attachment) {
-						endpoint.removeEventChannel(attachment);
-						if (exc instanceof InterruptedByTimeoutException) {
-							endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-							close(attachment);
-						} else if (exc instanceof ClosedChannelException) {
-							endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-						} else {
-							endpoint.processChannel(attachment, SocketStatus.ERROR);
-						}
-					}
-				});
+					});
+		}
 	}
 
 	/*
