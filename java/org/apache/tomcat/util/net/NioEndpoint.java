@@ -1484,7 +1484,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		public void maintain() {
 			long date = System.currentTimeMillis();
-			System.out.println("EventPoller#maintain() --> date = " + date);
 			// Maintain runs at most once every 5s, although it will likely get
 			// called more
 			if ((date - lastMaintain) < 5000L) {
@@ -1544,7 +1543,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @return <tt>true</tt> if the channel is added successfully else
 		 *         <tt>false</tt>
 		 */
-		public boolean add(NioChannel channel, long timeout, int flag) {
+		public boolean add(final NioChannel channel, long timeout, int flag) {
 			if (this.channelList.size() > this.size) {
 				return false;
 			}

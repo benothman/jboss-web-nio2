@@ -200,7 +200,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	private ByteBuffer buffer;
 	private boolean reading = false;
 	private boolean writing = false;
-	private Object writeMutex;
+	private Object writeLock;
+	private Object readLock;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
@@ -218,7 +219,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
 		this.buffer = ByteBuffer.allocateDirect(1);
-		this.writeMutex = new Object();
+		this.writeLock = new Object();
+		this.readLock = new Object();
 	}
 
 	/**
@@ -848,7 +850,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		if (reading) {
 			throw new ReadPendingException();
 		}
-		enableReading(false);
+
+		disableReading();
 		// Clear the internal buffer
 		this.buffer.clear();
 		// Perform an asynchronous read operation using the internal buffer
@@ -889,6 +892,45 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	public <A> void awaitRead(final A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 		awaitRead(0L, TimeUnit.MILLISECONDS, attachment, handler);
+	}
+
+	/**
+	 * <p>
+	 * Wait until there is no read operation is pending. The read operation will
+	 * take place as soon as the channel becomes ready for reading.
+	 * </p>
+	 * 
+	 * @param src
+	 *            The buffer from which bytes are to be retrieved
+	 * @param timeout
+	 *            The maximum time for the I/O operation to complete
+	 * @param unit
+	 *            The time unit of the {@code timeout} argument
+	 * @param attachment
+	 *            The object to attach to the I/O operation; can be {@code null}
+	 * @param handler
+	 *            The handler for consuming the result
+	 */
+	public <A> void differRead(ByteBuffer src, long timeout, TimeUnit unit, A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+
+		while (isReadPending()) {
+			synchronized (this.readLock) {
+				try {
+					this.readLock.wait(500);
+				} catch (Throwable e) {
+					// NOPE
+				}
+			}
+		}
+
+		try {
+			// The channel is available for reads, do it quickly
+			this.read(src, timeout, unit, attachment, handler);
+		} catch (ReadPendingException rpe) {
+			// Another thread starts a read operation. Let's try again.
+			this.differRead(src, timeout, unit, attachment, handler);
+		}
 	}
 
 	/**
@@ -1181,19 +1223,19 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			final CompletionHandler<Integer, ? super A> handler) {
 
 		while (isWritePending()) {
-			synchronized (this.writeMutex) {
+			synchronized (this.writeLock) {
 				try {
-					this.writeMutex.wait(500);
+					this.writeLock.wait(500);
 				} catch (Throwable e) {
 					// NOPE
 				}
 			}
 		}
 
-		if (!isWritePending()) {
+		try {
 			// The channel is available for writes, do it quickly
 			this.write(src, timeout, unit, attachment, handler);
-		} else {
+		} catch (WritePendingException wpe) {
 			// Another thread starts a write operation. Let's try again.
 			this.differWrite(src, timeout, unit, attachment, handler);
 		}
@@ -1327,7 +1369,10 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable read operations
 	 */
 	protected final void enableReading() {
-		this.reading = false;
+		synchronized (this.readLock) {
+			this.reading = false;
+			this.readLock.notifyAll();
+		}
 	}
 
 	/**
@@ -1350,7 +1395,10 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable write operations
 	 */
 	protected final void enableWriting() {
-		enableWriting(true);
+		synchronized (this.writeLock) {
+			this.writing = false;
+			this.writeLock.notifyAll();
+		}
 	}
 
 	/**
