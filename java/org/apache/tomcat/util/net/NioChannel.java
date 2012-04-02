@@ -200,6 +200,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	private ByteBuffer buffer;
 	private boolean reading = false;
 	private boolean writing = false;
+	private Object mutex;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
@@ -217,6 +218,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
 		this.buffer = ByteBuffer.allocateDirect(1);
+		this.mutex = new Object();
 	}
 
 	/**
@@ -1135,11 +1137,11 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void write(ByteBuffer[] srcs, int offset, int length, long timeout, TimeUnit unit,
 			A attachment, final CompletionHandler<Long, ? super A> handler) {
-		
+
 		if (writing) {
 			throw new WritePendingException();
 		}
-		
+
 		enableWriting(false);
 		this.channel.write(srcs, offset, length, timeout, unit, attachment,
 				new CompletionHandler<Long, A>() {
@@ -1156,6 +1158,45 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 						handler.failed(exc, attachment);
 					}
 				});
+	}
+
+	/**
+	 * <p>
+	 * Wait until there is no write operation is pending. The write operation
+	 * will take place as soon as the channel becomes ready for writing.
+	 * </p>
+	 * 
+	 * @param src
+	 *            The buffer from which bytes are to be retrieved
+	 * @param timeout
+	 *            The maximum time for the I/O operation to complete
+	 * @param unit
+	 *            The time unit of the {@code timeout} argument
+	 * @param attachment
+	 *            The object to attach to the I/O operation; can be {@code null}
+	 * @param handler
+	 *            The handler for consuming the result
+	 */
+	public <A> void differWrite(ByteBuffer src, long timeout, TimeUnit unit, A attachment,
+			final CompletionHandler<Integer, ? super A> handler) {
+
+		while (isWritePending()) {
+			synchronized (this.mutex) {
+				try {
+					this.mutex.wait(500);
+				} catch (Throwable e) {
+					// NOPE
+				}
+			}
+		}
+
+		if (!isWritePending()) {
+			// The channel is available for writes, do it quickly
+			this.write(src, timeout, unit, attachment, handler);
+		} else {
+			// Another thread starts a write operation. Let's try again.
+			this.differWrite(src, timeout, unit, attachment, handler);
+		}
 	}
 
 	/**
