@@ -198,8 +198,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
-	private boolean reading = false;
-	private boolean writing = false;
+	private volatile boolean reading = false;
+	private volatile boolean writing = false;
 	private Object mutex;
 
 	/**
@@ -681,11 +681,11 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public <A> void read(ByteBuffer dst, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
-		if (reading) {
+		if (this.reading) {
 			throw new ReadPendingException();
 		}
 		// Disable reading
-		enableReading(false);
+		disableReading();
 		final int x = this.reset(dst);
 		this.channel.read(dst, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
@@ -1327,7 +1327,14 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable read operations
 	 */
 	protected final void enableReading() {
-		enableReading(true);
+		this.reading = false;
+	}
+
+	/**
+	 * Disable read operations
+	 */
+	protected final void disableReading() {
+		this.reading = true;
 	}
 
 	/**
