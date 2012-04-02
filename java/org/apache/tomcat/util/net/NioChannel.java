@@ -198,9 +198,9 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
-	private volatile boolean reading = false;
-	private volatile boolean writing = false;
-	private Object mutex;
+	private boolean reading = false;
+	private boolean writing = false;
+	private Object writeMutex;
 
 	/**
 	 * Create a new instance of {@code NioChannel}
@@ -218,7 +218,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		this.channel = channel;
 		this.id = counter.getAndIncrement();
 		this.buffer = ByteBuffer.allocateDirect(1);
-		this.mutex = new Object();
+		this.writeMutex = new Object();
 	}
 
 	/**
@@ -1181,9 +1181,9 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			final CompletionHandler<Integer, ? super A> handler) {
 
 		while (isWritePending()) {
-			synchronized (this.mutex) {
+			synchronized (this.writeMutex) {
 				try {
-					this.mutex.wait(500);
+					this.writeMutex.wait(500);
 				} catch (Throwable e) {
 					// NOPE
 				}
