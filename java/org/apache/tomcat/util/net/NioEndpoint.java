@@ -1503,17 +1503,26 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Remove the channel having the specified id
+		 * 
+		 * @param id
+		 */
+		protected void remove(long id) {
+			this.channelList.remove(id);
+		}
+
+		/**
 		 * @param channel
 		 */
 		public void remove(NioChannel channel) {
-			this.channelList.remove(channel.getId());
+			remove(channel.getId());
 		}
 
 		/**
 		 * @param info
 		 */
 		public void remove(ChannelInfo info) {
-			this.channelList.remove(info.channel.getId());
+			remove(info.channel);
 		}
 
 		/**
@@ -1569,6 +1578,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				remove(info);
 				// TODO
 			} else if (info.read()) {
+				remove(info);
 				if (!info.channel.isReadPending()) {
 					info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
 
@@ -1577,7 +1587,6 @@ public class NioEndpoint extends AbstractEndpoint {
 							if (nBytes < 0) {
 								failed(new ClosedChannelException(), attachment);
 							} else {
-								remove(attachment);
 								processChannel(attachment.channel, SocketStatus.OPEN_READ);
 							}
 						}
@@ -1943,14 +1952,14 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @throws Exception
 		 */
 		private void sendFile(final SendfileData data) throws Exception {
-			if(data.channel.isWritePending()) {
+			if (data.channel.isWritePending()) {
 				add(data);
 				return;
 			}
 			// Configure the send file data
 			data.setup();
-			
-			final NioChannel channel = data.channel;			
+
+			final NioChannel channel = data.channel;
 			final int BUFFER_SIZE = channel.getOption(StandardSocketOptions.SO_SNDBUF);
 			final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 			int nr = data.fileChannel.read(buffer);

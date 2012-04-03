@@ -830,29 +830,36 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						recycledProcessors.offer(processor);
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
-							ch.awaitRead(proto.getKeepAliveTimeout(), TimeUnit.MILLISECONDS,
-									proto.endpoint, new CompletionHandler<Integer, NioEndpoint>() {
+							proto.endpoint.removeEventChannel(channel);
+							if (!ch.isReadPending()) {
+								ch.awaitRead(proto.getKeepAliveTimeout(), TimeUnit.MILLISECONDS,
+										proto.endpoint,
+										new CompletionHandler<Integer, NioEndpoint>() {
 
-										@Override
-										public void completed(Integer nBytes, NioEndpoint endpoint) {
-											if (nBytes < 0) {
-												failed(new ClosedByInterruptException(), endpoint);
-											} else {
-												endpoint.processChannel(ch, null);
+											@Override
+											public void completed(Integer nBytes,
+													NioEndpoint endpoint) {
+												if (nBytes < 0) {
+													failed(new ClosedByInterruptException(),
+															endpoint);
+												} else {
+													endpoint.processChannel(ch, null);
+												}
 											}
-										}
 
-										@Override
-										public void failed(Throwable exc, NioEndpoint endpoint) {
-											endpoint.closeChannel(ch);
-										}
-									});
+											@Override
+											public void failed(Throwable exc, NioEndpoint endpoint) {
+												endpoint.closeChannel(ch);
+											}
+										});
+							}
 						}
 					} else {
 						if (proto.endpoint.isRunning()) {
 							proto.endpoint.addEventChannel(channel,
 									processor.endpoint.getKeepAliveTimeout(),
-									processor.getReadNotifications(), processor.getWriteNotification(),
+									processor.getReadNotifications(),
+									processor.getWriteNotification(),
 									processor.getResumeNotification(), false);
 						}
 					}
