@@ -610,7 +610,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			throw new ReadPendingException();
 		}
 		try {
-			enableReading(false);
+			disableReading();
 			int x = this.reset(dst);
 			return (x + this.channel.read(dst).get(timeout, unit));
 		} catch (Exception exp) {
