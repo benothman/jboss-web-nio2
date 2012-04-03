@@ -1577,6 +1577,7 @@ public class NioEndpoint extends AbstractEndpoint {
 							if (nBytes < 0) {
 								failed(new ClosedChannelException(), attachment);
 							} else {
+								remove(attachment);
 								processChannel(attachment.channel, SocketStatus.OPEN_READ);
 							}
 						}
@@ -1593,8 +1594,8 @@ public class NioEndpoint extends AbstractEndpoint {
 					});
 				}
 			} else if (info.write()) {
+				remove(info.channel);
 				if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
-					remove(info.channel);
 					closeChannel(info.channel);
 				}
 			} else {

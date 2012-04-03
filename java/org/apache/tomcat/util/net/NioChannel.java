@@ -914,6 +914,19 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	public <A> void differRead(ByteBuffer src, long timeout, TimeUnit unit, A attachment,
 			final CompletionHandler<Integer, ? super A> handler) {
 
+		long readTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
+		long time = System.currentTimeMillis();
+
+		if (isReadPending()) {
+			synchronized (this.readLock) {
+				try {
+					this.readLock.wait(timeout);
+				} catch (Throwable e) {
+					// NOPE
+				}
+			}
+		}
+
 		while (isReadPending()) {
 			synchronized (this.readLock) {
 				try {
@@ -922,14 +935,20 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 					// NOPE
 				}
 			}
+			time = System.currentTimeMillis() - time;
+			readTimeout -= time;
+			if (readTimeout <= 0) {
+				handler.failed(new InterruptedByTimeoutException(), attachment);
+				return;
+			}
 		}
 
 		try {
 			// The channel is available for reads, do it quickly
-			this.read(src, timeout, unit, attachment, handler);
+			this.read(src, readTimeout, unit, attachment, handler);
 		} catch (ReadPendingException rpe) {
 			// Another thread starts a read operation. Let's try again.
-			this.differRead(src, timeout, unit, attachment, handler);
+			this.differRead(src, readTimeout, unit, attachment, handler);
 		}
 	}
 
