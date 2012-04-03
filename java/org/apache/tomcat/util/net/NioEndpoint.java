@@ -405,6 +405,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
 
+		System.out.println("*** " + channel + "timeout = " + timeout + ", RD=" + read + ", WR="
+				+ write + ", RS=" + resume + ",WK=" + wakeup + " ***");
+
 		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
 				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
 
