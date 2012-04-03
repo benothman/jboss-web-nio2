@@ -1388,10 +1388,10 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable read operations
 	 */
 	protected final void enableReading() {
-		synchronized (this.readLock) {
+		//synchronized (this.readLock) {
 			this.reading = false;
-			this.readLock.notifyAll();
-		}
+		//	this.readLock.notifyAll();
+		//}
 	}
 
 	/**
@@ -1414,10 +1414,10 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable write operations
 	 */
 	protected final void enableWriting() {
-		synchronized (this.writeLock) {
+		//synchronized (this.writeLock) {
 			this.writing = false;
-			this.writeLock.notifyAll();
-		}
+		//	this.writeLock.notifyAll();
+		//}
 	}
 
 	/**
@@ -1431,6 +1431,16 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
+	 * Check if the channel is ready for read operation
+	 * 
+	 * @return <tt>true</tt> if no read operation is in progress, else
+	 *         <tt>false</tt>
+	 */
+	public boolean isReadReady() {
+		return !isReadPending();
+	}
+
+	/**
 	 * Check if a write operation is in progress or not.
 	 * 
 	 * @return <tt>true</tt> if a write operation is already in progress, else
@@ -1438,6 +1448,16 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public boolean isWritePending() {
 		return this.writing;
+	}
+
+	/**
+	 * Check if the channel is ready for write.
+	 * 
+	 * @return <tt>true</tt> if no write operation is already in progress, else
+	 *         <tt>false</tt>
+	 */
+	public boolean isWriteReady() {
+		return !isWritePending();
 	}
 
 	/**
