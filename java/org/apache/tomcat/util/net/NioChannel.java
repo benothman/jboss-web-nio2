@@ -198,8 +198,8 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	protected AsynchronousSocketChannel channel;
 	private long id;
 	private ByteBuffer buffer;
-	private boolean reading = false;
-	private boolean writing = false;
+	private volatile boolean reading = false;
+	private volatile boolean writing = false;
 	private Object writeLock;
 	private Object readLock;
 
