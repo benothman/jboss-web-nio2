@@ -405,8 +405,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
 
-		//System.out.println("*** " + channel + " -> timeout = " + timeout + ", RD=" + read + ", WR="
-		//		+ write + ", RS=" + resume + ", WK=" + wakeup + " ***");
+		// System.out.println("*** " + channel + " -> timeout = " + timeout +
+		// ", RD=" + read + ", WR="
+		// + write + ", RS=" + resume + ", WK=" + wakeup + " ***");
 
 		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
 				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
@@ -717,8 +718,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 	}
 
-	// ------------------------------------------------- ChannelInfo Inner Class
-
 	/**
 	 * Channel list class, used to avoid using a possibly large amount of
 	 * objects with very little actual use.
@@ -1017,8 +1016,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			System.arraycopy(infos, 0, copy.infos, 0, size);
 		}
 	}
-
-	// ----------------------------------------------------- Worker Inner Class
 
 	/**
 	 * Server processor class.
@@ -1431,6 +1428,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		protected long lastMaintain = System.currentTimeMillis();
 
 		protected ConcurrentHashMap<Long, ChannelInfo> channelList;
+		protected ConcurrentLinkedQueue<ChannelInfo> recycledChannelList;
 		private Object mutex;
 		private int size;
 
@@ -1497,7 +1495,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			for (ChannelInfo info : this.channelList.values()) {
 				if (date >= info.timeout) {
-					this.channelList.remove(info.channel.getId());
+					remove(info);
 					if (!processChannel(info.channel, SocketStatus.TIMEOUT)) {
 						closeChannel(info.channel);
 					}
@@ -1511,14 +1509,17 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @param id
 		 */
 		protected void remove(long id) {
-			this.channelList.remove(id);
+			ChannelInfo info = this.channelList.remove(id);
+			offer(info);
 		}
 
 		/**
 		 * @param channel
 		 */
 		public void remove(NioChannel channel) {
-			remove(channel.getId());
+			if (channel != null) {
+				remove(channel.getId());
+			}
 		}
 
 		/**
@@ -1534,6 +1535,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void init() {
 			this.mutex = new Object();
 			this.channelList = new ConcurrentHashMap<>(this.size);
+			this.recycledChannelList = new ConcurrentLinkedQueue<>();
 		}
 
 		/**
@@ -1542,7 +1544,31 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void destroy() {
 			synchronized (this.mutex) {
 				this.channelList.clear();
+				this.recycledChannelList.clear();
 				this.mutex.notifyAll();
+			}
+		}
+
+		/**
+		 * 
+		 * @return
+		 */
+		protected ChannelInfo poll() {
+			ChannelInfo info = this.recycledChannelList.poll();
+			if (info == null) {
+				info = new ChannelInfo();
+			}
+			return info;
+		}
+
+		/**
+		 * 
+		 * @param info
+		 */
+		protected void offer(ChannelInfo info) {
+			if (info != null) {
+				info.recycle();
+				this.recycledChannelList.offer(info);
 			}
 		}
 
@@ -1563,7 +1589,10 @@ public class NioEndpoint extends AbstractEndpoint {
 			long date = timeout + System.currentTimeMillis();
 			ChannelInfo info = this.channelList.get(channel.getId());
 			if (info == null) {
-				info = new ChannelInfo(channel, date, flag);
+				info = poll();
+				info.channel = channel;
+				info.timeout = date;
+				info.flags = flag;
 				this.channelList.put(info.channel.getId(), info);
 			} else {
 				info.timeout = date;
@@ -1607,12 +1636,12 @@ public class NioEndpoint extends AbstractEndpoint {
 					});
 				}
 			} else if (info.write()) {
-				remove(info.channel);
+				remove(info);
 				if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
 					closeChannel(info.channel);
 				}
 			} else {
-				remove(info.channel);
+				remove(info);
 				processChannel(info.channel, SocketStatus.ERROR);
 			}
 
