@@ -1571,8 +1571,8 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 
 			if (info.resume()) {
+				remove(info);
 				if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
-					remove(info);
 					closeChannel(info.channel);
 				}
 			}
@@ -1582,6 +1582,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				// TODO
 			} else if (info.read()) {
 				if (info.channel.isReadReady()) {
+					System.out.println("********  await for read event  ********");
 					info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
 
 						@Override

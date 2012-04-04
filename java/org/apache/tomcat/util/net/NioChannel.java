@@ -965,7 +965,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * @throws InterruptedException
 	 */
 	public int writeBytes(ByteBuffer src, long timeout, TimeUnit unit) throws Exception {
-		if (writing) {
+		if (this.writing) {
 			throw new WritePendingException();
 		}
 		try {

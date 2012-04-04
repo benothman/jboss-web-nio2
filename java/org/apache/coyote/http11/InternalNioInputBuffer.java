@@ -86,9 +86,49 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	public InternalNioInputBuffer(Request request, int headerBufferSize, NioEndpoint endpoint) {
 		super(request, headerBufferSize);
 		this.endpoint = endpoint;
+		this.init();
+	}
+
+	/**
+	 * 
+	 */
+	protected void init() {
 		this.inputBuffer = new InputBufferImpl();
-		this.readTimeout = (endpoint.getKeepAliveTimeout() > 0 ? endpoint.getKeepAliveTimeout()
-				: endpoint.getSoTimeout());
+		this.readTimeout = (endpoint.getSoTimeout() > 0 ? endpoint.getSoTimeout()
+				: Integer.MAX_VALUE);
+
+		// Initialize the completion handler
+		this.completionHandler = new CompletionHandler<Integer, NioChannel>() {
+
+			@Override
+			public void completed(Integer nBytes, NioChannel attachment) {
+				if (nBytes < 0) {
+					failed(new ClosedChannelException(), attachment);
+				}
+
+				if (nBytes > 0) {
+					bbuf.flip();
+					bbuf.get(buf, pos, nBytes);
+					lastValid = pos + nBytes;
+					endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, NioChannel attachment) {
+				if (exc instanceof InterruptedByTimeoutException) {
+					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+					endpoint.removeEventChannel(attachment);
+					close(attachment);
+				} else if (exc instanceof ClosedChannelException) {
+					endpoint.removeEventChannel(attachment);
+					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+				} else {
+					endpoint.removeEventChannel(attachment);
+					endpoint.processChannel(attachment, SocketStatus.ERROR);
+				}
+			}
+		};
 	}
 
 	/**
@@ -418,41 +458,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	private void nonBlockingRead(final ByteBuffer bb, long timeout, TimeUnit unit) {
 
 		final NioChannel ch = this.channel;
-
-		if (this.completionHandler == null) {
-			this.completionHandler = new CompletionHandler<Integer, NioChannel>() {
-
-				@Override
-				public void completed(Integer nBytes, NioChannel attachment) {
-					if (nBytes < 0) {
-						failed(new ClosedChannelException(), attachment);
-					}
-
-					if (nBytes > 0) {
-						bbuf.flip();
-						bbuf.get(buf, pos, nBytes);
-						lastValid = pos + nBytes;
-						endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
-					}
-				}
-
-				@Override
-				public void failed(Throwable exc, NioChannel attachment) {
-					if (exc instanceof InterruptedByTimeoutException) {
-						endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-						endpoint.removeEventChannel(attachment);
-						close(attachment);
-					} else if (exc instanceof ClosedChannelException) {
-						endpoint.removeEventChannel(attachment);
-						endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-					} else {
-						endpoint.removeEventChannel(attachment);
-						endpoint.processChannel(attachment, SocketStatus.ERROR);
-					}
-				}
-			};
-		}
-
 		if (ch.isReadReady()) {
 			try {
 				ch.read(bb, ch, this.completionHandler);
@@ -486,8 +491,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		}
 		return nr;
 	}
-
-	// ------------------------------------- ChannelInputBuffer Inner Class
 
 	/**
 	 * This class is an input buffer which will read its data from an input

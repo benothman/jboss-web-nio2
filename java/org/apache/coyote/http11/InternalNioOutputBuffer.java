@@ -69,7 +69,48 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	public InternalNioOutputBuffer(Response response, int headerBufferSize, NioEndpoint endpoint) {
 		super(response, headerBufferSize);
 		this.endpoint = endpoint;
-		this.writeTimeout = endpoint.getSoTimeout();
+		// Initialize the input buffer
+		this.init();
+	}
+
+	/**
+	 * 
+	 */
+	protected void init() {
+
+		this.writeTimeout = (endpoint.getSoTimeout() > 0 ? endpoint.getSoTimeout()
+				: Integer.MAX_VALUE);
+
+		this.completionHandler = new CompletionHandler<Integer, NioChannel>() {
+
+			@Override
+			public void completed(Integer nBytes, NioChannel attachment) {
+				if (nBytes < 0) {
+					failed(new ClosedChannelException(), attachment);
+					return;
+				}
+
+				if (bbuf.hasRemaining()) {
+					attachment.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, attachment, this);
+				} else {
+					// Clear the buffer when all bytes are written
+					bbuf.clear();
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, NioChannel attachment) {
+				endpoint.removeEventChannel(attachment);
+				if (exc instanceof InterruptedByTimeoutException) {
+					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+					close(attachment);
+				} else if (exc instanceof ClosedChannelException) {
+					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+				} else {
+					endpoint.processChannel(attachment, SocketStatus.ERROR);
+				}
+			}
+		};
 	}
 
 	/**
@@ -123,8 +164,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
 		int nw = 0;
 		try {
-			long wrTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
-			nw = this.channel.writeBytes(buffer, wrTimeout, unit);
+			nw = this.channel.writeBytes(buffer, timeout, unit);
 			if (nw < 0) {
 				close(channel);
 			}
@@ -151,46 +191,12 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	private void nonBlockingWrite(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
 
 		final NioChannel ch = this.channel;
-		final long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
-
-		if (this.completionHandler == null) {
-			this.completionHandler = new CompletionHandler<Integer, NioChannel>() {
-
-				@Override
-				public void completed(Integer nBytes, NioChannel attachment) {
-					if (nBytes < 0) {
-						failed(new ClosedChannelException(), attachment);
-						return;
-					}
-
-					if (bbuf.hasRemaining()) {
-						attachment.write(bbuf, writeTimeout, unit, attachment, this);
-					} else {
-						// Clear the buffer when all bytes are written
-						bbuf.clear();
-					}
-				}
-
-				@Override
-				public void failed(Throwable exc, NioChannel attachment) {
-					endpoint.removeEventChannel(attachment);
-					if (exc instanceof InterruptedByTimeoutException) {
-						endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-						close(attachment);
-					} else if (exc instanceof ClosedChannelException) {
-						endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-					} else {
-						endpoint.processChannel(attachment, SocketStatus.ERROR);
-					}
-				}
-			};
-		}
 
 		// Check if the channel is ready for write operation
 		if (ch.isWriteReady()) {
 			try {
 				// Perform the write operation
-				ch.write(buffer, writeTimeout, unit, ch, this.completionHandler);
+				ch.write(buffer, timeout, unit, ch, this.completionHandler);
 			} catch (Throwable t) {
 				log.warn("An error occurs when trying a blocking write");
 				if (log.isDebugEnabled()) {
