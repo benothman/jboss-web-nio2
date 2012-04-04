@@ -368,24 +368,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			if (lastValid == buf.length) {
 				throw new IllegalArgumentException(sm.getString("iib.requestheadertoolarge.error"));
 			}
-
-			if (nonBlocking) {
-				nonBlockingRead(bbuf, readTimeout, unit);
-			} else {
-				nRead = blockingRead(bbuf, readTimeout, unit);
-				if (nRead > 0) {
-					bbuf.flip();
-					bbuf.get(buf, pos, nRead);
-					lastValid = pos + nRead;
-				} else {
-					if ((-nRead) == Status.EAGAIN) {
-						return false;
-					} else {
-						throw new IOException(sm.getString("iib.failedread"));
-					}
-				}
-			}
-
 		} else {
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
@@ -398,22 +380,25 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			}
 			pos = end;
 			lastValid = pos;
+		}
 
-			if (nonBlocking) {
-				nonBlockingRead(bbuf, readTimeout, unit);
-			} else {
-				nRead = blockingRead(bbuf, readTimeout, unit);
-				if (nRead > 0) {
-					bbuf.flip();
-					bbuf.get(buf, pos, nRead);
-					lastValid = pos + nRead;
-				} else if (nRead == NioChannel.OP_STATUS_CLOSED) {
-					throw new IOException(sm.getString("iib.failedread"));
-				} else if (nRead == NioChannel.OP_STATUS_READ_TIMEOUT) {
-					throw new SocketTimeoutException(sm.getString("iib.failedread"));
-				}
+		// -----------------------
+		if (nonBlocking) {
+			nonBlockingRead(bbuf, readTimeout, unit);
+		} else {
+			nRead = blockingRead(bbuf, readTimeout, unit);
+			if (nRead > 0) {
+				bbuf.flip();
+				bbuf.get(buf, pos, nRead);
+				lastValid = pos + nRead;
+			} else if (nRead == NioChannel.OP_STATUS_CLOSED) {
+				throw new IOException(sm.getString("iib.failedread"));
+			} else if (nRead == NioChannel.OP_STATUS_READ_TIMEOUT) {
+				throw new SocketTimeoutException(sm.getString("iib.failedread"));
 			}
 		}
+		// -----------------------
+
 		return (nRead >= 0);
 	}
 
@@ -469,7 +454,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			};
 		}
 
-		if (!ch.isReadPending()) {
+		if (ch.isReadReady()) {
 			ch.read(bb, ch, this.completionHandler);
 		}
 	}
