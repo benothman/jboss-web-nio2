@@ -382,7 +382,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			lastValid = pos;
 		}
 
-		// -----------------------
+		// Reading from client
 		if (nonBlocking) {
 			nonBlockingRead(bbuf, readTimeout, unit);
 		} else {
@@ -397,7 +397,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				throw new SocketTimeoutException(sm.getString("iib.failedread"));
 			}
 		}
-		// -----------------------
 
 		return (nRead >= 0);
 	}
@@ -455,7 +454,13 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		}
 
 		if (ch.isReadReady()) {
-			ch.read(bb, ch, this.completionHandler);
+			try {
+				ch.read(bb, ch, this.completionHandler);
+			} catch (Throwable t) {
+				if (log.isDebugEnabled()) {
+					log.debug("An error occurs when trying a non-blocking read ", t);
+				}
+			}
 		}
 	}
 
