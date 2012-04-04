@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.Response;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.net.CompletionHandlerAdapter;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
 import org.apache.tomcat.util.net.SocketStatus;
@@ -54,6 +53,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * NIO endpoint.
 	 */
 	protected NioEndpoint endpoint;
+
+	/**
+	 * 
+	 */
+	private CompletionHandler<Integer, NioChannel> completionHandler;
 
 	/**
 	 * Create a new instance of {@code InternalNioOutputBuffer}
@@ -149,39 +153,43 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		final NioChannel ch = this.channel;
 		final long writeTimeout = timeout > 0 ? timeout : Integer.MAX_VALUE;
 
-		if (!ch.isWritePending()) {
+		if (this.completionHandler == null) {
+			this.completionHandler = new CompletionHandler<Integer, NioChannel>() {
 
-			ch.write(buffer, writeTimeout, unit, ch,
-					new CompletionHandlerAdapter<Integer, NioChannel>() {
+				@Override
+				public void completed(Integer nBytes, NioChannel attachment) {
+					if (nBytes < 0) {
+						failed(new ClosedChannelException(), attachment);
+						return;
+					}
 
-						@Override
-						public void completed(Integer nBytes, NioChannel attachment) {
-							if (nBytes < 0) {
-								failed(new ClosedChannelException(), attachment);
-								return;
-							}
+					if (bbuf.hasRemaining()) {
+						attachment.write(bbuf, writeTimeout, unit, attachment, this);
+					} else {
+						// Clear the buffer when all bytes are written
+						bbuf.clear();
+					}
+				}
 
-							if (buffer.hasRemaining()) {
-								attachment.write(buffer, writeTimeout, unit, attachment, this);
-							} else {
-								// Clear the buffer when all bytes are written
-								buffer.clear();
-							}
-						}
+				@Override
+				public void failed(Throwable exc, NioChannel attachment) {
+					endpoint.removeEventChannel(attachment);
+					if (exc instanceof InterruptedByTimeoutException) {
+						endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
+						close(attachment);
+					} else if (exc instanceof ClosedChannelException) {
+						endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
+					} else {
+						endpoint.processChannel(attachment, SocketStatus.ERROR);
+					}
+				}
+			};
+		}
 
-						@Override
-						public void failed(Throwable exc, NioChannel attachment) {
-							endpoint.removeEventChannel(attachment);
-							if (exc instanceof InterruptedByTimeoutException) {
-								endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-								close(attachment);
-							} else if (exc instanceof ClosedChannelException) {
-								endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-							} else {
-								endpoint.processChannel(attachment, SocketStatus.ERROR);
-							}
-						}
-					});
+		// Check if the channel is ready for write operation
+		if (ch.isWriteReady()) {
+			// Perform the write operation
+			ch.write(buffer, writeTimeout, unit, ch, this.completionHandler);
 		}
 	}
 
@@ -362,4 +370,5 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		return true;
 	}
+
 }

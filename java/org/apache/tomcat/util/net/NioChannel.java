@@ -606,7 +606,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	public int readBytes(final ByteBuffer dst, final long timeout, final TimeUnit unit)
 			throws Exception {
-		if (reading) {
+		if (this.reading) {
 			throw new ReadPendingException();
 		}
 		try {
@@ -1203,7 +1203,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 			throw new WritePendingException();
 		}
 
-		enableWriting(false);
+		disableWriting();
 		this.channel.write(srcs, offset, length, timeout, unit, attachment,
 				new CompletionHandler<Long, A>() {
 
