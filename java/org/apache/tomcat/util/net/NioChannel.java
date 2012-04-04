@@ -686,6 +686,17 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		// Disable reading
 		disableReading();
 		final int x = this.reset(dst);
+		
+		if(this.readHandler == null) {
+			this.readHandler = new ReadCompletionHandler<>();
+		}
+		this.readHandler.handler = handler;
+		this.channel.read(dst, timeout, unit, attachment, this.readHandler);
+
+		
+		
+		
+		/*
 		this.channel.read(dst, timeout, unit, attachment, new CompletionHandler<Integer, A>() {
 
 			@Override
@@ -702,6 +713,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 				handler.failed(exc, attach);
 			}
 		});
+		*/
 	}
 
 	/**
@@ -852,6 +864,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 		disableReading();
 		// Clear the internal buffer
 		this.buffer.clear();
+		
 		// Perform an asynchronous read operation using the internal buffer
 		this.channel.read(this.buffer, timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
@@ -1387,4 +1400,33 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	public String toString() {
 		return getName();
 	}
+
+	private ReadCompletionHandler readHandler;
+	
+	
+	private class ReadCompletionHandler<V extends Number, A> implements CompletionHandler<V, A> {
+
+		private CompletionHandler<V, A> handler;
+		
+		
+		/* (non-Javadoc)
+		 * @see java.nio.channels.CompletionHandler#completed(java.lang.Object, java.lang.Object)
+		 */
+		@Override
+		public void completed(V result, A attachment) {
+			enableReading();
+			handler.completed(result, attachment);
+		}
+
+		/* (non-Javadoc)
+		 * @see java.nio.channels.CompletionHandler#failed(java.lang.Throwable, java.lang.Object)
+		 */
+		@Override
+		public void failed(Throwable exc, A attachment) {
+			enableReading();
+			handler.failed(exc, attachment);
+		}
+
+	}
+
 }
