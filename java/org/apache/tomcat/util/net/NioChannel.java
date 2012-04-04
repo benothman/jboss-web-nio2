@@ -1388,10 +1388,10 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable read operations
 	 */
 	protected final void enableReading() {
-		//synchronized (this.readLock) {
-			this.reading = false;
-		//	this.readLock.notifyAll();
-		//}
+		// synchronized (this.readLock) {
+		this.reading = false;
+		// this.readLock.notifyAll();
+		// }
 	}
 
 	/**
@@ -1414,10 +1414,17 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 * Enable write operations
 	 */
 	protected final void enableWriting() {
-		//synchronized (this.writeLock) {
-			this.writing = false;
-		//	this.writeLock.notifyAll();
-		//}
+		// synchronized (this.writeLock) {
+		this.writing = false;
+		// this.writeLock.notifyAll();
+		// }
+	}
+
+	/**
+	 * Disable write operations
+	 */
+	protected final void disableWriting() {
+		this.writing = true;
 	}
 
 	/**

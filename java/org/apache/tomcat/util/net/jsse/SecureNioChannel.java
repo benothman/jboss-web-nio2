@@ -131,13 +131,13 @@ public class SecureNioChannel extends NioChannel {
 			throw new ReadPendingException();
 		}
 
-		enableReading(false);
+		disableReading();
 
 		if (this.netInBuffer.position() == 0) {
 			try {
 				this.reset(this.netInBuffer);
 				int x = this.channel.read(this.netInBuffer).get(timeout, unit);
-				if(x < 0) {
+				if (x < 0) {
 					throw new ClosedChannelException();
 				}
 			} catch (Exception exp) {
@@ -188,7 +188,7 @@ public class SecureNioChannel extends NioChannel {
 			throw new ReadPendingException();
 		}
 
-		enableReading(false);
+		disableReading();
 		this.reset(this.netInBuffer);
 
 		this.channel.read(this.netInBuffer, timeout, unit, attachment,
@@ -242,16 +242,16 @@ public class SecureNioChannel extends NioChannel {
 			throw new IndexOutOfBoundsException();
 		}
 
+		if (isReadPending()) {
+			throw new ReadPendingException();
+		}
+		
+		// Disable read operations
+		disableReading();
 		final ByteBuffer netInBuffers[] = new ByteBuffer[length];
 		for (int i = 0; i < length; i++) {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
 		}
-
-		if (isReadPending()) {
-			throw new ReadPendingException();
-		}
-
-		enableReading(false);
 
 		this.reset(netInBuffers[0]);
 
@@ -275,8 +275,8 @@ public class SecureNioChannel extends NioChannel {
 							}
 						}
 
-						handler.completed(read, attach);
 						enableReading();
+						handler.completed(read, attach);
 					}
 
 					@Override
@@ -327,7 +327,9 @@ public class SecureNioChannel extends NioChannel {
 		if (isWritePending()) {
 			throw new WritePendingException();
 		}
-		enableWriting(false);
+
+		disableWriting();
+		
 		// Clear the output buffer
 		this.netOutBuffer.compact();
 		// the number of bytes written
@@ -386,7 +388,8 @@ public class SecureNioChannel extends NioChannel {
 		if (isWritePending()) {
 			throw new WritePendingException();
 		}
-		enableWriting(false);
+		
+		disableWriting();
 
 		try {
 			// Prepare the output buffer
@@ -448,7 +451,8 @@ public class SecureNioChannel extends NioChannel {
 		if (isWritePending()) {
 			throw new WritePendingException();
 		}
-		enableWriting(false);
+
+		disableWriting();
 
 		ByteBuffer[] netOutBuffers = new ByteBuffer[length];
 		int size = getSSLSession().getPacketBufferSize();
