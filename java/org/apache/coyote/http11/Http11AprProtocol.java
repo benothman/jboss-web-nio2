@@ -641,7 +641,8 @@ public class Http11AprProtocol implements ProtocolHandler, MBeanRegistration {
                         state = event(socket, SocketStatus.OPEN_READ);
                     } else {
                         proto.endpoint.getEventPoller().add(socket, processor.getTimeout(), 
-                                processor.getReadNotifications(), false, processor.getResumeNotification(), false);
+								processor.getReadNotifications(), false,
+								processor.getResumeNotification(), false);
                     }
                 } else {
                     recycledProcessors.offer(processor);
