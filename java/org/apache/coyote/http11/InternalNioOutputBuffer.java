@@ -188,8 +188,15 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 		// Check if the channel is ready for write operation
 		if (ch.isWriteReady()) {
-			// Perform the write operation
-			ch.write(buffer, writeTimeout, unit, ch, this.completionHandler);
+			try {
+				// Perform the write operation
+				ch.write(buffer, writeTimeout, unit, ch, this.completionHandler);
+			} catch (Throwable t) {
+				log.warn("An error occurs when trying a blocking write");
+				if (log.isDebugEnabled()) {
+					log.debug(t.getMessage(), t);
+				}
+			}
 		}
 	}
 
