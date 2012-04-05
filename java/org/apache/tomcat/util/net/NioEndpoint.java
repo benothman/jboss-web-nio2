@@ -1624,8 +1624,9 @@ public class NioEndpoint extends AbstractEndpoint {
 							if (nBytes < 0) {
 								failed(new ClosedChannelException(), attachment);
 							} else {
+								NioChannel ch = attachment.channel;
 								remove(attachment);
-								processChannel(attachment.channel, SocketStatus.OPEN_READ);
+								processChannel(ch, SocketStatus.OPEN_READ);
 							}
 						}
 
