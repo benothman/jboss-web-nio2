@@ -27,7 +27,6 @@ import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -737,7 +736,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		protected AtomicLong registerCount = new AtomicLong(0);
 		protected RequestGroupInfo global = new RequestGroupInfo();
 
-		protected ConcurrentHashMap<NioChannel, Http11NioProcessor> connections = new ConcurrentHashMap<NioChannel, Http11NioProcessor>();
+		protected ConcurrentHashMap<Long, Http11NioProcessor> connections = new ConcurrentHashMap<Long, Http11NioProcessor>();
 		protected ConcurrentLinkedQueue<Http11NioProcessor> recycledProcessors = new ConcurrentLinkedQueue<Http11NioProcessor>() {
 			/**
 			 * 
@@ -799,7 +798,9 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		@Override
 		public SocketState event(NioChannel channel, SocketStatus status) {
 
-			Http11NioProcessor processor = connections.get(channel);
+			System.out.println("-----> Http11NioProtocol#event(" + channel + ", " + status + ") ");
+
+			Http11NioProcessor processor = connections.get(channel.getId());
 
 			SocketState state = SocketState.CLOSED;
 			if (processor != null) {
@@ -826,7 +827,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					Http11NioProtocol.log.error(sm.getString("http11protocol.proto.error"), e);
 				} finally {
 					if (state != SocketState.LONG) {
-						connections.remove(channel);
+						connections.remove(channel.getId());
 						recycledProcessors.offer(processor);
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
@@ -856,8 +857,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						}
 					} else {
 						if (proto.endpoint.isRunning()) {
-							proto.endpoint.addEventChannel(channel,
-									processor.endpoint.getKeepAliveTimeout(),
+							proto.endpoint.addEventChannel(channel, processor.getTimeout(),
 									processor.getReadNotifications(),
 									processor.getWriteNotification(),
 									processor.getResumeNotification(), false);
@@ -899,14 +899,12 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					// processed by this thread will use either a new or a
 					// recycled
 					// processor.
-					connections.put(channel, processor);
+					connections.put(channel.getId(), processor);
 					if (processor.isAvailable() && processor.getReadNotifications()) {
 						// Call a read event right away
 						state = event(channel, SocketStatus.OPEN_READ);
 					} else {
-						proto.endpoint.addEventChannel(
-								channel,
-								proto.endpoint.getKeepAliveTimeout(),// processor.getTimeout(),
+						proto.endpoint.addEventChannel(channel, processor.getTimeout(),
 								processor.getReadNotifications(), false,
 								processor.getResumeNotification(), false);
 					}
