@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
-import java.nio.channels.ClosedByInterruptException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -744,6 +744,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 			private static final long serialVersionUID = 1L;
 			protected AtomicInteger size = new AtomicInteger(0);
 
+			@Override
 			public boolean offer(Http11NioProcessor processor) {
 				boolean offer = (proto.processorCache == -1) ? true
 						: (size.get() < proto.processorCache);
@@ -760,6 +761,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				return result;
 			}
 
+			@Override
 			public Http11NioProcessor poll() {
 				Http11NioProcessor result = super.poll();
 				if (result != null) {
@@ -768,6 +770,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 				return result;
 			}
 
+			@Override
 			public void clear() {
 				Http11NioProcessor next = poll();
 				while (next != null) {
@@ -797,8 +800,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		 */
 		@Override
 		public SocketState event(NioChannel channel, SocketStatus status) {
-
-			System.out.println("-----> Http11NioProtocol#event(" + channel + ", " + status + ") ");
 
 			Http11NioProcessor processor = connections.get(channel.getId());
 
@@ -841,8 +842,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 											public void completed(Integer nBytes,
 													NioEndpoint endpoint) {
 												if (nBytes < 0) {
-													failed(new ClosedByInterruptException(),
-															endpoint);
+													failed(new ClosedChannelException(), endpoint);
 												} else {
 													endpoint.processChannel(ch, null);
 												}

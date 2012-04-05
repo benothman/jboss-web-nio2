@@ -1586,8 +1586,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				return false;
 			}
 
-			System.out.println("*** " + channel + " -> flag = " + flag + " ***");
-
 			long date = timeout + System.currentTimeMillis();
 			ChannelInfo info = this.channelList.get(channel.getId());
 			if (info == null) {
@@ -1612,11 +1610,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				remove(info);
 				// TODO
 			} else if (info.read()) {
-
-				System.out.println("+-+-+-+ " + channel + " -> READ +-+-+-+");
-
 				if (ch.isReadReady()) {
-					System.out.println("********  await for read event  ********");
 					ch.awaitRead(ch, new CompletionHandler<Integer, NioChannel>() {
 
 						@Override
