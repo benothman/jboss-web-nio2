@@ -1586,22 +1586,24 @@ public class NioEndpoint extends AbstractEndpoint {
 				return false;
 			}
 
+			System.out.println("*** " + channel + " -> flag = " + flag + " ***");
+
 			long date = timeout + System.currentTimeMillis();
 			ChannelInfo info = this.channelList.get(channel.getId());
 			if (info == null) {
 				info = poll();
 				info.channel = channel;
-				info.timeout = date;
 				info.flags = flag;
-				this.channelList.put(info.channel.getId(), info);
+				this.channelList.put(channel.getId(), info);
 			} else {
-				info.timeout = date;
 				info.flags = ChannelInfo.merge(info.flags, flag);
 			}
 
+			info.timeout = date;
+
 			if (info.resume()) {
 				remove(info);
-				if (!processChannel(info.channel, SocketStatus.OPEN_CALLBACK)) {
+				if (!processChannel(channel, SocketStatus.OPEN_CALLBACK)) {
 					closeChannel(info.channel);
 				}
 			}
@@ -1610,6 +1612,9 @@ public class NioEndpoint extends AbstractEndpoint {
 				remove(info);
 				// TODO
 			} else if (info.read()) {
+
+				System.out.println("+-+-+-+ " + channel + " -> READ +-+-+-+");
+
 				if (info.channel.isReadReady()) {
 					System.out.println("********  await for read event  ********");
 					info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
