@@ -1601,54 +1601,53 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			info.timeout = date;
 
+			final NioChannel ch = channel;
+
 			if (info.resume()) {
 				remove(info);
-				if (!processChannel(channel, SocketStatus.OPEN_CALLBACK)) {
-					closeChannel(info.channel);
+				if (!processChannel(ch, SocketStatus.OPEN_CALLBACK)) {
+					closeChannel(ch);
 				}
-			}
-
-			if (info.wakeup()) {
+			} else if (info.wakeup()) {
 				remove(info);
 				// TODO
 			} else if (info.read()) {
 
 				System.out.println("+-+-+-+ " + channel + " -> READ +-+-+-+");
 
-				if (info.channel.isReadReady()) {
+				if (ch.isReadReady()) {
 					System.out.println("********  await for read event  ********");
-					info.channel.awaitRead(info, new CompletionHandler<Integer, ChannelInfo>() {
+					ch.awaitRead(ch, new CompletionHandler<Integer, NioChannel>() {
 
 						@Override
-						public void completed(Integer nBytes, ChannelInfo attachment) {
+						public void completed(Integer nBytes, NioChannel attach) {
 							if (nBytes < 0) {
-								failed(new ClosedChannelException(), attachment);
+								failed(new ClosedChannelException(), attach);
 							} else {
-								NioChannel ch = attachment.channel;
-								remove(attachment);
-								processChannel(ch, SocketStatus.OPEN_READ);
+								remove(attach);
+								processChannel(attach, SocketStatus.OPEN_READ);
 							}
 						}
 
 						@Override
-						public void failed(Throwable exc, ChannelInfo attachment) {
-							remove(attachment);
+						public void failed(Throwable exc, NioChannel attach) {
+							remove(attach);
 							if (exc instanceof ClosedChannelException) {
-								processChannel(attachment.channel, SocketStatus.DISCONNECT);
+								processChannel(attach, SocketStatus.DISCONNECT);
 							} else {
-								processChannel(attachment.channel, SocketStatus.ERROR);
+								processChannel(attach, SocketStatus.ERROR);
 							}
 						}
 					});
 				}
 			} else if (info.write()) {
 				remove(info);
-				if (!processChannel(info.channel, SocketStatus.OPEN_WRITE)) {
-					closeChannel(info.channel);
+				if (!processChannel(ch, SocketStatus.OPEN_WRITE)) {
+					closeChannel(ch);
 				}
 			} else {
 				remove(info);
-				processChannel(info.channel, SocketStatus.ERROR);
+				processChannel(ch, SocketStatus.ERROR);
 			}
 
 			// Wake up all waiting threads
