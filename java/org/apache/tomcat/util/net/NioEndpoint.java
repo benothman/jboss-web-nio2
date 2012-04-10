@@ -1370,6 +1370,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			} catch (Throwable th) {
 				// NOPE
+				logger.error(th.getMessage(), th);
+
 			} finally {
 				this.recycle();
 			}
