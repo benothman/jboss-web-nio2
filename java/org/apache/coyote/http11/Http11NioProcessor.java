@@ -20,6 +20,7 @@ package org.apache.coyote.http11;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Locale;
@@ -236,7 +237,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			response.setStatus(500);
 			error = true;
 		}
-		
+
 		rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
 
 		if (error) {
@@ -300,20 +301,17 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 								public void completed(Integer nBytes, NioChannel attachment) {
 									if (nBytes < 0) {
 										// Reach the end of the stream
-										closeChannel(ch);
-										return;
-									}
-
-									if (nBytes > 0) {
+										failed(null, attachment);
+									} else {
 										endpoint.processChannel(ch, null);
 									}
 								}
 
 								@Override
 								public void failed(Throwable exc, NioChannel attachment) {
-									if (exc instanceof InterruptedByTimeoutException) {
-										closeChannel(ch);
-									}
+									System.out
+											.println("Waiting for client request error -> " + exc);
+									closeChannel(attachment);
 								}
 							});
 
@@ -1152,7 +1150,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			sendfileData.setStart(response.getSendfileStart());
 			sendfileData.setEnd(response.getSendfileEnd());
 			sendfileData.setKeepAlive(keepAlive);
-			
+
 		}
 
 		// Check for compression
