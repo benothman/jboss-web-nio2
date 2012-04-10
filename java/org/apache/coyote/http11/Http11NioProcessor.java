@@ -309,8 +309,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 
 								@Override
 								public void failed(Throwable exc, NioChannel attachment) {
-									System.out
-											.println("Waiting for client request error -> " + exc);
 									closeChannel(attachment);
 								}
 							});

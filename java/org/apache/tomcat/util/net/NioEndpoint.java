@@ -1361,15 +1361,18 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		@Override
 		public void run() {
+			try {
+				Handler.SocketState state = ((status == null) ? handler.process(channel) : handler
+						.event(channel, status));
 
-			Handler.SocketState state = ((status == null) ? handler.process(channel) : handler
-					.event(channel, status));
-
-			if (state == SocketState.CLOSED) {
-				closeChannel(channel);
+				if (state == SocketState.CLOSED) {
+					closeChannel(channel);
+				}
+			} catch (Throwable th) {
+				// NOPE
+			} finally {
+				this.recycle();
 			}
-
-			this.recycle();
 		}
 
 		/**
