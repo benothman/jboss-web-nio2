@@ -524,6 +524,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	@Override
 	public void close() throws IOException {
+		System.out.println("Closing " + this);
 		this.channel.close();
 	}
 
