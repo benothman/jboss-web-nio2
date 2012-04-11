@@ -100,6 +100,11 @@ public abstract class AbstractEndpoint {
 			.getRuntime().availableProcessors();
 
 	/**
+	 * The maximum number of connections
+	 */
+	protected int maxConnections = 1024;
+	
+	/**
 	 * Priority of the acceptor and poller threads.
 	 */
 	protected int threadPriority = Thread.NORM_PRIORITY;
@@ -462,6 +467,24 @@ public abstract class AbstractEndpoint {
 	 */
 	public void setMaxThreads(int maxThreads) {
 		this.maxThreads = maxThreads;
+	}
+
+	/**
+	 * Getter for maxConnections
+	 *
+	 * @return the maxConnections
+	 */
+	public int getMaxConnections() {
+		return this.maxConnections;
+	}
+
+	/**
+	 * Setter for the maxConnections
+	 *
+	 * @param maxConnections the maxConnections to set
+	 */
+	public void setMaxConnections(int maxConnections) {
+		this.maxConnections = maxConnections;
 	}
 
 	/**

@@ -293,6 +293,21 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	}
 
 	/**
+	 * @param size
+	 */
+	public void setPollerSize(int size) {
+		System.out.println(" max-connections = " + size);
+		this.endpoint.setMaxConnections(size);
+	}
+
+	/**
+	 * @return The poller size
+	 */
+	public int getPollerSize() {
+		return this.endpoint.getMaxConnections();
+	}
+
+	/**
 	 * @return the thread priority
 	 */
 	public int getThreadPriority() {

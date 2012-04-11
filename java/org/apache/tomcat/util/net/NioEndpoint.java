@@ -603,7 +603,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 *         <tt>false</tt>
 	 */
 	private boolean addChannel(NioChannel channel) {
-		if (this.counter.get() < this.maxThreads && channel.isOpen()) {
+		if (this.counter.get() < this.maxConnections && channel.isOpen()) {
 			if (this.connections.get(channel.getId()) == null
 					|| this.connections.get(channel.getId()).isClosed()) {
 				this.connections.put(channel.getId(), channel);
@@ -611,7 +611,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				return true;
 			}
 		}
-
+		
 		return false;
 	}
 
@@ -1369,9 +1369,9 @@ public class NioEndpoint extends AbstractEndpoint {
 					closeChannel(channel);
 				}
 			} catch (Throwable th) {
-				// NOPE
-				logger.error(th.getMessage(), th);
-
+				if (logger.isDebugEnabled()) {
+					logger.debug(th.getMessage(), th);
+				}
 			} finally {
 				this.recycle();
 			}
@@ -1619,17 +1619,19 @@ public class NioEndpoint extends AbstractEndpoint {
 								failed(new ClosedChannelException(), attach);
 							} else {
 								remove(attach);
-								processChannel(attach, SocketStatus.OPEN_READ);
+								if (!processChannel(attach, SocketStatus.OPEN_READ)) {
+									closeChannel(attach);
+								}
 							}
 						}
 
 						@Override
 						public void failed(Throwable exc, NioChannel attach) {
 							remove(attach);
-							if (exc instanceof ClosedChannelException) {
-								processChannel(attach, SocketStatus.DISCONNECT);
-							} else {
-								processChannel(attach, SocketStatus.ERROR);
+							SocketStatus status = (exc instanceof ClosedChannelException) ? SocketStatus.DISCONNECT
+									: SocketStatus.ERROR;
+							if (!processChannel(attach, status)) {
+								closeChannel(attach);
 							}
 						}
 					});
