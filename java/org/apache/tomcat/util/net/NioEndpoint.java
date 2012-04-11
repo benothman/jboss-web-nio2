@@ -611,7 +611,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -645,6 +645,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void closeChannel(NioChannel channel) {
 		if (channel != null) {
 			try {
+				System.out.println("Closing " + channel);
 				channel.close();
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
