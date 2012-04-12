@@ -335,6 +335,16 @@ public class NioEndpoint extends AbstractEndpoint {
 			sendfile.destroy();
 		}
 
+		for (NioChannel ch : this.connections.values()) {
+			try {
+				ch.close();
+			} catch (Throwable t) {
+				// Nothing to do
+			}
+		}
+
+		this.connections.clear();
+		
 		this.serverSocketChannelFactory.destroy();
 		this.serverSocketChannelFactory = null;
 		this.recycledChannelProcessors = null;
@@ -697,7 +707,8 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					System.out.println("New connection accepted -> " + (++counter));
+					System.out.println("New connection accepted -> " + (++counter) + " : open = "
+							+ channel.isOpen());
 					// Using the short-circuit AND operator
 					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(
 							channel, null))) {
