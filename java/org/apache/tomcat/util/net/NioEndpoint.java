@@ -200,6 +200,10 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.executor = Executors.newFixedThreadPool(this.maxThreads, this.threadFactory);
 		}
 
+		System.out.println("--------> " + this.executor.getClass().getName());
+		
+		
+		
 		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
