@@ -506,7 +506,7 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
-	 * Closes this channel.
+	 * Close this channel.
 	 * 
 	 * <p>
 	 * Any outstanding asynchronous operations upon this channel will complete
@@ -524,7 +524,6 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 */
 	@Override
 	public void close() throws IOException {
-		System.out.println("Closing " + this);
 		this.channel.close();
 	}
 

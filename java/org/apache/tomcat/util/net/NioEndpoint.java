@@ -198,11 +198,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		// If the executor is not set, create it with a fixed thread pool
 		if (this.executor == null) {
 			this.executor = Executors.newFixedThreadPool(this.maxThreads, this.threadFactory);
-		}
-
-		System.out.println("--------> " + this.executor.getClass().getName());
-		
-		
+		}		
 		
 		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
@@ -696,7 +692,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		public void run() {
 
-			int counter = 0;
 			// Loop until we receive a shutdown command
 			while (running) {
 				// Loop if end point is paused
@@ -711,8 +706,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					System.out.println("New connection accepted -> " + (++counter) + " : open = "
-							+ channel.isOpen());
 					// Using the short-circuit AND operator
 					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(
 							channel, null))) {
