@@ -205,6 +205,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		} else {
 			this.serverSocketChannelFactory.threadGroup = threadGroup;
 		}
+		System.out.println("***** backlog = " + this.backlog);
 
 		// Initialize the SSL context if the SSL mode is enabled
 		if (SSLEnabled) {
