@@ -128,7 +128,8 @@ public abstract class AbstractEndpoint {
 	 * Allows the server developer to specify the backlog that should be used
 	 * for server sockets. By default, this value is 100.
 	 */
-	protected int backlog = 100;
+	//protected int backlog = 100;
+	protected int backlog = 511;
 
 	/**
 	 * Socket TCP no delay.
