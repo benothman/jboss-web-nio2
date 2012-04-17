@@ -296,7 +296,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 	 * @param size
 	 */
 	public void setPollerSize(int size) {
-		System.out.println(" max-connections = " + size);
 		this.endpoint.setMaxConnections(size);
 	}
 

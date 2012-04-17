@@ -68,11 +68,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	private ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
 
 	/**
-	 * Available workers.
-	 */
-	protected WorkerStack workerStack = null;
-
-	/**
 	 * Handling of accepted sockets.
 	 */
 	protected Handler handler = null;
@@ -198,8 +193,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		// If the executor is not set, create it with a fixed thread pool
 		if (this.executor == null) {
 			this.executor = Executors.newFixedThreadPool(this.maxThreads, this.threadFactory);
-		}		
-		
+		}
+
 		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
@@ -254,11 +249,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (!running) {
 			running = true;
 			paused = false;
-
-			// Create worker collection
-			if (executor == null) {
-				workerStack = new WorkerStack(maxThreads);
-			}
 
 			// Start acceptor threads
 			for (int i = 0; i < acceptorThreadCount; i++) {
@@ -321,16 +311,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 
-		if (workerStack != null) {
-			// All workers will stop automatically since they already received
-			// the interruption signal
-			for (Worker worker : workerStack.workers) {
-				if (worker != null && worker.channel != null) {
-					worker.channel.close(true);
-				}
-			}
-		}
-
 		if (this.sendfile != null) {
 			sendfile.destroy();
 		}
@@ -344,7 +324,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		this.connections.clear();
-		
+
 		this.serverSocketChannelFactory.destroy();
 		this.serverSocketChannelFactory = null;
 		this.recycledChannelProcessors = null;
@@ -468,96 +448,11 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * Create (or allocate) and return an available processor for use in
-	 * processing a specific HTTP request, if possible. If the maximum allowed
-	 * processors have already been created and are in use, return
-	 * <code>null</code> instead.
-	 */
-	protected Worker createWorkerThread() {
-
-		synchronized (workerStack) {
-			if (workerStack.size() > 0) {
-				curThreadsBusy++;
-				return (workerStack.pop());
-			}
-			if ((maxThreads > 0) && (curThreads < maxThreads)) {
-				curThreadsBusy++;
-				if (curThreadsBusy == maxThreads) {
-					logger.info(sm.getString("endpoint.info.maxThreads",
-							Integer.toString(maxThreads), address, Integer.toString(port)));
-				}
-				return (newWorkerThread());
-			} else {
-				if (maxThreads < 0) {
-					curThreadsBusy++;
-					return (newWorkerThread());
-				} else {
-					return (null);
-				}
-			}
-		}
-
-	}
-
-	/**
-	 * Create and return a new processor suitable for processing HTTP requests
-	 * and returning the corresponding responses.
-	 */
-	protected Worker newWorkerThread() {
-		return new Worker();
-	}
-
-	/**
-	 * Recycle the specified Processor so that it can be used again.
-	 * 
-	 * @param workerThread
-	 *            The processor to be recycled
-	 */
-	protected void recycleWorkerThread(Worker workerThread) {
-		synchronized (workerStack) {
-			workerStack.push(workerThread);
-			curThreadsBusy--;
-			workerStack.notify();
-		}
-	}
-
-	/**
-	 * Return a new worker thread, and block while to worker is available.
-	 */
-	protected Worker getWorkerThread() {
-		// Allocate a new worker thread
-		Worker workerThread = createWorkerThread();
-		if (org.apache.tomcat.util.net.Constants.WAIT_FOR_THREAD
-				|| org.apache.tomcat.util.Constants.LOW_MEMORY) {
-			while (workerThread == null) {
-				try {
-					synchronized (workerStack) {
-						workerStack.wait();
-					}
-				} catch (InterruptedException e) {
-					// Ignore
-				}
-				workerThread = createWorkerThread();
-			}
-		}
-		return workerThread;
-	}
-
-	/**
 	 * Process given channel.
 	 */
 	protected boolean processChannelWithOptions(NioChannel channel) {
 		try {
-			if (executor == null) {
-				Worker worker = getWorkerThread();
-				if (worker != null) {
-					worker.assignWithOptions(channel);
-				} else {
-					return false;
-				}
-			} else {
-				executor.execute(new ChannelWithOptionsProcessor(channel));
-			}
+			executor.execute(new ChannelWithOptionsProcessor(channel));
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
 			// the pool and its queue are full
@@ -577,31 +472,29 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	public boolean processChannel(NioChannel channel, SocketStatus status) {
 		try {
-			if (this.executor == null) {
-				Worker worker = getWorkerThread();
-				if (worker != null) {
-					worker.assign(channel, status);
-				} else {
-					return false;
-				}
-			} else {
-				ChannelProcessor processor = this.recycledChannelProcessors.poll();
-				if (processor == null) {
-					processor = new ChannelProcessor(channel, status);
-				} else {
-					processor.setChannel(channel);
-					processor.setStatus(status);
-				}
-
-				this.executor.execute(processor);
-			}
+			ChannelProcessor processor = getChannelProcessor(channel, status);
+			this.executor.execute(processor);
+			return true;
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
 			// the pool and its queue are full
 			logger.error(sm.getString("endpoint.process.fail"), t);
 			return false;
 		}
-		return true;
+	}
+
+	/**
+	 * @return peek a processor from the recycled processors list
+	 */
+	private ChannelProcessor getChannelProcessor(NioChannel channel, SocketStatus status) {
+		ChannelProcessor processor = this.recycledChannelProcessors.poll();
+		if (processor == null) {
+			processor = new ChannelProcessor(channel, status);
+		} else {
+			processor.setChannel(channel);
+			processor.setStatus(status);
+		}
+		return processor;
 	}
 
 	/**
@@ -724,8 +617,14 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * {@code ChannelInfo}
+	 * <p>
 	 * Channel list class, used to avoid using a possibly large amount of
 	 * objects with very little actual use.
+	 * </p>
+	 * Created on Apr 13, 2012 at 11:13:13 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
 	public static class ChannelInfo {
 		/**
@@ -875,294 +774,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * Channel list class, used to avoid using a possibly large amount of
-	 * objects with very little actual use.
-	 */
-	public class ChannelList {
-		protected int size;
-		protected int pos;
-		protected ChannelInfo infos[];
-
-		/**
-		 * Create a new instance of {@code ChannelList}
-		 * 
-		 * @param size
-		 */
-		public ChannelList(int size) {
-			this.size = 0;
-			pos = 0;
-			this.infos = new ChannelInfo[size];
-		}
-
-		/**
-		 * @return the channel list size
-		 */
-		public int size() {
-			return this.size;
-		}
-
-		/**
-		 * @return the current ChannelInfo
-		 */
-		public ChannelInfo get() {
-			return pos == size ? null : infos[pos++];
-		}
-
-		/**
-		 * Clear the channel list
-		 */
-		public void clear() {
-			size = 0;
-			pos = 0;
-		}
-
-		/**
-		 * Remove the channel from the list
-		 * 
-		 * @param channel
-		 *            the channel to be removed
-		 * @return <tt>true</tt> if the channel was successfully removed, else
-		 *         <tt>false</tt>
-		 */
-		public boolean remove(NioChannel channel) {
-			if (channel != null) {
-				for (int i = 0; i < size; i++) {
-					if (infos[i].channel == channel) {
-						infos[i] = infos[size - 1];
-						size--;
-						return true;
-					}
-				}
-			}
-
-			return false;
-		}
-
-		/**
-		 * Remove the {@code ChannelInfo} from the list
-		 * 
-		 * @param info
-		 *            the {@code ChannelInfo} to remove
-		 */
-		public void remove(ChannelInfo info) {
-			if (info != null) {
-				for (int i = 0; i < size; i++) {
-					if (infos[i] == info) {
-						infos[i] = infos[size - 1];
-						size--;
-						break;
-					}
-				}
-			}
-		}
-
-		/**
-		 * Check the timeouts for channels in the list
-		 * 
-		 * @param date
-		 *            the current date
-		 * @return the first channel reaches it's timeout or <tt>null</tt> if no
-		 *         channel found
-		 */
-		public ChannelInfo check(long date) {
-			while (pos < size) {
-				if (infos[pos] != null && date >= infos[pos].timeout) {
-					ChannelInfo result = infos[pos];
-					infos[pos] = infos[size - 1];
-					size--;
-					return result;
-				}
-				pos++;
-			}
-			pos = 0;
-
-			return null;
-		}
-
-		/**
-		 * Add the channel to the list of channels
-		 * 
-		 * @param channel
-		 * @param timeout
-		 * @param flag
-		 * @return <tt>true</tt> if the channel is added successfully else
-		 *         <tt>false</tt>
-		 */
-		public ChannelInfo add(NioChannel channel, long timeout, int flag) {
-			if (size == infos.length) {
-				return null;
-			} else {
-				ChannelInfo info = null;
-				long date = timeout + System.currentTimeMillis();
-				for (int i = 0; i < size; i++) {
-					if (infos[i] != null && infos[i].channel == channel) {
-						infos[i].flags = ChannelInfo.merge(infos[i].flags, flag);
-						info = infos[i];
-						info.timeout = date;
-						break;
-					}
-				}
-
-				if (info == null) {
-					info = new ChannelInfo(channel, date, flag);
-					infos[size++] = info;
-				}
-
-				return info;
-			}
-		}
-
-		/**
-		 * @param copy
-		 */
-		public void duplicate(ChannelList copy) {
-			copy.size = size;
-			copy.pos = pos;
-			System.arraycopy(infos, 0, copy.infos, 0, size);
-		}
-	}
-
-	/**
-	 * Server processor class.
-	 */
-	protected class Worker implements Runnable {
-
-		protected boolean available = false;
-		protected NioChannel channel;
-		protected SocketStatus status = null;
-		protected boolean options = false;
-
-		/**
-		 * Process an incoming TCP/IP connection on the specified socket. Any
-		 * exception that occurs during processing must be logged and swallowed.
-		 * <b>NOTE</b>: This method is called from our Connector's thread. We
-		 * must assign it to our own thread so that multiple simultaneous
-		 * requests can be handled.
-		 * 
-		 * @param channel
-		 *            The channel to process
-		 */
-		protected synchronized void assignWithOptions(NioChannel channel) {
-			doAssign(channel, null, true);
-		}
-
-		/**
-		 * 
-		 * @param channel
-		 * @param status
-		 * @param options
-		 */
-		protected synchronized void doAssign(NioChannel channel, SocketStatus status,
-				boolean options) {
-			// Wait for the Processor to get the previous Socket
-			while (available) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-				}
-			}
-
-			// Store the newly available Socket and notify our thread
-			this.channel = channel;
-			this.status = status;
-			this.options = options;
-			available = true;
-			notifyAll();
-		}
-
-		/**
-		 * Process an incoming TCP/IP connection on the specified channel. Any
-		 * exception that occurs during processing must be logged and swallowed.
-		 * <b>NOTE</b>: This method is called from our Connector's thread. We
-		 * must assign it to our own thread so that multiple simultaneous
-		 * requests can be handled.
-		 * 
-		 * @param channel
-		 *            the channel to process
-		 */
-		protected synchronized void assign(NioChannel channel) {
-			doAssign(channel, null, false);
-		}
-
-		/**
-		 * 
-		 * @param channel
-		 * @param status
-		 */
-		protected synchronized void assign(NioChannel channel, SocketStatus status) {
-			doAssign(channel, status, false);
-		}
-
-		/**
-		 * Await a newly assigned Channel from our Connector, or
-		 * <code>null</code> if we are supposed to shut down.
-		 */
-		protected synchronized NioChannel await() {
-
-			// Wait for the Connector to provide a new channel
-			while (!available) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-				}
-			}
-
-			// Notify the Connector that we have received this channel
-			NioChannel channel = this.channel;
-			available = false;
-			notifyAll();
-
-			return channel;
-
-		}
-
-		/**
-		 * The background thread that listens for incoming TCP/IP connections
-		 * and hands them off to an appropriate processor.
-		 */
-		public void run() {
-
-			// Process requests until we receive a shutdown signal
-			while (running) {
-				try {
-					// Wait for the next channel to be assigned
-					NioChannel channel = await();
-					if (channel == null)
-						continue;
-
-					if (!deferAccept && options) {
-						if (!setChannelOptions(channel)) {
-							// Close the channel only if it wasn't closed
-							// already
-							channel.close();
-						}
-					} else {
-						// Process the request from this channel
-						if ((status != null)
-								&& (handler.event(channel, status) == Handler.SocketState.CLOSED)) {
-							// Close channel right away
-							closeChannel(channel);
-						} else if ((status == null)
-								&& ((options && !setChannelOptions(channel)) || handler
-										.process(channel) == Handler.SocketState.CLOSED)) {
-							// Close channel right away
-							closeChannel(channel);
-						}
-					}
-				} catch (Exception exp) {
-					// NOTHING
-				} finally {
-					// Finish up this request
-					// We do not need to recycle threads manually since this
-					// will be done by the Executor
-					// recycleWorkerThread(this);
-				}
-			}
-
-		}
-	}
-
-	/**
 	 * {@code Handler}
 	 * 
 	 * <p>
@@ -1216,79 +827,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		public SocketState event(NioChannel channel, SocketStatus status);
 
-	}
-
-	/**
-	 * {@code WorkerStack}
-	 * 
-	 * Created on Dec 13, 2011 at 10:36:38 AM
-	 * 
-	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
-	 */
-	public class WorkerStack {
-
-		protected Worker[] workers = null;
-		protected int end = 0;
-
-		/**
-		 * Create a new instance of {@code WorkerStack}
-		 * 
-		 * @param size
-		 */
-		public WorkerStack(int size) {
-			workers = new Worker[size];
-		}
-
-		/**
-		 * Put the object into the queue.
-		 * 
-		 * @param worker
-		 *            the worker to be appended to the queue (first element).
-		 */
-		public void push(Worker worker) {
-			workers[end++] = worker;
-		}
-
-		/**
-		 * Get the first object out of the queue. Return null if the queue is
-		 * empty.
-		 * 
-		 * @return the worker on the top of the stack
-		 */
-		public Worker pop() {
-			if (end > 0) {
-				return workers[--end];
-			}
-			return null;
-		}
-
-		/**
-		 * Get the first object out of the queue, Return null if the queue is
-		 * empty.
-		 * 
-		 * @return the worker on the top of the stack
-		 */
-		public Worker peek() {
-			return workers[end];
-		}
-
-		/**
-		 * Is the queue empty?
-		 * 
-		 * @return true if the stack is empty
-		 */
-		public boolean isEmpty() {
-			return (end == 0);
-		}
-
-		/**
-		 * How many elements are there in this queue?
-		 * 
-		 * @return the number of elements in the stack
-		 */
-		public int size() {
-			return (end);
-		}
 	}
 
 	/**
