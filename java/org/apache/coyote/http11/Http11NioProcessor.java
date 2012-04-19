@@ -20,10 +20,9 @@ package org.apache.coyote.http11;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.ActionCode;
@@ -88,6 +87,9 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 */
 	protected NioEndpoint endpoint;
 
+	private static ConcurrentLinkedQueue<CompletionHandler<Integer, Pair<NioEndpoint, NioChannel>>> handlers = new ConcurrentLinkedQueue<>();
+	private static ConcurrentLinkedQueue<Pair<NioEndpoint, NioChannel>> pairs = new ConcurrentLinkedQueue<>();
+
 	/**
 	 * Create a new instance of {@code Http11NioProcessor}
 	 * 
@@ -117,6 +119,68 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 
 		// Cause loading of FastHttpDateFormat
 		FastHttpDateFormat.getCurrentDate();
+	}
+
+	private static CompletionHandler<Integer, Pair<NioEndpoint, NioChannel>> getHandler() {
+		CompletionHandler<Integer, Pair<NioEndpoint, NioChannel>> handler = handlers.poll();
+		if (handler == null) {
+			handler = new CompletionHandler<Integer, Pair<NioEndpoint, NioChannel>>() {
+
+				@Override
+				public void completed(Integer nBytes, Pair<NioEndpoint, NioChannel> attachment) {
+					if (nBytes < 0) {
+						// Reach the end of the stream
+						failed(null, attachment);
+					} else {
+						attachment.first.processChannel(attachment.last, null);
+						handlers.offer(this);
+						pairs.offer(attachment);
+					}
+				}
+
+				@Override
+				public void failed(Throwable exc, Pair<NioEndpoint, NioChannel> attachment) {
+					attachment.first.closeChannel(attachment.last);
+					handlers.offer(this);
+					pairs.offer(attachment);
+				}
+			};
+		}
+
+		return handler;
+	}
+
+	/**
+	 * 
+	 * @param endpoint
+	 * @param channel
+	 * @return
+	 */
+	private static Pair<NioEndpoint, NioChannel> getPair(NioEndpoint endpoint, NioChannel channel) {
+		Pair<NioEndpoint, NioChannel> pair = pairs.poll();
+		if (pair == null) {
+			pair = new Pair<NioEndpoint, NioChannel>(endpoint, channel);
+		} else {
+			pair.first = endpoint;
+			pair.last = channel;
+		}
+		return pair;
+	}
+
+	private static class Pair<K, V> {
+		K first;
+		V last;
+
+		/**
+		 * Create a new instance of {@code Pair}
+		 * 
+		 * @param first
+		 * @param last
+		 */
+		public Pair(K first, V last) {
+			this.first = first;
+			this.last = last;
+		}
 	}
 
 	/**
@@ -294,25 +358,22 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 					// Perform an asynchronous read operation to wait for
 					// incoming data
 
-					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch,
-							new CompletionHandlerAdapter<Integer, NioChannel>() {
+					final Pair<NioEndpoint, NioChannel> pair = getPair(endpoint, ch);
 
-								@Override
-								public void completed(Integer nBytes, NioChannel attachment) {
-									if (nBytes < 0) {
-										// Reach the end of the stream
-										failed(null, attachment);
-									} else {
-										endpoint.processChannel(ch, null);
-									}
-								}
+					ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, pair, getHandler());
 
-								@Override
-								public void failed(Throwable exc, NioChannel attachment) {
-									closeChannel(attachment);
-								}
-							});
-
+					/*
+					 * ch.awaitRead(soTimeout, TimeUnit.MILLISECONDS, ch, new
+					 * CompletionHandlerAdapter<Integer, NioChannel>() {
+					 * 
+					 * @Override public void completed(Integer nBytes,
+					 * NioChannel attachment) { if (nBytes < 0) { // Reach the
+					 * end of the stream failed(null, attachment); } else {
+					 * endpoint.processChannel(ch, null); } }
+					 * 
+					 * @Override public void failed(Throwable exc, NioChannel
+					 * attachment) { closeChannel(attachment); } });
+					 */
 					openChannel = true;
 					break;
 				}
