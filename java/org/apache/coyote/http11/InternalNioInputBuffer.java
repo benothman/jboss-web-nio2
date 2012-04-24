@@ -110,7 +110,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					bbuf.flip();
 					bbuf.get(buf, pos, nBytes);
 					lastValid = pos + nBytes;
-					//endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
+					endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
 				}
 			}
 
