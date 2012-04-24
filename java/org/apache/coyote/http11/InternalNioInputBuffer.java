@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
-import org.apache.tomcat.jni.Status;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
@@ -104,13 +103,14 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			public void completed(Integer nBytes, NioChannel attachment) {
 				if (nBytes < 0) {
 					failed(new ClosedChannelException(), attachment);
+					return;
 				}
 
 				if (nBytes > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nBytes);
 					lastValid = pos + nBytes;
-					endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
+					//endpoint.processChannel(attachment, SocketStatus.OPEN_READ);
 				}
 			}
 

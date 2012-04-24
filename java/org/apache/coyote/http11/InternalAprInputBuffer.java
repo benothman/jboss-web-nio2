@@ -809,7 +809,6 @@ public class InternalAprInputBuffer implements InputBuffer {
 		}
 
 		return (nRead >= 0);
-
 	}
 
 	// ------------------------------------- InputStreamInputBuffer Inner Class
