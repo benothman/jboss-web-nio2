@@ -205,7 +205,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		} else {
 			this.serverSocketChannelFactory.threadGroup = threadGroup;
 		}
-		System.out.println("***** backlog = " + this.backlog);
 
 		// Initialize the SSL context if the SSL mode is enabled
 		if (SSLEnabled) {
@@ -978,6 +977,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		protected ConcurrentHashMap<Long, ChannelInfo> channelList;
 		protected ConcurrentLinkedQueue<ChannelInfo> recycledChannelList;
+		private ConcurrentLinkedQueue<CompletionHandler<Integer, NioChannel>> recycledCompletionHandlers;
 		private Object mutex;
 		private int size;
 
@@ -1038,15 +1038,17 @@ public class NioEndpoint extends AbstractEndpoint {
 			// called more
 			if ((date - lastMaintain) < 5000L) {
 				return;
-			} else {
-				lastMaintain = date;
 			}
+
+			// Update the last maintain time
+			lastMaintain = date;
 
 			for (ChannelInfo info : this.channelList.values()) {
 				if (date >= info.timeout) {
+					NioChannel ch = info.channel;
 					remove(info);
-					if (!processChannel(info.channel, SocketStatus.TIMEOUT)) {
-						closeChannel(info.channel);
+					if (!processChannel(ch, SocketStatus.TIMEOUT)) {
+						closeChannel(ch);
 					}
 				}
 			}
@@ -1075,7 +1077,9 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @param info
 		 */
 		public void remove(ChannelInfo info) {
-			remove(info.channel);
+			if (info != null) {
+				remove(info.channel);
+			}
 		}
 
 		/**
@@ -1085,6 +1089,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			this.mutex = new Object();
 			this.channelList = new ConcurrentHashMap<>(this.size);
 			this.recycledChannelList = new ConcurrentLinkedQueue<>();
+			this.recycledCompletionHandlers = new ConcurrentLinkedQueue<>();
 		}
 
 		/**
@@ -1094,6 +1099,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			synchronized (this.mutex) {
 				this.channelList.clear();
 				this.recycledChannelList.clear();
+				this.recycledCompletionHandlers.clear();
 				this.mutex.notifyAll();
 			}
 		}
@@ -1111,6 +1117,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		/**
+		 * Recycle the the {@link ChannelInfo}
 		 * 
 		 * @param info
 		 */
@@ -1119,6 +1126,57 @@ public class NioEndpoint extends AbstractEndpoint {
 				info.recycle();
 				this.recycledChannelList.offer(info);
 			}
+		}
+
+		/**
+		 * Peek a {@link java.nio.CompletionHandler} from the list of recycled
+		 * handlers. If the list is empty, create a new one and return it.
+		 * 
+		 * @return a reference of {@link java.nio.CompletionHandler}
+		 */
+		private CompletionHandler<Integer, NioChannel> getCompletionHandler() {
+			CompletionHandler<Integer, NioChannel> handler = this.recycledCompletionHandlers.poll();
+			if (handler == null) {
+				handler = new CompletionHandler<Integer, NioChannel>() {
+
+					@Override
+					public void completed(Integer nBytes, NioChannel attach) {
+						if (nBytes < 0) {
+							failed(new ClosedChannelException(), attach);
+						} else {
+							remove(attach);
+							if (!processChannel(attach, SocketStatus.OPEN_READ)) {
+								closeChannel(attach);
+							}
+							// Recycle the completion handler
+							recycleHanlder(this);
+						}
+					}
+
+					@Override
+					public void failed(Throwable exc, NioChannel attach) {
+						remove(attach);
+						SocketStatus status = (exc instanceof ClosedChannelException) ? SocketStatus.DISCONNECT
+								: SocketStatus.ERROR;
+						if (!processChannel(attach, status)) {
+							closeChannel(attach);
+						}
+						// Recycle the completion handler
+						recycleHanlder(this);
+					}
+				};
+			}
+
+			return handler;
+		}
+
+		/**
+		 * Recycle the {@link java.nio.CompletionHandler}
+		 * 
+		 * @param handler
+		 */
+		private void recycleHanlder(CompletionHandler<Integer, NioChannel> handler) {
+			this.recycledCompletionHandlers.offer(handler);
 		}
 
 		/**
@@ -1145,7 +1203,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			} else {
 				info.flags = ChannelInfo.merge(info.flags, flag);
 			}
-
+			// Setting the channel timeout
 			info.timeout = date;
 
 			final NioChannel ch = channel;
@@ -1160,30 +1218,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				// TODO
 			} else if (info.read()) {
 				if (ch.isReadReady()) {
-					ch.awaitRead(ch, new CompletionHandler<Integer, NioChannel>() {
-
-						@Override
-						public void completed(Integer nBytes, NioChannel attach) {
-							if (nBytes < 0) {
-								failed(new ClosedChannelException(), attach);
-							} else {
-								remove(attach);
-								if (!processChannel(attach, SocketStatus.OPEN_READ)) {
-									closeChannel(attach);
-								}
-							}
-						}
-
-						@Override
-						public void failed(Throwable exc, NioChannel attach) {
-							remove(attach);
-							SocketStatus status = (exc instanceof ClosedChannelException) ? SocketStatus.DISCONNECT
-									: SocketStatus.ERROR;
-							if (!processChannel(attach, status)) {
-								closeChannel(attach);
-							}
-						}
-					});
+					ch.awaitRead(ch, getCompletionHandler());
 				}
 			} else if (info.write()) {
 				remove(info);

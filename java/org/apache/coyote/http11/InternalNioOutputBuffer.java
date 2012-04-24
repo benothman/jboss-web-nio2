@@ -55,7 +55,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	protected NioEndpoint endpoint;
 
 	/**
-	 * 
+	 * The completion handler used for asynchronous write operations
 	 */
 	private CompletionHandler<Integer, NioChannel> completionHandler;
 

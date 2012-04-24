@@ -72,7 +72,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	protected NioEndpoint endpoint = null;
 
 	/**
-	 * 
+	 * The completion handler used for asynchronous read operations
 	 */
 	private CompletionHandler<Integer, NioChannel> completionHandler;
 
