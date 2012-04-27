@@ -754,7 +754,6 @@ public class InternalAprInputBuffer implements InputBuffer {
 			}
 
 		} else {
-
 			if (buf.length - end < 4500) {
 				// In this case, the request header was really large, so we
 				// allocate a

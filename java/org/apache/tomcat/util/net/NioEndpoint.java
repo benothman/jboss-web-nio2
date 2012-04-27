@@ -1195,6 +1195,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			long date = timeout + System.currentTimeMillis();
 			ChannelInfo info = this.channelList.get(channel.getId());
+			boolean exists = false;
 			if (info == null) {
 				info = poll();
 				info.channel = channel;
