@@ -847,7 +847,7 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
 							proto.endpoint.removeEventChannel(channel);
-							if (!ch.isReadPending()) {
+							if (ch.isReadReady()) {
 								ch.awaitRead(proto.getKeepAliveTimeout(), TimeUnit.MILLISECONDS,
 										proto.endpoint,
 										new CompletionHandler<Integer, NioEndpoint>() {
