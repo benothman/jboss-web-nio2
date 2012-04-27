@@ -158,6 +158,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 		this.nonBlocking = nonBlocking;
 		
 		if(nonBlocking) {
+			System.out.println("****** configure non blocking events ******");
 			nonBlockingRead(bbuf, readTimeout, unit);
 		}
 	}
