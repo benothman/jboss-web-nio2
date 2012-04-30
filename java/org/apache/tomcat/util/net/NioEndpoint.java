@@ -380,7 +380,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * poller.
 	 * 
 	 * @param channel
-	 *            to add to the poller
+	 *            the channel to add to the poller
 	 * @param timeout
 	 *            to use for this connection
 	 * @param read
@@ -390,6 +390,8 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param resume
 	 *            to send a callback event
 	 * @param wakeup
+	 * 
+	 * @see #addEventChannel(NioChannel, long, int)
 	 */
 	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
@@ -401,15 +403,20 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * 
+	 * Same as
+	 * {@link #addEventChannel(NioChannel, long, boolean, boolean, boolean, boolean)}
 	 * 
 	 * @param channel
+	 *            the channel to add to the poller
 	 * @param timeout
+	 *            the channel timeout
 	 * @param flags
+	 *            a merge of read, write, resume and wake up event types
+	 * 
+	 * @see #addEventChannel(NioChannel, long, boolean, boolean, boolean,
+	 *      boolean)
 	 */
 	public void addEventChannel(NioChannel channel, long timeout, int flags) {
-
-		System.out.println("Add new event channel -> " + channel);
 
 		long eventTimeout = timeout <= 0 ? keepAliveTimeout : timeout;
 

@@ -101,8 +101,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			@Override
 			public void completed(Integer nBytes, NioChannel attachment) {
-				System.out.println("InternalNioInputBuffer ---> completed (nBytes = " + nBytes
-						+ ")");
 				if (nBytes < 0) {
 					failed(new ClosedChannelException(), attachment);
 					return;
@@ -476,9 +474,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * 
 	 */
 	protected void readAsync() throws IOException {
-		System.out.println("Read Async");
 		fill();
-		// nonBlockingRead(bbuf, readTimeout, unit);
 	}
 
 	/**
