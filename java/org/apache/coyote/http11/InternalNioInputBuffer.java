@@ -155,7 +155,7 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * @param nonBlocking
 	 */
 	public void setNonBlocking(boolean nonBlocking) {
-		this.nonBlocking = nonBlocking;		
+		this.nonBlocking = nonBlocking;
 	}
 
 	/**
@@ -467,6 +467,13 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * 
+	 */
+	protected void readAsync() {
+		nonBlockingRead(bbuf, readTimeout, unit);
 	}
 
 	/**
