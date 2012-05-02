@@ -402,6 +402,31 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 */
 	protected boolean fill() throws IOException {
 		int nRead = 0;
+		// Prepare the internal input buffer for reading
+		this.prepare();
+		// Reading from client
+		if (nonBlocking) {
+			nonBlockingRead(bbuf, readTimeout, unit);
+		} else {
+			nRead = blockingRead(bbuf, readTimeout, unit);
+			if (nRead > 0) {
+				bbuf.flip();
+				bbuf.get(buf, pos, nRead);
+				lastValid = pos + nRead;
+			} else if (nRead == NioChannel.OP_STATUS_CLOSED) {
+				throw new IOException(sm.getString("iib.failedread"));
+			} else if (nRead == NioChannel.OP_STATUS_READ_TIMEOUT) {
+				throw new SocketTimeoutException(sm.getString("iib.failedread"));
+			}
+		}
+
+		return (nRead >= 0);
+	}
+
+	/**
+	 * Prepare the input buffer for reading
+	 */
+	private void prepare() {
 		bbuf.clear();
 
 		if (parsingHeader) {
@@ -421,24 +446,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 			pos = end;
 			lastValid = pos;
 		}
-
-		// Reading from client
-		if (nonBlocking) {
-			nonBlockingRead(bbuf, readTimeout, unit);
-		} else {
-			nRead = blockingRead(bbuf, readTimeout, unit);
-			if (nRead > 0) {
-				bbuf.flip();
-				bbuf.get(buf, pos, nRead);
-				lastValid = pos + nRead;
-			} else if (nRead == NioChannel.OP_STATUS_CLOSED) {
-				throw new IOException(sm.getString("iib.failedread"));
-			} else if (nRead == NioChannel.OP_STATUS_READ_TIMEOUT) {
-				throw new SocketTimeoutException(sm.getString("iib.failedread"));
-			}
-		}
-
-		return (nRead >= 0);
 	}
 
 	/**
@@ -473,7 +480,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 * 
 	 */
 	protected void readAsync() throws IOException {
-		fill();
+		this.prepare();
+		this.nonBlockingRead(bbuf, readTimeout, unit);
 	}
 
 	/**
