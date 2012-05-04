@@ -23,6 +23,7 @@ package org.apache.tomcat.util.net;
 
 import java.net.InetAddress;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tomcat.jni.Library;
@@ -103,7 +104,7 @@ public abstract class AbstractEndpoint {
 	 * The maximum number of connections
 	 */
 	protected int maxConnections = 1024;
-	
+
 	/**
 	 * Priority of the acceptor and poller threads.
 	 */
@@ -125,10 +126,15 @@ public abstract class AbstractEndpoint {
 	protected InetAddress address;
 
 	/**
+	 * The default thread factory
+	 */
+	protected ThreadFactory threadFactory;
+
+	/**
 	 * Allows the server developer to specify the backlog that should be used
 	 * for server sockets. By default, this value is 100.
 	 */
-	//protected int backlog = 100;
+	// protected int backlog = 100;
 	protected int backlog = 511;
 
 	/**
@@ -317,6 +323,25 @@ public abstract class AbstractEndpoint {
 		}
 	}
 
+	/**
+	 * Create a new thread for the specified target
+	 *  
+	 * @param target
+	 * @param name
+	 * @param daemon
+	 * @return an instance of a new thread
+	 */
+	protected Thread newThread(Runnable target, String name, boolean daemon) {
+		Thread thread = this.threadFactory != null ? this.threadFactory.newThread(target)
+				: new Thread(target);
+
+		thread.setName(getName() +"-" + name);
+		thread.setPriority(threadPriority);
+		thread.setDaemon(daemon);
+
+		return thread;
+	}
+
 	// --------------------------------------------
 	/**
 	 * Getter for running
@@ -472,7 +497,7 @@ public abstract class AbstractEndpoint {
 
 	/**
 	 * Getter for maxConnections
-	 *
+	 * 
 	 * @return the maxConnections
 	 */
 	public int getMaxConnections() {
@@ -481,8 +506,9 @@ public abstract class AbstractEndpoint {
 
 	/**
 	 * Setter for the maxConnections
-	 *
-	 * @param maxConnections the maxConnections to set
+	 * 
+	 * @param maxConnections
+	 *            the maxConnections to set
 	 */
 	public void setMaxConnections(int maxConnections) {
 		this.maxConnections = maxConnections;

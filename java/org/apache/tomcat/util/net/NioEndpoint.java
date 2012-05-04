@@ -63,7 +63,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	protected static Logger logger = Logger.getLogger(NioEndpoint.class);
 
 	private AsynchronousServerSocketChannel listener;
-	private ThreadFactory threadFactory;
 	private ConcurrentHashMap<Long, NioChannel> connections;
 	private ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
 
@@ -72,8 +71,14 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	protected Handler handler = null;
 
+	/**
+	 * The event poller
+	 */
 	private EventPoller eventPoller;
 
+	/**
+	 * 
+	 */
 	protected NioServerSocketChannelFactory serverSocketChannelFactory = null;
 
 	/**
@@ -252,28 +257,22 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			// Start acceptor threads
 			for (int i = 0; i < acceptorThreadCount; i++) {
-				Thread acceptorThread = this.threadFactory.newThread(new Acceptor());
-				acceptorThread.setDaemon(daemon);
+				Thread acceptorThread = newThread(new Acceptor(), "Acceptor", daemon);
 				acceptorThread.start();
 			}
 
 			// Start sendfile thread
 			if (useSendfile) {
-				sendfile = new Sendfile();
-				sendfile.init();
-				Thread sendfileThread = this.threadFactory.newThread(sendfile);
-				sendfileThread.setName(getName() + "-SendFile");
-				sendfileThread.setPriority(threadPriority);
-				sendfileThread.setDaemon(true);
+				this.sendfile = new Sendfile();
+				this.sendfile.init();
+				Thread sendfileThread = newThread(this.sendfile, "SendFile", true);
 				sendfileThread.start();
 			}
 
 			// Starting the event poller
 			this.eventPoller = new EventPoller(this.maxThreads);
 			this.eventPoller.init();
-			Thread eventPollerThread = this.threadFactory.newThread(this.eventPoller);
-			eventPollerThread.setName(getName() + "-EventPoller");
-			eventPollerThread.setDaemon(true);
+			Thread eventPollerThread = newThread(this.eventPoller, "EventPoller", true);
 			eventPollerThread.start();
 		}
 	}
@@ -311,10 +310,17 @@ public class NioEndpoint extends AbstractEndpoint {
 			}
 		}
 
+		// Destroy the send file thread
 		if (this.sendfile != null) {
 			sendfile.destroy();
 		}
 
+		// destroy the send file thread
+		if (this.eventPoller != null) {
+			this.eventPoller.destroy();
+		}
+
+		// Closing all alive connections
 		for (NioChannel ch : this.connections.values()) {
 			try {
 				ch.close();
@@ -322,11 +328,13 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Nothing to do
 			}
 		}
-
+		// Remove all connections
 		this.connections.clear();
-
+		// Destroy the server socket channel factory
 		this.serverSocketChannelFactory.destroy();
 		this.serverSocketChannelFactory = null;
+		// Destroy all recycled channel processors
+		this.recycledChannelProcessors.clear();
 		this.recycledChannelProcessors = null;
 
 		initialized = false;

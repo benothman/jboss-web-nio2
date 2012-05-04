@@ -190,15 +190,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 */
 	private void nonBlockingWrite(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
 
-		final NioChannel ch = this.channel;
-
 		// Check if the channel is ready for write operation
-		if (ch.isWriteReady()) {
+		if (this.channel.isWriteReady()) {
 			try {
 				// Perform the write operation
-				ch.write(buffer, timeout, unit, ch, this.completionHandler);
+				this.channel.write(buffer, timeout, unit, this.channel, this.completionHandler);
 			} catch (Throwable t) {
-				log.warn("An error occurs when trying a blocking write");
+				log.warn("An error occurs when trying a non-blocking write");
 				if (log.isDebugEnabled()) {
 					log.debug(t.getMessage(), t);
 				}
