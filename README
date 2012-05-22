@@ -32,8 +32,9 @@
      
      http://www.oracle.com/technetwork/java/javase/downloads/index.html
       
-  2) To test the new connector (NIO2 connector), download JBoss Application Server 7 from
-	 the link below, note that we tested this connector using JBoss AS 7.1.1 Final:
+  2) To test the new connector (NIO2 connector), download JBoss Application Server 7 
+     from the link below, note that we tested this connector using JBoss AS 7.1.1 
+     Final:
 	 
 	 JBoss AS download link: http://www.jboss.org/jbossas/downloads
     	 
@@ -49,8 +50,8 @@
      * « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/jbossweb-7.0.13.Final.jar.index »
      * « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/jasper-jdt-7.0.3.Final.jar.index »
      
-     Example: if the jar copied is named « jbossweb.jar », the index file will be named
-              « jbossweb.jar.index »
+     Example: if the jar copied is named « jbossweb.jar », the index file will be 
+              named « jbossweb.jar.index »
      
   6) Refer to the JBoss AS 7 guide to configure and use the new connector.
      http://docs.jboss.org/jbossweb/7.0.x/config/http.html
