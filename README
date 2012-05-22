@@ -22,19 +22,35 @@
  
  
  This fork of the JBoss web project aims to provide a new web connector based on
- JavaSE 7 NIO2 features(asynchronous channels) . All old connectors remain available
+ Java-SE 7 NIO2 features(asynchronous channels) . All old connectors remain available
  for use. To build this project, please refer to the file BUILDING.txt.
+ This project is intended to be used with JBoss AS 7.
  
  Notes:
   1) To be able to build this project you need JDK-1.7 since we use Java 7 features.
-  2) To test the new connector (NIO2 connector), you need also to have a fresh build
-  	 of JBoss AS 7. You can download sources from it's github repository.
-  	 Build JBoss AS 7 using JDK-1.6 and run it with JRE-1.7 (required).
-  	 
-  	 https://github.com/jbossas/jboss-as
+     You can download it from the following link:
+     
+     http://www.oracle.com/technetwork/java/javase/downloads/index.html
+      
+  2) To test the new connector (NIO2 connector), download JBoss Application Server 7 from
+	 the link below, note that we tested this connector using JBoss AS 7.1.1 Final:
+	 
+	 JBoss AS download link: http://www.jboss.org/jbossas/downloads
+    	 
   3) Copy the result jars ( $PROJECT_HOME/output/jars/) in the directory
-     « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/ »
+     « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/ ».
+     
   4) Edit the file « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/module.xml » to
-     add the earlier copied jars as resources as replacement of the old ones
-  5) Refer to the JBoss AS 7 guide to configure and use the new connector.
+     add the earlier copied jars as resources as replacement of the old ones.
+     
+  5) Copy the files listed below in the same directory and rename them to the earlier 
+     copied jars within the extension « .index »
+  
+     * « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/jbossweb-7.0.13.Final.jar.index »
+     * « $JBOSS_INSTALL_DIR/modules/org/jboss/as/web/main/jasper-jdt-7.0.3.Final.jar.index »
+     
+     Example: if the jar copied is named « jbossweb.jar », the index file will be named
+              « jbossweb.jar.index »
+     
+  6) Refer to the JBoss AS 7 guide to configure and use the new connector.
      http://docs.jboss.org/jbossweb/7.0.x/config/http.html
