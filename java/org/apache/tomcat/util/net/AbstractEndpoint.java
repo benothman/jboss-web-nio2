@@ -26,7 +26,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.tomcat.jni.Library;
 import org.apache.tomcat.util.res.StringManager;
 
 /**

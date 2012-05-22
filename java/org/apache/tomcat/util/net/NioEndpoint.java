@@ -337,6 +337,9 @@ public class NioEndpoint extends AbstractEndpoint {
 		this.recycledChannelProcessors.clear();
 		this.recycledChannelProcessors = null;
 
+		// Shut down the executor
+		((ExecutorService)this.executor).shutdown();
+		
 		initialized = false;
 	}
 
