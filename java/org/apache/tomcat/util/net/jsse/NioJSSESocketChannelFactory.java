@@ -178,7 +178,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 * org.apache.tomcat.util.net.NioChannel)
 	 */
 	public void initChannel(NioChannel channel) throws Exception {
-		log.info(getClass().getName() + " -> Initializing " + channel);
 		SecureNioChannel sslChannel = (SecureNioChannel) channel;
 		initSSLEngine(sslChannel.getSslEngine());
 	}
