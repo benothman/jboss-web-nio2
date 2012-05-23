@@ -503,7 +503,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		try {
 			ChannelProcessor processor = getChannelProcessor(channel, status);
 			this.executor.execute(processor);
-			//this.executor.execute(new ChannelProcessor(channel, status));
 			return true;
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -521,7 +520,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		try {
 			HandshakeProcessor processor = getHandshakeProcessor(channel);
 			this.executor.execute(processor);
-			//this.executor.execute(new HandshakeProcessor(channel));
 			return true;
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
