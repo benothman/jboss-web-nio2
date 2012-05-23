@@ -655,8 +655,9 @@ public class NioEndpoint extends AbstractEndpoint {
 					}
 				}
 
-				// Accept the next incoming connection from the server channel
 				try {
+					// Accept the next incoming connection from the server
+					// channel
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
 
 					boolean ok = false;
@@ -713,10 +714,8 @@ public class NioEndpoint extends AbstractEndpoint {
 		@Override
 		public void run() {
 			try {
-				System.out.println("Starting handshake for channel -> " + channel);
 				serverSocketChannelFactory.handshake(channel);
-				System.out.println("End handshake for channel -> " + channel);
-				
+
 				if (!processChannel(channel, null)) {
 					logger.info("Fail processing the channel");
 					closeChannel(channel);
@@ -734,7 +733,9 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		private void recycle() {
 			this.channel = null;
-			recycledHandshakeProcessors.offer(this);
+			if (recycledHandshakeProcessors != null) {
+				recycledHandshakeProcessors.offer(this);
+			}
 		}
 
 		/**
@@ -745,7 +746,6 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void setChannel(NioChannel channel) {
 			this.channel = channel;
 		}
-
 	}
 
 	/**
