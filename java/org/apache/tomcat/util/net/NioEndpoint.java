@@ -193,11 +193,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		}
 
 		if (this.recycledChannelProcessors == null) {
-			//this.recycledChannelProcessors = new ConcurrentLinkedQueue<>();
+			this.recycledChannelProcessors = new ConcurrentLinkedQueue<>();
 		}
 
 		if (this.recycledHandshakeProcessors == null) {
-			//this.recycledHandshakeProcessors = new ConcurrentLinkedQueue<>();
+			this.recycledHandshakeProcessors = new ConcurrentLinkedQueue<>();
 		}
 
 		// If the executor is not set, create it with a fixed thread pool
@@ -501,9 +501,9 @@ public class NioEndpoint extends AbstractEndpoint {
 			return false;
 		}
 		try {
-			//ChannelProcessor processor = getChannelProcessor(channel, status);
-			//this.executor.execute(processor);
-			this.executor.execute(new ChannelProcessor(channel, status));
+			ChannelProcessor processor = getChannelProcessor(channel, status);
+			this.executor.execute(processor);
+			//this.executor.execute(new ChannelProcessor(channel, status));
 			return true;
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
@@ -519,9 +519,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	private boolean handshake(NioChannel channel) {
 		try {
-			//HandshakeProcessor processor = getHandshakeProcessor(channel);
-			//this.executor.execute(processor);
-			this.executor.execute(new HandshakeProcessor(channel));
+			HandshakeProcessor processor = getHandshakeProcessor(channel);
+			this.executor.execute(processor);
+			//this.executor.execute(new HandshakeProcessor(channel));
 			return true;
 		} catch (Throwable t) {
 			// This means we got an OOM or similar creating a thread, or that
