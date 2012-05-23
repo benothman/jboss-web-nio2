@@ -161,10 +161,10 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	public NioChannel acceptChannel(AsynchronousServerSocketChannel listener) throws IOException {
 		try {
 			AsynchronousSocketChannel asyncChannel = listener.accept().get();
+			log.info(getClass().getName() + " -> New channel accepted");
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			NioChannel channel = new SecureNioChannel(asyncChannel, engine);
-
 			return channel;
 		} catch (Exception e) {
 			throw new IOException(e);
@@ -179,6 +179,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 * org.apache.tomcat.util.net.NioChannel)
 	 */
 	public void initChannel(NioChannel channel) throws Exception {
+		log.info(getClass().getName() + " -> Initializing " + channel);
 		SecureNioChannel sslChannel = (SecureNioChannel) channel;
 		initSSLEngine(sslChannel.getSslEngine());
 	}
@@ -192,6 +193,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	@Override
 	public void handshake(NioChannel channel) throws IOException {
+		log.info(getClass().getName() + " -> Start handshake for channel -> " + channel);
 		// We do getSession instead of startHandshake() so we can call this
 		// multiple times
 		SecureNioChannel sslChannel = (SecureNioChannel) channel;
@@ -209,9 +211,12 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		}
 		sslChannel.handshake();
 
-		if (sslChannel.getSSLSession().getCipherSuite().equals("SSL_NULL_WITH_NULL_NULL"))
+		if (sslChannel.getSSLSession().getCipherSuite().equals("SSL_NULL_WITH_NULL_NULL")) {
 			throw new IOException(
 					"SSL handshake failed. Ciper suite in SSL Session is SSL_NULL_WITH_NULL_NULL");
+		}
+
+		log.info(getClass().getName() + " -> End handshake for channel -> " + channel);
 	}
 
 	/**
@@ -796,8 +801,8 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 		// Create an unbound server socket
 		SSLServerSocketFactory sslProxy = sslContext.getServerSocketFactory();
 		ServerSocket socket = sslProxy.createServerSocket();
-		//SSLEngine engine = sslContext.createSSLEngine();
-		//initSSLEngine(engine);
+		// SSLEngine engine = sslContext.createSSLEngine();
+		// initSSLEngine(engine);
 
 		try {
 			// Set the timeout to 1ms as all we care about is if it throws an

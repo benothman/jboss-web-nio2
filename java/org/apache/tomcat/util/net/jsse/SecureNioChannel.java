@@ -245,7 +245,7 @@ public class SecureNioChannel extends NioChannel {
 		if (isReadPending()) {
 			throw new ReadPendingException();
 		}
-		
+
 		// Disable read operations
 		disableReading();
 		final ByteBuffer netInBuffers[] = new ByteBuffer[length];
@@ -329,7 +329,7 @@ public class SecureNioChannel extends NioChannel {
 		}
 
 		disableWriting();
-		
+
 		// Clear the output buffer
 		this.netOutBuffer.compact();
 		// the number of bytes written
@@ -388,7 +388,7 @@ public class SecureNioChannel extends NioChannel {
 		if (isWritePending()) {
 			throw new WritePendingException();
 		}
-		
+
 		disableWriting();
 
 		try {
@@ -761,7 +761,7 @@ public class SecureNioChannel extends NioChannel {
 				int nBytes = 0;
 				if (read) {
 					clientAppData.clear();
-					nBytes = this.channel.read(this.netInBuffer).get();
+					nBytes = this.channel.read(this.netInBuffer).get(10000, TimeUnit.MILLISECONDS);
 				}
 				if (nBytes < 0) {
 					throw new IOException(this + " : EOF encountered during handshake UNWRAP.");
@@ -813,7 +813,7 @@ public class SecureNioChannel extends NioChannel {
 					tryTasks();
 					// Send the handshaking data to client
 					while (this.netOutBuffer.hasRemaining()) {
-						if (this.channel.write(this.netOutBuffer).get() < 0) {
+						if (this.channel.write(this.netOutBuffer).get(10000, TimeUnit.MILLISECONDS) < 0) {
 							// Handle closed channel
 							throw new IOException(this
 									+ " : EOF encountered during handshake WRAP.");
