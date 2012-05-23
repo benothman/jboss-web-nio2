@@ -368,7 +368,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			serverSocketChannelFactory.handshake(channel);
 			return true;
 		} catch (Throwable t) {
-			// logger.error(t.getMessage(), t);
+			logger.error(t.getMessage(), t);
 			if (logger.isDebugEnabled()) {
 				if (t instanceof SSLHandshakeException) {
 					logger.debug(sm.getString("endpoint.err.handshake"), t);
