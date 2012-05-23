@@ -65,6 +65,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	private AsynchronousServerSocketChannel listener;
 	private ConcurrentHashMap<Long, NioChannel> connections;
 	private ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
+	private ConcurrentLinkedQueue<HandshakeProcessor> recycledHandshakeProcessors;
 
 	/**
 	 * Handling of accepted sockets.
@@ -193,6 +194,10 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		if (this.recycledChannelProcessors == null) {
 			this.recycledChannelProcessors = new ConcurrentLinkedQueue<>();
+		}
+
+		if (this.recycledHandshakeProcessors == null) {
+			this.recycledHandshakeProcessors = new ConcurrentLinkedQueue<>();
 		}
 
 		// If the executor is not set, create it with a fixed thread pool
@@ -336,10 +341,13 @@ public class NioEndpoint extends AbstractEndpoint {
 		// Destroy all recycled channel processors
 		this.recycledChannelProcessors.clear();
 		this.recycledChannelProcessors = null;
+		// Destroy all recycled handshake processors
+		this.recycledHandshakeProcessors.clear();
+		this.recycledHandshakeProcessors = null;
 
 		// Shut down the executor
-		((ExecutorService)this.executor).shutdown();
-		
+		((ExecutorService) this.executor).shutdown();
+
 		initialized = false;
 	}
 
@@ -364,11 +372,9 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			// Initialize the channel
 			serverSocketChannelFactory.initChannel(channel);
-			// Start SSL handshake if SSL is enabled
-			serverSocketChannelFactory.handshake(channel);
 			return true;
 		} catch (Throwable t) {
-			//logger.error(t.getMessage(), t);
+			// logger.error(t.getMessage(), t);
 			if (logger.isDebugEnabled()) {
 				if (t instanceof SSLHandshakeException) {
 					logger.debug(sm.getString("endpoint.err.handshake"), t);
@@ -376,7 +382,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					logger.debug(sm.getString("endpoint.err.unexpected"), t);
 				}
 			}
-			// Tell to close the channel
+
 			return false;
 		}
 	}
@@ -504,6 +510,23 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
+	 * @param channel
+	 * @return
+	 */
+	private boolean handshake(NioChannel channel) {
+		try {
+			HandshakeProcessor processor = getHandshakeProcessor(channel);
+			this.executor.execute(processor);
+			return true;
+		} catch (Throwable t) {
+			// This means we got an OOM or similar creating a thread, or that
+			// the pool and its queue are full
+			logger.error(sm.getString("endpoint.process.fail"), t);
+			return false;
+		}
+	}
+
+	/**
 	 * @return peek a processor from the recycled processors list
 	 */
 	private ChannelProcessor getChannelProcessor(NioChannel channel, SocketStatus status) {
@@ -513,6 +536,19 @@ public class NioEndpoint extends AbstractEndpoint {
 		} else {
 			processor.setChannel(channel);
 			processor.setStatus(status);
+		}
+		return processor;
+	}
+
+	/**
+	 * @return peek a handshake processor from the recycled processors list
+	 */
+	private HandshakeProcessor getHandshakeProcessor(NioChannel channel) {
+		HandshakeProcessor processor = this.recycledHandshakeProcessors.poll();
+		if (processor == null) {
+			processor = new HandshakeProcessor(channel);
+		} else {
+			processor.setChannel(channel);
 		}
 		return processor;
 	}
@@ -619,9 +655,18 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					// Using the short-circuit AND operator
-					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(
-							channel, null))) {
+
+					boolean ok = false;
+					if (addChannel(channel) && setChannelOptions(channel) && channel.isOpen()) {
+						if (channel.isSecure()) {
+							handshake(channel);
+							ok = true;
+						} else {
+							ok = processChannel(channel, null);
+						}
+					}
+					// If a problem occurs, close the channel right away
+					if (!ok) {
 						logger.info("Fail processing the channel");
 						closeChannel(channel);
 					}
@@ -634,6 +679,67 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			}
 		}
+	}
+
+	/**
+	 * {@code HandshakeProcessor}
+	 * 
+	 * 
+	 * Created on May 23, 2012 at 11:48:45 AM
+	 * 
+	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
+	 */
+	protected class HandshakeProcessor implements Runnable {
+
+		private NioChannel channel;
+
+		/**
+		 * Create a new instance of {@code HandshakeProcessor}
+		 * 
+		 * @param channel
+		 */
+		public HandshakeProcessor(NioChannel channel) {
+			this.channel = channel;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Runnable#run()
+		 */
+		@Override
+		public void run() {
+			try {
+				serverSocketChannelFactory.handshake(channel);
+
+				if (!(channel.isOpen() && processChannel(channel, null))) {
+					logger.info("Fail processing the channel");
+					closeChannel(channel);
+				}
+			} catch (Exception exp) {
+				closeChannel(channel);
+			} finally {
+				this.recycle();
+			}
+		}
+
+		/**
+		 * Recycle the handshake processor
+		 */
+		private void recycle() {
+			this.channel = null;
+			recycledHandshakeProcessors.offer(this);
+		}
+
+		/**
+		 * Setter for the channel
+		 * 
+		 * @param channel
+		 */
+		public void setChannel(NioChannel channel) {
+			this.channel = channel;
+		}
+
 	}
 
 	/**
