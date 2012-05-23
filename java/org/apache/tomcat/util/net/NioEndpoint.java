@@ -619,7 +619,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				// Accept the next incoming connection from the server channel
 				try {
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					System.out.println("Accepting new channel");
 					// Using the short-circuit AND operator
 					if (!(addChannel(channel) && setChannelOptions(channel) && channel.isOpen() && processChannel(
 							channel, null))) {

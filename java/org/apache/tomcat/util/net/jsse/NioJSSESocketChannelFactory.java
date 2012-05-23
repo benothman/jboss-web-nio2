@@ -161,7 +161,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	public NioChannel acceptChannel(AsynchronousServerSocketChannel listener) throws IOException {
 		try {
 			AsynchronousSocketChannel asyncChannel = listener.accept().get();
-			log.info(getClass().getName() + " -> New channel accepted");
 			InetSocketAddress addr = (InetSocketAddress) asyncChannel.getRemoteAddress();
 			SSLEngine engine = sslContext.createSSLEngine(addr.getHostString(), addr.getPort());
 			NioChannel channel = new SecureNioChannel(asyncChannel, engine);
@@ -193,7 +192,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 	 */
 	@Override
 	public void handshake(NioChannel channel) throws IOException {
-		log.info(getClass().getName() + " -> Start handshake for channel -> " + channel);
 		// We do getSession instead of startHandshake() so we can call this
 		// multiple times
 		SecureNioChannel sslChannel = (SecureNioChannel) channel;
@@ -215,8 +213,6 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 			throw new IOException(
 					"SSL handshake failed. Ciper suite in SSL Session is SSL_NULL_WITH_NULL_NULL");
 		}
-
-		log.info(getClass().getName() + " -> End handshake for channel -> " + channel);
 	}
 
 	/**
