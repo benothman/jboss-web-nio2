@@ -497,6 +497,9 @@ public class NioEndpoint extends AbstractEndpoint {
 	 *         successfully else <tt>false</tt>
 	 */
 	public boolean processChannel(NioChannel channel, SocketStatus status) {
+		if (channel.isClosed()) {
+			return false;
+		}
 		try {
 			ChannelProcessor processor = getChannelProcessor(channel, status);
 			this.executor.execute(processor);
@@ -710,9 +713,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		@Override
 		public void run() {
 			try {
+				System.out.println("Starting handshake for channel -> " + channel);
 				serverSocketChannelFactory.handshake(channel);
-
-				if (!(channel.isOpen() && processChannel(channel, null))) {
+				System.out.println("End handshake for channel -> " + channel);
+				
+				if (!processChannel(channel, null)) {
 					logger.info("Fail processing the channel");
 					closeChannel(channel);
 				}
