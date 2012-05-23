@@ -717,6 +717,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					closeChannel(channel);
 				}
 			} catch (Exception exp) {
+				logger.error(exp.getMessage(), exp);
 				closeChannel(channel);
 			} finally {
 				this.recycle();
