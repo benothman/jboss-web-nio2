@@ -65,7 +65,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	private AsynchronousServerSocketChannel listener;
 	private ConcurrentHashMap<Long, NioChannel> connections;
 	private ConcurrentLinkedQueue<ChannelProcessor> recycledChannelProcessors;
-	private ConcurrentLinkedQueue<HandshakeProcessor> recycledHandshakeProcessors;
+	private ConcurrentLinkedQueue<HandshakeHandler> recycledHandshakeProcessors;
 
 	/**
 	 * Handling of accepted sockets.
@@ -518,7 +518,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 */
 	private boolean handshake(NioChannel channel) {
 		try {
-			HandshakeProcessor processor = getHandshakeProcessor(channel);
+			HandshakeHandler processor = getHandshakeProcessor(channel);
 			this.executor.execute(processor);
 			return true;
 		} catch (Throwable t) {
@@ -546,10 +546,10 @@ public class NioEndpoint extends AbstractEndpoint {
 	/**
 	 * @return peek a handshake processor from the recycled processors list
 	 */
-	private HandshakeProcessor getHandshakeProcessor(NioChannel channel) {
-		HandshakeProcessor processor = this.recycledHandshakeProcessors.poll();
+	private HandshakeHandler getHandshakeProcessor(NioChannel channel) {
+		HandshakeHandler processor = this.recycledHandshakeProcessors.poll();
 		if (processor == null) {
-			processor = new HandshakeProcessor(channel);
+			processor = new HandshakeHandler(channel);
 		} else {
 			processor.setChannel(channel);
 		}
@@ -686,14 +686,21 @@ public class NioEndpoint extends AbstractEndpoint {
 	}
 
 	/**
-	 * {@code HandshakeProcessor}
-	 * 
+	 * {@code HandshakeHandler}
+	 * <p>
+	 * Asynchronous handler for the secure channel handshake. Since the
+	 * handshake for the secure channels may take awhile, if several new
+	 * connections are received at the same time, the non-blocking handshake
+	 * aims to avoid connections to be timed out. Note that this does not
+	 * guarantee that no connection will be timed out, this depends to the
+	 * socket SO_TIMEOUT in the client side.
+	 * </p>
 	 * 
 	 * Created on May 23, 2012 at 11:48:45 AM
 	 * 
 	 * @author <a href="mailto:nbenothm@redhat.com">Nabil Benothman</a>
 	 */
-	protected class HandshakeProcessor implements Runnable {
+	protected class HandshakeHandler implements Runnable {
 
 		private NioChannel channel;
 
@@ -702,7 +709,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * 
 		 * @param channel
 		 */
-		public HandshakeProcessor(NioChannel channel) {
+		public HandshakeHandler(NioChannel channel) {
 			this.channel = channel;
 		}
 
@@ -721,10 +728,10 @@ public class NioEndpoint extends AbstractEndpoint {
 					closeChannel(channel);
 				}
 			} catch (Exception exp) {
-				if(logger.isDebugEnabled()) {
+				if (logger.isDebugEnabled()) {
 					logger.debug(exp.getMessage(), exp);
 				}
-				
+
 				closeChannel(channel);
 			} finally {
 				this.recycle();
