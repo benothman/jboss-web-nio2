@@ -522,9 +522,14 @@ public class SecureNioChannel extends NioChannel {
 			return;
 		}
 		sslEngine.closeOutbound();
-		this.netOutBuffer.compact();
-		this.netInBuffer.compact();
-		int packetBufferSize = getSSLSession().getPacketBufferSize();
+
+		SSLSession session = getSSLSession();
+		int packetBufferSize = Math.max(session.getPacketBufferSize(), MIN_BUFFER_SIZE);
+
+		this.netOutBuffer = (this.netOutBuffer == null) ? ByteBuffer
+				.allocateDirect(packetBufferSize) : this.netOutBuffer.compact();
+		this.netInBuffer = (this.netInBuffer == null) ? ByteBuffer.allocateDirect(packetBufferSize)
+				: this.netInBuffer.compact();
 
 		while (!sslEngine.isOutboundDone()) {
 			// Get close message
