@@ -609,7 +609,9 @@ public class NioEndpoint extends AbstractEndpoint {
 			try {
 				channel.close();
 			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
+				if (logger.isDebugEnabled()) {
+					logger.debug(e.getMessage(), e);
+				}
 			} finally {
 				if (this.connections.remove(channel.getId()) != null) {
 					this.counter.decrementAndGet();
