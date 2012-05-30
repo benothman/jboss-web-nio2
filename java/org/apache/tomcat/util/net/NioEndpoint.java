@@ -204,7 +204,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (this.executor == null) {
 			this.executor = Executors.newFixedThreadPool(this.maxThreads, this.threadFactory);
 		}
-
+		
 		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
@@ -661,11 +661,9 @@ public class NioEndpoint extends AbstractEndpoint {
 					// Accept the next incoming connection from the server
 					// channel
 					final NioChannel channel = serverSocketChannelFactory.acceptChannel(listener);
-					System.out.println("Accepting new channel -> " + channel);
 					boolean ok = false;
 					if (addChannel(channel) && setChannelOptions(channel) && channel.isOpen()) {
 						if (channel.isSecure()) {
-							System.out.println("The channel " + channel + " is secure");
 							handshake(channel);
 							ok = true;
 						} else {
@@ -725,7 +723,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void run() {
 			try {
 				serverSocketChannelFactory.handshake(channel);
-
+				
 				if (!processChannel(channel, null)) {
 					logger.info("Fail processing the channel");
 					closeChannel(channel);
