@@ -1303,6 +1303,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
 					@Override
 					public void failed(Throwable exc, NioChannel attach) {
+						logger.error(exc.getMessage(), exc);
 						remove(attach);
 						SocketStatus status = (exc instanceof ClosedChannelException) ? SocketStatus.DISCONNECT
 								: SocketStatus.ERROR;
