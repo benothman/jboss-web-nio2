@@ -196,12 +196,11 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		if (this.channel.isWriteReady()) {
 			try {
 				// Perform the write operation
-				
+
 				byte bytes[] = new byte[buffer.remaining()];
 				buffer.get(bytes).flip();
 				System.out.println("To write -> " + new String(bytes));
-				
-				
+
 				this.channel.write(buffer, timeout, unit, this.channel, this.completionHandler);
 			} catch (Throwable t) {
 				log.warn("An error occurs when trying a non-blocking write");
@@ -353,7 +352,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	@Override
 	public boolean flushLeftover() throws IOException {
 		// Calculate the number of bytes that fit in the buffer
-		int n = Math.min(leftover.getLength(), bbuf.remaining());
+		System.out.println(getClass().getName() + "#flushLeftover() -> bbuf.remaining = "
+				+ bbuf.remaining() + ", bbuf.capacity- bbuf.position = "
+				+ (bbuf.capacity() - bbuf.position()));
+		int n = Math.min(leftover.getLength(), bbuf.capacity() - bbuf.position());
 		// put bytes in the buffer
 		bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
 		// Update the offset
