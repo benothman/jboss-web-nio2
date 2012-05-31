@@ -108,6 +108,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				} else if (exc instanceof ClosedChannelException) {
 					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
 				} else {
+					exc.printStackTrace();
 					endpoint.processChannel(attachment, SocketStatus.ERROR);
 				}
 			}
