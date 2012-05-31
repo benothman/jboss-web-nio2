@@ -1377,6 +1377,7 @@ public class NioEndpoint extends AbstractEndpoint {
 				}
 			} else {
 				remove(info);
+				System.out.println(getClass().getName()+"#add(...) -> Unknown Event");
 				processChannel(ch, SocketStatus.ERROR);
 			}
 
