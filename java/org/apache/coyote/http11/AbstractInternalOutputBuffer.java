@@ -263,12 +263,21 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	}
 
 	/**
+	 * 
+	 */
+	protected void clearBuffer() {
+		synchronized (this.bbuf) {
+			this.bbuf.clear();
+		}
+	}
+	
+	/**
 	 * Recycle this object
 	 */
 	public void recycle() {
 		// Recycle Request object
 		response.recycle();
-		bbuf.clear();
+		this.clearBuffer();
 		pos = 0;
 		lastActiveFilter = -1;
 		committed = false;
