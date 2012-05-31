@@ -73,6 +73,9 @@ public class HttpEventImpl implements HttpEvent {
     }
 
     public void setType(EventType eventType) {
+    	if(eventType == EventType.ERROR) {
+    		new Exception("ERROR trace").printStackTrace();
+    	}
         this.eventType = eventType;
     }
     
