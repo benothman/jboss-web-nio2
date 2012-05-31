@@ -640,6 +640,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 			int start = chunk.getStart();
 			byte[] b = chunk.getBuffer();
 
+			/*
 			int remain = bbuf.capacity() - bbuf.position();
 			if (remain == 0) {
 				flushBuffer();
@@ -655,7 +656,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 			}
 
 			int x = Math.min(len, remain);
-
+			*/
 			while (len > 0) {
 				int thisTime = len;
 				if (bbuf.position() == bbuf.capacity()) {
