@@ -141,7 +141,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 		} else {
 			bbuf = ByteBuffer.allocateDirect((headerBufferSize / 1500 + 1) * 1500);
 		}
-				
+
 		outputBuffer = new OutputBufferImpl();
 		filterLibrary = new OutputFilter[0];
 		activeFilters = new OutputFilter[0];
@@ -270,7 +270,7 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 			this.bbuf.clear();
 		}
 	}
-	
+
 	/**
 	 * Recycle this object
 	 */
@@ -639,6 +639,22 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 			int len = chunk.getLength();
 			int start = chunk.getStart();
 			byte[] b = chunk.getBuffer();
+
+			int remain = bbuf.capacity() - bbuf.position();
+			if (remain == 0) {
+				flushBuffer();
+			}
+
+			while (remain == 0) {
+				try {
+					Thread.sleep(1);
+					remain = bbuf.capacity() - bbuf.position();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+
+			int x = Math.min(len, remain);
 
 			while (len > 0) {
 				int thisTime = len;

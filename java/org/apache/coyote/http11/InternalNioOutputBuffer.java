@@ -94,7 +94,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					attachment.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, attachment, this);
 				} else {
 					// Clear the buffer when all bytes are written
-					//bbuf.clear();
+					// bbuf.clear();
 					clearBuffer();
 				}
 			}
@@ -113,7 +113,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			}
 		};
 	}
-	
+
 	/**
 	 * Set the underlying socket.
 	 * 
@@ -283,10 +283,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		if (leftover.getLength() > 0) {
 			if (Http11NioProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
+				int step = 0;
 				while (leftover.getLength() > 0) {
 					// Calculate the maximum number of bytes that can fit in the
 					// buffer
-					int n = Math.min(bbuf.remaining(), leftover.getLength());
+					System.out.println(this.getClass().getName() + "#flushBuffer() -> Step#"
+							+ (++step));
+					int n = Math.min(bbuf.capacity() - bbuf.position(), leftover.getLength());
 					int off = leftover.getOffset();
 					// Put bytes into the buffer
 					bbuf.put(leftover.getBuffer(), off, n).flip();
@@ -324,7 +327,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					}
 				}
 				response.setLastWrite(res);
-				//bbuf.clear();
+				// bbuf.clear();
 				clearBuffer();
 			}
 
