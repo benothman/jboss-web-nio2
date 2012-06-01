@@ -158,6 +158,11 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	}
 
 	/**
+	 * Initialize the internal output buffer
+	 */
+	protected abstract void init();
+
+	/**
 	 * Set the non blocking flag.
 	 * 
 	 * @param nonBlocking

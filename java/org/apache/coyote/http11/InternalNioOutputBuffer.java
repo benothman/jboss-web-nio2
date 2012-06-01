@@ -73,8 +73,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		this.init();
 	}
 
-	/**
+	/*
+	 * (non-Javadoc)
 	 * 
+	 * @see org.apache.coyote.http11.AbstractInternalOutputBuffer#init()
 	 */
 	protected void init() {
 
@@ -101,7 +103,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
-				exc.printStackTrace();
 				endpoint.removeEventChannel(attachment);
 				if (exc instanceof InterruptedByTimeoutException) {
 					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
@@ -348,9 +349,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	@Override
 	public boolean flushLeftover() throws IOException {
 		// Calculate the number of bytes that fit in the buffer
-		System.out.println(getClass().getName() + "#flushLeftover() -> bbuf.remaining = "
-				+ bbuf.remaining() + ", bbuf.capacity- bbuf.position = "
-				+ (bbuf.capacity() - bbuf.position()));
 		int n = Math.min(leftover.getLength(), bbuf.capacity() - bbuf.position());
 		// put bytes in the buffer
 		bbuf.put(leftover.getBuffer(), leftover.getOffset(), n).flip();
