@@ -204,14 +204,6 @@ public class SecureNioChannel extends NioChannel {
 						try {
 							// Unwrap the data
 							int read = unwrap(netInBuffer, dst);
-
-							dst.flip();
-							System.out.println("nBytes : " + nBytes + ", remaining : "
-									+ dst.remaining());
-							byte bb[] = new byte[dst.remaining()];
-							dst.get(bb);
-							System.out.println("Received <" + new String(bb)+">");
-
 							// If everything is OK, so complete
 							handler.completed(read, attach);
 							enableReading();
