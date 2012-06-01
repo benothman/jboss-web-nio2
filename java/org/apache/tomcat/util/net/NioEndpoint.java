@@ -413,10 +413,6 @@ public class NioEndpoint extends AbstractEndpoint {
 	public void addEventChannel(NioChannel channel, long timeout, boolean read, boolean write,
 			boolean resume, boolean wakeup) {
 
-		
-		System.out.println(channel + " -> read = " + read + ", write = " + write +", resume = " + resume);
-		
-		
 		int flags = (read ? ChannelInfo.READ : 0) | (write ? ChannelInfo.WRITE : 0)
 				| (resume ? ChannelInfo.RESUME : 0) | (wakeup ? ChannelInfo.WAKEUP : 0);
 

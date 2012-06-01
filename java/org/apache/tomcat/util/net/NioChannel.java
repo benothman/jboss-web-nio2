@@ -858,7 +858,6 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 
 					@Override
 					public void failed(Throwable exc, A attachment) {
-						exc.printStackTrace();
 						enableReading();
 						handler.failed(exc, attachment);
 					}

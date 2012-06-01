@@ -795,8 +795,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 	 */
 	public void action(ActionCode actionCode, Object param) {
 
-		System.out.println(getClass().getName() +" -> ActionCode = " + actionCode.getCode());
-		
 		if (actionCode == ActionCode.ACTION_COMMIT) {
 			// Commit current response
 			commit(param);
