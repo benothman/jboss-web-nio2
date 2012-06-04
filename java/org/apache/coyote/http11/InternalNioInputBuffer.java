@@ -106,6 +106,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					return;
 				}
 
+				System.out.println("nBytes = " + nBytes);
+				
 				if (nBytes > 0) {
 					bbuf.flip();
 					bbuf.get(buf, pos, nBytes);
