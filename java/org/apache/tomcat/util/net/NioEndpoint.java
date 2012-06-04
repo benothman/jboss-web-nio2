@@ -365,7 +365,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				channel.setOption(StandardSocketOptions.SO_LINGER, soLinger);
 			}
 			if (tcpNoDelay) {
-				logger.info("Setting the TCP_NODELAY option");
 				channel.setOption(StandardSocketOptions.TCP_NODELAY, tcpNoDelay);
 			}
 

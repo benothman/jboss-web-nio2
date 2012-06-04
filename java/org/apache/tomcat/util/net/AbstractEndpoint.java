@@ -139,7 +139,7 @@ public abstract class AbstractEndpoint {
 	/**
 	 * Socket TCP no delay.
 	 */
-	protected boolean tcpNoDelay = true;
+	protected boolean tcpNoDelay = false;
 
 	/**
 	 * Socket linger.
