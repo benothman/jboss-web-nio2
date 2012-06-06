@@ -121,6 +121,8 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 					endpoint.removeEventChannel(attachment);
 					close(attachment);
 				} else if (exc instanceof ClosedChannelException) {
+					System.out.println(InternalNioInputBuffer.class.getName() + " { " + attachment
+							+ " }, DISCONNECT");
 					endpoint.removeEventChannel(attachment);
 					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
 				} else {
