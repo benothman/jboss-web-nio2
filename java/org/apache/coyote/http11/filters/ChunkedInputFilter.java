@@ -221,7 +221,6 @@ public class ChunkedInputFilter implements InputFilter {
 		pos = readChunk.getStart();
 		lastValid = pos + nRead;
 		buf = readChunk.getBytes();
-
 		return nRead;
 
 	}
@@ -245,14 +244,16 @@ public class ChunkedInputFilter implements InputFilter {
 				// In non blocking mode, no new chunk follows, even if data was
 				// present
 				int n = readBytes();
+
 				if (n < 0) {
 					throw new IOException("Invalid chunk header-1");
 				} else if (n == 0) {
 					return false;
 				}
+				System.out.println(getClass().getName() + " -> n = " + n + ", "
+						+ new String(buf, pos, n));
 			}
 
-			System.out.println("");
 			if (buf[pos] == Constants.CR) {
 				System.out.println(getClass().getName() + " -> Step #1");
 			} else if (buf[pos] == Constants.LF) {
