@@ -814,8 +814,12 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		 */
 		@Override
 		public SocketState event(NioChannel channel, SocketStatus status) {
-			
+
 			Http11NioProcessor processor = connections.get(channel.getId());
+
+			if (status == SocketStatus.ERROR || status == SocketStatus.DISCONNECT) {
+				System.out.println("******** " + channel + " -> " + status);
+			}
 
 			SocketState state = SocketState.CLOSED;
 			if (processor != null) {
@@ -914,8 +918,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 					// recycled
 					// processor.
 					connections.put(channel.getId(), processor);
-					
-					if ( /*processor.isAvailable() &&*/ processor.getReadNotifications()) {
+
+					if ( /* processor.isAvailable() && */processor.getReadNotifications()) {
 						// Call a read event right away
 						processor.inputBuffer.readAsync();
 					} else {
