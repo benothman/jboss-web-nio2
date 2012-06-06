@@ -120,7 +120,7 @@ final class StandardEngineValve extends ValveBase {
 			throws IOException, ServletException {
 
 		// Ask this Host to process this request
-		System.out.println("request -> " + request);
+		System.out.println("request -> " + request +", event = " + event.getType());
 		if (request != null) {
 			System.out.println("request.getHost() -> " + request.getHost());
 			if (request.getHost() != null) {
