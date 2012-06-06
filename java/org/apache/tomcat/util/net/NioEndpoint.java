@@ -453,9 +453,7 @@ public class NioEndpoint extends AbstractEndpoint {
 	 * @param channel
 	 */
 	public void removeEventChannel(NioChannel channel) {
-		if (channel != null) {
-			this.eventPoller.remove(channel);
-		}
+		this.eventPoller.remove(channel);
 	}
 
 	/**
@@ -1203,27 +1201,25 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * 
 		 * @param id
 		 */
-		protected void remove(long id) {
+		protected boolean remove(long id) {
 			ChannelInfo info = this.channelList.remove(id);
-			offer(info);
+			return offer(info);
 		}
 
 		/**
 		 * @param channel
+		 * @return true if the channel is removed successfully else false
 		 */
-		public void remove(NioChannel channel) {
-			if (channel != null) {
-				remove(channel.getId());
-			}
+		public boolean remove(NioChannel channel) {
+			return channel != null ? remove(channel.getId()) : false;
 		}
 
 		/**
 		 * @param info
+		 * @return true if the channel-info is removed successfully else false
 		 */
-		public void remove(ChannelInfo info) {
-			if (info != null) {
-				remove(info.channel);
-			}
+		public boolean remove(ChannelInfo info) {
+			return info != null ? remove(info.channel) : false;
 		}
 
 		/**
@@ -1265,11 +1261,12 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * 
 		 * @param info
 		 */
-		protected void offer(ChannelInfo info) {
+		protected boolean offer(ChannelInfo info) {
 			if (info != null) {
 				info.recycle();
-				this.recycledChannelList.offer(info);
+				return this.recycledChannelList.offer(info);
 			}
+			return false;
 		}
 
 		/**
