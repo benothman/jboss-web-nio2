@@ -287,6 +287,7 @@ public class CoyoteAdapter implements Adapter {
 				}
 				return (!error);
 			} catch (Throwable t) {
+				log.error(t.getMessage(), t);
 				if (!(t instanceof IOException)) {
 					log.error(sm.getString("coyoteAdapter.service"), t);
 				}
