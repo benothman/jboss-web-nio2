@@ -226,6 +226,7 @@ public class CoyoteAdapter implements Adapter {
 					}
 					break;
 				case DISCONNECT:
+					System.out.println("### DISCONNECT ###");
 				case ERROR:
 					request.getEvent().setType(HttpEvent.EventType.ERROR);
 					error = true;
@@ -287,7 +288,6 @@ public class CoyoteAdapter implements Adapter {
 				}
 				return (!error);
 			} catch (Throwable t) {
-				log.error(t.getMessage(), t);
 				if (!(t instanceof IOException)) {
 					log.error(sm.getString("coyoteAdapter.service"), t);
 				}

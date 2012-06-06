@@ -1,21 +1,23 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with this
- * work for additional information regarding copyright ownership. The ASF
- * licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
+
 package org.apache.catalina.core;
+
 
 import java.io.IOException;
 
@@ -29,113 +31,102 @@ import org.apache.catalina.util.StringManager;
 import org.apache.catalina.valves.ValveBase;
 import org.jboss.servlet.http.HttpEvent;
 
+
 /**
  * Valve that implements the default basic behavior for the
  * <code>StandardEngine</code> container implementation.
  * <p>
- * <b>USAGE CONSTRAINT</b>: This implementation is likely to be useful only when
- * processing HTTP requests.
- * 
+ * <b>USAGE CONSTRAINT</b>:  This implementation is likely to be useful only
+ * when processing HTTP requests.
+ *
  * @author Craig R. McClanahan
- * @version $Revision: 699 $ $Date: 2008-07-04 10:36:15 +0200 (Fri, 04 Jul 2008)
- *          $
+ * @version $Revision: 699 $ $Date: 2008-07-04 10:36:15 +0200 (Fri, 04 Jul 2008) $
  */
 
-final class StandardEngineValve extends ValveBase {
+final class StandardEngineValve
+    extends ValveBase {
 
-	// ----------------------------------------------------- Instance Variables
 
-	/**
-	 * The descriptive information related to this implementation.
-	 */
-	private static final String info = "org.apache.catalina.core.StandardEngineValve/1.0";
+    // ----------------------------------------------------- Instance Variables
 
-	/**
-	 * The string manager for this package.
-	 */
-	private static final StringManager sm = StringManager.getManager(Constants.Package);
 
-	// ------------------------------------------------------------- Properties
+    /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+        "org.apache.catalina.core.StandardEngineValve/1.0";
 
-	/**
-	 * Return descriptive information about this Valve implementation.
-	 */
-	public String getInfo() {
 
-		return (info);
+    /**
+     * The string manager for this package.
+     */
+    private static final StringManager sm =
+        StringManager.getManager(Constants.Package);
 
-	}
 
-	// --------------------------------------------------------- Public Methods
+    // ------------------------------------------------------------- Properties
 
-	/**
-	 * Select the appropriate child Host to process this request, based on the
-	 * requested server name. If no matching Host can be found, return an
-	 * appropriate HTTP error.
-	 * 
-	 * @param request
-	 *            Request to be processed
-	 * @param response
-	 *            Response to be produced
-	 * @param valveContext
-	 *            Valve context used to forward to the next Valve
-	 * 
-	 * @exception IOException
-	 *                if an input/output error occurred
-	 * @exception ServletException
-	 *                if a servlet error occurred
-	 */
-	public final void invoke(Request request, Response response) throws IOException,
-			ServletException {
 
-		// Select the Host to be used for this Request
-		Host host = request.getHost();
-		if (host == null) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST,
-					sm.getString("standardEngine.noHost", request.getServerName()));
-			return;
-		}
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    public String getInfo() {
 
-		// Ask this Host to process this request
-		host.getPipeline().getFirst().invoke(request, response);
+        return (info);
 
-	}
+    }
 
-	/**
-	 * Process Comet event.
-	 * 
-	 * @param request
-	 *            Request to be processed
-	 * @param response
-	 *            Response to be produced
-	 * @param valveContext
-	 *            Valve context used to forward to the next Valve
-	 * 
-	 * @exception IOException
-	 *                if an input/output error occurred
-	 * @exception ServletException
-	 *                if a servlet error occurred
-	 */
-	public final void event(Request request, Response response, HttpEvent event)
-			throws IOException, ServletException {
 
-		// Ask this Host to process this request
-		System.out.println("request -> " + request +", event = " + event.getType());
-		if (request != null) {
-			System.out.println("request.getHost() -> " + request.getHost());
-			if (request.getHost() != null) {
-				System.out.println("request.getHost().getPipeline() -> "
-						+ request.getHost().getPipeline());
-				if (request.getHost().getPipeline() != null) {
-					System.out.println("request.getHost().getPipeline().getFirst() -> "
-							+ request.getHost().getPipeline().getFirst());
-				}
-			}
+    // --------------------------------------------------------- Public Methods
 
-		}
 
-		request.getHost().getPipeline().getFirst().event(request, response, event);
+    /**
+     * Select the appropriate child Host to process this request,
+     * based on the requested server name.  If no matching Host can
+     * be found, return an appropriate HTTP error.
+     *
+     * @param request Request to be processed
+     * @param response Response to be produced
+     * @param valveContext Valve context used to forward to the next Valve
+     *
+     * @exception IOException if an input/output error occurred
+     * @exception ServletException if a servlet error occurred
+     */
+    public final void invoke(Request request, Response response)
+        throws IOException, ServletException {
 
-	}
+        // Select the Host to be used for this Request
+        Host host = request.getHost();
+        if (host == null) {
+            response.sendError
+                (HttpServletResponse.SC_BAD_REQUEST,
+                 sm.getString("standardEngine.noHost", 
+                              request.getServerName()));
+            return;
+        }
+
+        // Ask this Host to process this request
+        host.getPipeline().getFirst().invoke(request, response);
+
+    }
+
+
+    /**
+     * Process Comet event.
+     *
+     * @param request Request to be processed
+     * @param response Response to be produced
+     * @param valveContext Valve context used to forward to the next Valve
+     *
+     * @exception IOException if an input/output error occurred
+     * @exception ServletException if a servlet error occurred
+     */
+    public final void event(Request request, Response response, HttpEvent event)
+        throws IOException, ServletException {
+
+        // Ask this Host to process this request
+        request.getHost().getPipeline().getFirst().event(request, response, event);
+
+    }
 
 }
