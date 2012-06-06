@@ -204,7 +204,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		if (this.executor == null) {
 			this.executor = Executors.newFixedThreadPool(this.maxThreads, this.threadFactory);
 		}
-		
+
 		ExecutorService executorService = (ExecutorService) this.executor;
 		AsynchronousChannelGroup threadGroup = AsynchronousChannelGroup
 				.withThreadPool(executorService);
@@ -723,7 +723,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		public void run() {
 			try {
 				serverSocketChannelFactory.handshake(channel);
-				
+
 				if (!processChannel(channel, null)) {
 					logger.info("Fail processing the channel");
 					closeChannel(channel);
@@ -1372,8 +1372,10 @@ public class NioEndpoint extends AbstractEndpoint {
 					closeChannel(ch);
 				}
 			} else {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Unknown Event");
+				}
 				remove(info);
-				System.out.println(getClass().getName()+"#add(...) -> Unknown Event");
 				processChannel(ch, SocketStatus.ERROR);
 			}
 
