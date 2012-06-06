@@ -221,6 +221,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 				resumeNotification = false;
 			} else if (status == SocketStatus.ERROR) {
 				// Set error flag right away
+				System.out.println("*** ERROR EVENT ***");
 				error = true;
 			}
 			containerThread.set(Boolean.TRUE);
