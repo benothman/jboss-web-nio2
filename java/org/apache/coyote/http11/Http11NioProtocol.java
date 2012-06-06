@@ -817,10 +817,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 			Http11NioProcessor processor = connections.get(channel.getId());
 
-			if (status == SocketStatus.ERROR || status == SocketStatus.DISCONNECT) {
-				System.out.println("******** " + channel + " -> " + status);
-			}
-
 			SocketState state = SocketState.CLOSED;
 			if (processor != null) {
 				processor.startProcessing();

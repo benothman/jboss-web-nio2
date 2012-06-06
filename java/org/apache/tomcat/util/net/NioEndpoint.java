@@ -1302,6 +1302,10 @@ public class NioEndpoint extends AbstractEndpoint {
 						remove(attach);
 						SocketStatus status = (exc instanceof ClosedChannelException) ? SocketStatus.DISCONNECT
 								: SocketStatus.ERROR;
+
+						System.out.println(EventPoller.class.getName() + "{ " + attach
+								+ ", status = " + status + " }");
+
 						if (!processChannel(attach, status)) {
 							closeChannel(attach);
 						}

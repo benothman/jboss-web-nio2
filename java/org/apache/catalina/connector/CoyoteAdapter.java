@@ -227,7 +227,6 @@ public class CoyoteAdapter implements Adapter {
 					break;
 				case DISCONNECT:
 				case ERROR:
-					System.out.println("### status = " + status + " ###");
 					request.getEvent().setType(HttpEvent.EventType.ERROR);
 					error = true;
 					break;
