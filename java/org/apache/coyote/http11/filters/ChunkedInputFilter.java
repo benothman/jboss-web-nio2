@@ -246,38 +246,30 @@ public class ChunkedInputFilter implements InputFilter {
 				int n = readBytes();
 
 				if (n < 0) {
-					throw new IOException("Invalid chunk header-1");
+					throw new IOException("Invalid chunk header");
 				} else if (n == 0) {
 					return false;
 				}
-				System.out.println(getClass().getName() + " -> n = " + n + ", "
-						+ new String(buf, pos, n));
 			}
 
 			if (buf[pos] == Constants.CR) {
-				System.out.println(getClass().getName() + " -> Step #1");
+				// Nothing to do
 			} else if (buf[pos] == Constants.LF) {
 				eol = true;
-				System.out.println(getClass().getName() + " -> Step #2");
 			} else if (buf[pos] == Constants.SEMI_COLON) {
 				trailer = true;
-				System.out.println(getClass().getName() + " -> Step #3");
 			} else if (buf[pos] < 0) {
-				System.out.println(getClass().getName() + " -> Step #4");
-				throw new IOException("Invalid chunk header-2");
+				throw new IOException("Invalid chunk header");
 			} else if (!trailer) {
-				System.out.println(getClass().getName() + " -> Step #5");
 				// don't read data after the trailer
 				if (HexUtils.DEC[buf[pos]] != -1) {
-					System.out.println(getClass().getName() + " -> Step #5.1");
 					readDigit = true;
 					result *= 16;
 					result += HexUtils.DEC[buf[pos]];
 				} else {
-					System.out.println(getClass().getName() + " -> Step #5.2");
 					// we shouldn't allow invalid, non hex characters
 					// in the chunked header
-					throw new IOException("Invalid chunk header-3");
+					throw new IOException("Invalid chunk header");
 				}
 			}
 
@@ -286,7 +278,7 @@ public class ChunkedInputFilter implements InputFilter {
 		}
 
 		if (!readDigit || (result < 0)) {
-			throw new IOException("Invalid chunk header-4");
+			throw new IOException("Invalid chunk header");
 		}
 
 		if (result == 0)
