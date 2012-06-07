@@ -116,19 +116,9 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
-				if (exc instanceof InterruptedByTimeoutException) {
-					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-					endpoint.removeEventChannel(attachment);
-					close(attachment);
-				} else if (exc instanceof ClosedChannelException) {
-					System.out.println(InternalNioInputBuffer.class.getName() + " { " + attachment
-							+ " }, DISCONNECT");
-					endpoint.removeEventChannel(attachment);
-					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-				} else {
-					endpoint.removeEventChannel(attachment);
-					endpoint.processChannel(attachment, SocketStatus.ERROR);
-				}
+				//close(attachment);
+				endpoint.removeEventChannel(attachment);
+				endpoint.processChannel(attachment, SocketStatus.ERROR);
 			}
 		};
 	}

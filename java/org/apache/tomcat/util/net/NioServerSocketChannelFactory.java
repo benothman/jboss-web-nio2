@@ -71,6 +71,7 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 
 	/**
 	 * Destroy the factory
+	 * 
 	 * @throws IOException
 	 */
 	public abstract void destroy() throws IOException;
@@ -169,8 +170,9 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @exception IOException
 	 *                for networking errors
 	 */
-	public abstract AsynchronousServerSocketChannel createServerChannel(int port)
-			throws IOException;
+	public AsynchronousServerSocketChannel createServerChannel(int port) throws IOException {
+		return createServerChannel(port, -1);
+	}
 
 	/**
 	 * Returns a server socket which uses all network interfaces on the host, is
@@ -187,8 +189,10 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 * @exception IOException
 	 *                for networking errors
 	 */
-	public abstract AsynchronousServerSocketChannel createServerChannel(int port, int backlog)
-			throws IOException;
+	public AsynchronousServerSocketChannel createServerChannel(int port, int backlog)
+			throws IOException {
+		return createServerChannel(port, backlog, null, false);
+	}
 
 	/**
 	 * Returns a server socket channel which uses only the specified network
@@ -202,13 +206,14 @@ public abstract class NioServerSocketChannelFactory implements Cloneable {
 	 *            how many connections are queued
 	 * @param ifAddress
 	 *            the network interface address to use
+	 * @param reuseAddress
 	 * @return an instance of
 	 *         {@link java.nio.channels.AsynchronousServerSocketChannel}
 	 * @exception IOException
 	 *                for networking errors
 	 */
 	public abstract AsynchronousServerSocketChannel createServerChannel(int port, int backlog,
-			InetAddress ifAddress) throws IOException;
+			InetAddress ifAddress, boolean reuseAddress) throws IOException;
 
 	/**
 	 * Initialize the specified {@code NioChannel}

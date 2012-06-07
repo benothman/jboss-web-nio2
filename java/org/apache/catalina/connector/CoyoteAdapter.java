@@ -287,6 +287,11 @@ public class CoyoteAdapter implements Adapter {
 				}
 				return (!error);
 			} catch (Throwable t) {
+
+				System.out.println("***** "+getClass().getName()+" --> THE ERROR IS CATCHED HERE *****");
+				t.printStackTrace();
+				System.out.println("\n\n\n-------------------------------------------------\n\n\n");
+				
 				if (!(t instanceof IOException)) {
 					log.error(sm.getString("coyoteAdapter.service"), t);
 				}

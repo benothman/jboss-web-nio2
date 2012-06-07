@@ -516,7 +516,11 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	 *             If an I/O error occurs
 	 */
 	@Override
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
+		if (isClosed()) {
+			return;
+		}
+		// Closing the channel
 		this.channel.close();
 	}
 

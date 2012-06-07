@@ -227,14 +227,8 @@ public class NioEndpoint extends AbstractEndpoint {
 
 		if (listener == null) {
 			try {
-				if (address == null) {
-					listener = this.serverSocketChannelFactory.createServerChannel(port, backlog);
-				} else {
-					listener = this.serverSocketChannelFactory.createServerChannel(port, backlog,
-							address);
-				}
-
-				listener.setOption(StandardSocketOptions.SO_REUSEADDR, this.reuseAddress);
+				listener = this.serverSocketChannelFactory.createServerChannel(port, backlog,
+						address, reuseAddress);
 			} catch (BindException be) {
 				logger.fatal(be.getMessage(), be);
 				throw new BindException(be.getMessage() + " "
@@ -367,8 +361,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			if (tcpNoDelay) {
 				channel.setOption(StandardSocketOptions.TCP_NODELAY, tcpNoDelay);
 			}
-
-			channel.setOption(StandardSocketOptions.SO_REUSEADDR, Boolean.TRUE);
 
 			// Initialize the channel
 			serverSocketChannelFactory.initChannel(channel);
@@ -607,6 +599,7 @@ public class NioEndpoint extends AbstractEndpoint {
 			try {
 				channel.close();
 			} catch (IOException e) {
+				e.printStackTrace();
 				if (logger.isDebugEnabled()) {
 					logger.debug(e.getMessage(), e);
 				}
@@ -1297,15 +1290,7 @@ public class NioEndpoint extends AbstractEndpoint {
 					@Override
 					public void failed(Throwable exc, NioChannel attach) {
 						remove(attach);
-						SocketStatus status = (exc instanceof ClosedChannelException) ? SocketStatus.DISCONNECT
-								: SocketStatus.ERROR;
-
-						System.out.println(EventPoller.class.getName() + "{ " + attach
-								+ ", status = " + status + " }");
-
-						if (!processChannel(attach, status)) {
-							closeChannel(attach);
-						}
+						processChannel(attach, SocketStatus.ERROR);
 						// Recycle the completion handler
 						recycleHanlder(this);
 					}

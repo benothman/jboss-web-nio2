@@ -170,13 +170,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		int nw = 0;
 		try {
 			nw = this.channel.writeBytes(buffer, timeout, unit);
-			if (nw < 0) {
-				close(channel);
-			}
-		} catch (Exception e) {
-			log.warn("An error occurs when trying a blocking write");
+			// if (nw < 0) {
+			// close(channel);
+			// }
+		} catch (Throwable t) {
+			log.warn("An error occurs when trying a blocking write", t);
 			if (log.isDebugEnabled()) {
-				log.debug(e.getMessage(), e);
+				log.debug(t.getMessage(), t);
 			}
 		}
 
@@ -201,8 +201,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 				// Perform the write operation
 				this.channel.write(buffer, timeout, unit, this.channel, this.completionHandler);
 			} catch (Throwable t) {
-				log.warn("An error occurs when trying a non-blocking write");
-				log.error(t.getMessage(), t);
+				log.warn("An error occurs when trying a non-blocking write", t);
 				if (log.isDebugEnabled()) {
 					log.debug(t.getMessage(), t);
 				}

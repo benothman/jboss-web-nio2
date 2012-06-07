@@ -24,6 +24,7 @@ package org.apache.tomcat.util.net;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 
@@ -64,6 +65,7 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see org.apache.tomcat.util.net.NioServerSocketChannelFactory#destroy()
 	 */
 	public void destroy() throws IOException {
@@ -71,7 +73,7 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 		this.attributes.clear();
 		this.attributes = null;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -100,37 +102,13 @@ public class DefaultNioServerSocketChannelFactory extends NioServerSocketChannel
 	 * 
 	 * @see
 	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createServerChannel
-	 * (int)
-	 */
-	@Override
-	public AsynchronousServerSocketChannel createServerChannel(int port) throws IOException {
-		return open().bind(new InetSocketAddress(port));
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createServerChannel
-	 * (int, int)
-	 */
-	@Override
-	public AsynchronousServerSocketChannel createServerChannel(int port, int backlog)
-			throws IOException {
-		return open().bind(new InetSocketAddress(port), backlog);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.apache.tomcat.util.net.NioServerSocketChannelFactory#createServerChannel
 	 * (int, int, java.net.InetAddress)
 	 */
 	@Override
 	public AsynchronousServerSocketChannel createServerChannel(int port, int backlog,
-			InetAddress ifAddress) throws IOException {
-		return open().bind(new InetSocketAddress(ifAddress, port), backlog);
+			InetAddress ifAddress, boolean reuseAddress) throws IOException {
+		return open().setOption(StandardSocketOptions.SO_REUSEADDR, reuseAddress).bind(
+				new InetSocketAddress(ifAddress, port), backlog);
 	}
 
 	/*

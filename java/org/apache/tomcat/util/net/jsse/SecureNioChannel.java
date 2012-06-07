@@ -501,14 +501,16 @@ public class SecureNioChannel extends NioChannel {
 	 * @see org.apache.tomcat.util.net.NioChannel#close()
 	 */
 	@Override
-	public void close() throws IOException {
+	public synchronized void close() throws IOException {
+		if (isClosed()) {
+			return;
+		}
 		try {
 			// Handle closing the SSL Engine
 			handleClose();
+			this.channel.close();
 		} catch (Exception e) {
 			throw new IOException(e);
-		} finally {
-			super.close();
 		}
 	}
 

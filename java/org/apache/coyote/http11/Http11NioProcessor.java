@@ -229,9 +229,9 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		} catch (InterruptedIOException e) {
 			error = true;
 		} catch (Throwable t) {
-			
-			System.err.println("**************** Here is the error ****************");
-			
+
+			System.out.println("**************** Here is the error ****************");
+
 			log.error(sm.getString("http11processor.request.process"), t);
 			// 500 - Internal Server Error
 			response.setStatus(500);

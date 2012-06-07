@@ -647,7 +647,8 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 
 			while (len > 0) {
 				int thisTime = len;
-				if (bbuf.position() == bbuf.capacity()) {
+				// if (bbuf.position() == bbuf.capacity()) {
+				if (!bbuf.hasRemaining()) {
 					flushBuffer();
 					if (leftover.getLength() > 0) {
 						// If non blocking (event) and there are leftover bytes,
@@ -662,9 +663,12 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 						return chunk.getLength();
 					}
 				}
-				if (thisTime > bbuf.capacity() - bbuf.position()) {
-					thisTime = bbuf.capacity() - bbuf.position();
+				// if (thisTime > bbuf.capacity() - bbuf.position()) {
+				if (thisTime > bbuf.remaining()) {
+					// thisTime = bbuf.capacity() - bbuf.position();
+					thisTime = bbuf.remaining();
 				}
+
 				bbuf.put(b, start, thisTime);
 				len = len - thisTime;
 				start = start + thisTime;
