@@ -31,6 +31,7 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.WritePendingException;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -605,7 +606,6 @@ public class NioEndpoint extends AbstractEndpoint {
 			} finally {
 				if (this.connections.remove(channel.getId()) != null) {
 					this.counter.decrementAndGet();
-					System.out.println("Number of connections -> " + this.counter.get());
 				}
 			}
 		}
@@ -1789,7 +1789,7 @@ public class NioEndpoint extends AbstractEndpoint {
 							}
 						}
 					});
-				} catch (Exception exp) {
+				} catch (WritePendingException exp) {
 					data.fileChannel.close();
 					add(data);
 				}
