@@ -116,8 +116,6 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
-				System.out.println("******* " + getClass().getName() + " ==> ERROR HERE { "
-						+ attachment + " } *******");
 				endpoint.removeEventChannel(attachment);
 				endpoint.processChannel(attachment, SocketStatus.ERROR);
 			}
@@ -456,15 +454,12 @@ public class InternalNioInputBuffer extends AbstractInternalInputBuffer {
 	 *            current channel
 	 */
 	private void nonBlockingRead(final ByteBuffer bb, long timeout, TimeUnit unit) {
-
 		final NioChannel ch = this.channel;
-		if (ch.isReadReady()) {
-			try {
-				ch.read(bb, ch, this.completionHandler);
-			} catch (Throwable t) {
-				if (log.isDebugEnabled()) {
-					log.debug("An error occurs when trying a non-blocking read ", t);
-				}
+		try {
+			ch.read(bb, ch, this.completionHandler);
+		} catch (Throwable t) {
+			if (log.isDebugEnabled()) {
+				log.debug("An error occurs when trying a non-blocking read ", t);
 			}
 		}
 	}

@@ -96,7 +96,6 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					attachment.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS, attachment, this);
 				} else {
 					// Clear the buffer when all bytes are written
-					// bbuf.clear();
 					clearBuffer();
 				}
 			}
@@ -104,7 +103,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
 				endpoint.removeEventChannel(attachment);
-				endpoint.processChannel(attachment, SocketStatus.ERROR);
+				//endpoint.processChannel(attachment, SocketStatus.ERROR);
 			}
 		};
 	}

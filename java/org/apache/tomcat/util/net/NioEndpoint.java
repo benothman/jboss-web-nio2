@@ -1345,8 +1345,14 @@ public class NioEndpoint extends AbstractEndpoint {
 					closeChannel(ch);
 				}
 			} else if (info.read()) {
-				if (ch.isReadReady()) {
+				try {
+					// Trying awaiting for read event
 					ch.awaitRead(ch, getCompletionHandler());
+				} catch (Exception e) {
+					// Ignore
+					if (logger.isDebugEnabled()) {
+						logger.debug(e.getMessage(), e);
+					}
 				}
 			} else if (info.write()) {
 				remove(info);
