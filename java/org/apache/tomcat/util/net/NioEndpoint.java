@@ -599,13 +599,13 @@ public class NioEndpoint extends AbstractEndpoint {
 			try {
 				channel.close();
 			} catch (IOException e) {
-				e.printStackTrace();
 				if (logger.isDebugEnabled()) {
 					logger.debug(e.getMessage(), e);
 				}
 			} finally {
 				if (this.connections.remove(channel.getId()) != null) {
 					this.counter.decrementAndGet();
+					System.out.println("Number of connections -> " + this.counter.get());
 				}
 			}
 		}
