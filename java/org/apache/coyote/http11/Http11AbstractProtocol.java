@@ -739,8 +739,6 @@ public abstract class Http11AbstractProtocol implements ProtocolHandler, MBeanRe
 	 *            the protocols to set
 	 */
 	public void setProtocols(String protocols) {
-		System.out.println("************ " + getClass().getName()
-				+ "setProtocols =====> protocols : " + protocols);
 		setAttribute("protocols", protocols);
 	}
 

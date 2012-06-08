@@ -157,11 +157,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		int nw = 0;
 		try {
 			nw = this.channel.writeBytes(this.bbuf, timeout, unit);
-			// if (nw < 0) {
-			// close(channel);
-			// }
+			if (nw < 0) {
+				close(channel);
+			}
 		} catch (Throwable t) {
-			log.warn("An error occurs when trying a blocking write -> " + this.channel, t);
 			if (log.isDebugEnabled()) {
 				log.debug(t.getMessage(), t);
 			}
@@ -181,12 +180,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 *            The time unit
 	 */
 	private void nonBlockingWrite(final long timeout, final TimeUnit unit) {
-
 		try {
 			// Perform the write operation
 			this.channel.write(this.bbuf, timeout, unit, this.channel, this.completionHandler);
 		} catch (Throwable t) {
-			log.warn(t.getMessage(), t);
 			if (log.isDebugEnabled()) {
 				log.debug(t.getMessage(), t);
 			}
@@ -271,12 +268,9 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		if (leftover.getLength() > 0) {
 			if (Http11NioProcessor.containerThread.get() == Boolean.TRUE) {
 				// Send leftover bytes
-				int step = 0;
 				while (leftover.getLength() > 0) {
 					// Calculate the maximum number of bytes that can fit in the
 					// buffer
-					System.out.println(this.getClass().getName() + "#flushBuffer() -> Step#"
-							+ (++step));
 					int n = Math.min(bbuf.capacity() - bbuf.position(), leftover.getLength());
 					int off = leftover.getOffset();
 					// Put bytes into the buffer

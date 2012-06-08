@@ -911,10 +911,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 
 				if (state == SocketState.LONG) {
 					// Associate the connection with the processor. The next
-					// request
-					// processed by this thread will use either a new or a
-					// recycled
-					// processor.
+					// request processed by this thread will use either a new or
+					// a recycled processor.
 					connections.put(channel.getId(), processor);
 
 					if ( /* processor.isAvailable() && */processor.getReadNotifications()) {
