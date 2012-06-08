@@ -217,15 +217,13 @@ public abstract class AbstractInternalOutputBuffer implements OutputBuffer {
 	 * Perform a write operation. The operation may be blocking or non-blocking
 	 * depending on the value of {@code nonBlocking} flag.
 	 * 
-	 * @param buffer
-	 *            the buffer containing the data to write
 	 * @param timeout
 	 *            a timeout for the operation
 	 * @param unit
 	 *            The time unit of the timeout
 	 * @return
 	 */
-	protected abstract int write(final ByteBuffer buffer, final long timeout, final TimeUnit unit);
+	protected abstract int write(final long timeout, final TimeUnit unit);
 
 	/**
 	 * Add an output filter to the filter library.

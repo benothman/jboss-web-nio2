@@ -846,8 +846,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 						recycledProcessors.offer(processor);
 						if (proto.endpoint.isRunning() && state == SocketState.OPEN) {
 							final NioChannel ch = channel;
-							proto.endpoint.removeEventChannel(channel);
-							if (ch.isReadReady()) {
+							proto.endpoint.removeEventChannel(ch);
+							try {
 								ch.awaitRead(proto.getKeepAliveTimeout(), TimeUnit.MILLISECONDS,
 										proto.endpoint,
 										new CompletionHandler<Integer, NioEndpoint>() {
@@ -867,6 +867,8 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 												endpoint.closeChannel(ch);
 											}
 										});
+							} catch (Exception exp) {
+								// NOPE
 							}
 						}
 					} else {

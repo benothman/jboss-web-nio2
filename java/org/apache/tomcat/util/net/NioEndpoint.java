@@ -1460,9 +1460,11 @@ public class NioEndpoint extends AbstractEndpoint {
 		 */
 		protected void setup() throws IOException {
 			this.pos = this.start;
-			java.nio.file.Path path = new File(this.fileName).toPath();
-			this.fileChannel = java.nio.channels.FileChannel.open(path, StandardOpenOption.READ)
-					.position(this.pos);
+			if (this.fileChannel == null || !this.fileChannel.isOpen()) {
+				java.nio.file.Path path = new File(this.fileName).toPath();
+				this.fileChannel = java.nio.channels.FileChannel
+						.open(path, StandardOpenOption.READ).position(this.pos);
+			}
 		}
 
 		/**
@@ -1712,10 +1714,7 @@ public class NioEndpoint extends AbstractEndpoint {
 		 * @throws Exception
 		 */
 		private void sendFile(final SendfileData data) throws Exception {
-			if (data.channel.isWritePending()) {
-				add(data);
-				return;
-			}
+
 			// Configure the send file data
 			data.setup();
 
@@ -1726,68 +1725,74 @@ public class NioEndpoint extends AbstractEndpoint {
 
 			if (nr >= 0) {
 				buffer.flip();
-				channel.write(buffer, data, new CompletionHandler<Integer, SendfileData>() {
+				try {
+					channel.write(buffer, data, new CompletionHandler<Integer, SendfileData>() {
 
-					@Override
-					public void completed(Integer nw, SendfileData attachment) {
-						if (nw < 0) { // Reach the end of stream
-							closeChannel(channel);
-							closeFile(attachment.fileChannel);
-							return;
-						}
+						@Override
+						public void completed(Integer nw, SendfileData attachment) {
+							if (nw < 0) { // Reach the end of stream
+								closeChannel(channel);
+								closeFile(attachment.fileChannel);
+								return;
+							}
 
-						attachment.pos += nw;
+							attachment.pos += nw;
 
-						if (attachment.pos >= attachment.end) {
-							// All requested bytes were sent, recycle it
-							recycleSendfileData(attachment);
-							return;
-						}
+							if (attachment.pos >= attachment.end) {
+								// All requested bytes were sent, recycle it
+								recycleSendfileData(attachment);
+								return;
+							}
 
-						boolean ok = true;
+							boolean ok = true;
 
-						if (!buffer.hasRemaining()) {
-							// This means that all data in the buffer has been
-							// written => Empty the buffer and read again
-							buffer.clear();
-							try {
-								if (attachment.fileChannel.read(buffer) >= 0) {
-									buffer.flip();
-								} else {
-									// Reach the EOF
+							if (!buffer.hasRemaining()) {
+								// This means that all data in the buffer has
+								// been
+								// written => Empty the buffer and read again
+								buffer.clear();
+								try {
+									if (attachment.fileChannel.read(buffer) >= 0) {
+										buffer.flip();
+									} else {
+										// Reach the EOF
+										ok = false;
+									}
+								} catch (Throwable th) {
 									ok = false;
 								}
-							} catch (Throwable th) {
-								ok = false;
+							}
+
+							if (ok) {
+								channel.write(buffer, attachment, this);
+							} else {
+								closeFile(attachment.fileChannel);
 							}
 						}
 
-						if (ok) {
-							channel.write(buffer, attachment, this);
-						} else {
-							closeFile(attachment.fileChannel);
+						@Override
+						public void failed(Throwable exc, SendfileData attachment) {
+							// Closing channels
+							closeChannel(channel);
+							closeFile(data.fileChannel);
 						}
-					}
 
-					@Override
-					public void failed(Throwable exc, SendfileData attachment) {
-						// Closing channels
-						closeChannel(channel);
-						closeFile(data.fileChannel);
-					}
-
-					/**
-					 * 
-					 * @param closeable
-					 */
-					private void closeFile(java.io.Closeable closeable) {
-						try {
-							closeable.close();
-						} catch (IOException e) {
-							// NOPE
+						/**
+						 * 
+						 * @param closeable
+						 */
+						private void closeFile(java.io.Closeable closeable) {
+							try {
+								closeable.close();
+							} catch (IOException e) {
+								// NOPE
+							}
 						}
-					}
-				});
+					});
+				} catch (Exception exp) {
+					data.fileChannel.close();
+					add(data);
+				}
 			} else {
 				recycleSendfileData(data);
 			}

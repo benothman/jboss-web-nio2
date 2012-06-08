@@ -22,10 +22,8 @@
 package org.apache.coyote.http11;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.coyote.ActionCode;
@@ -33,7 +31,6 @@ import org.apache.coyote.Response;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
-import org.apache.tomcat.util.net.SocketStatus;
 
 /**
  * {@code InternalNioOutputBuffer}
@@ -103,7 +100,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
 				endpoint.removeEventChannel(attachment);
-				//endpoint.processChannel(attachment, SocketStatus.ERROR);
+				// endpoint.processChannel(attachment, SocketStatus.ERROR);
 			}
 		};
 	}
@@ -156,10 +153,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * 
 	 * @return the number of bytes written, -1 in case of errors
 	 */
-	private int blockingWrite(ByteBuffer buffer, long timeout, TimeUnit unit) {
+	private int blockingWrite(long timeout, TimeUnit unit) {
 		int nw = 0;
 		try {
-			nw = this.channel.writeBytes(buffer, timeout, unit);
+			nw = this.channel.writeBytes(this.bbuf, timeout, unit);
 			// if (nw < 0) {
 			// close(channel);
 			// }
@@ -183,18 +180,15 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * @param unit
 	 *            The time unit
 	 */
-	private void nonBlockingWrite(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
+	private void nonBlockingWrite(final long timeout, final TimeUnit unit) {
 
-		// Check if the channel is ready for write operation
-		if (this.channel.isWriteReady()) {
-			try {
-				// Perform the write operation
-				this.channel.write(buffer, timeout, unit, this.channel, this.completionHandler);
-			} catch (Throwable t) {
-				log.warn("An error occurs when trying a non-blocking write", t);
-				if (log.isDebugEnabled()) {
-					log.debug(t.getMessage(), t);
-				}
+		try {
+			// Perform the write operation
+			this.channel.write(this.bbuf, timeout, unit, this.channel, this.completionHandler);
+		} catch (Throwable t) {
+			log.warn(t.getMessage(), t);
+			if (log.isDebugEnabled()) {
+				log.debug(t.getMessage(), t);
 			}
 		}
 	}
@@ -207,13 +201,13 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 	 * ByteBuffer, long, java.util.concurrent.TimeUnit)
 	 */
 	@Override
-	protected int write(final ByteBuffer buffer, final long timeout, final TimeUnit unit) {
+	protected int write(final long timeout, final TimeUnit unit) {
 		if (nonBlocking) {
-			nonBlockingWrite(buffer, timeout, unit);
+			nonBlockingWrite(timeout, unit);
 			return 0;
 		}
 
-		return blockingWrite(buffer, timeout, unit);
+		return blockingWrite(timeout, unit);
 	}
 
 	/**
@@ -226,7 +220,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 		if (!committed) {
 			this.bbuf.clear();
 			this.bbuf.put(Constants.ACK_BYTES).flip();
-			if (this.write(bbuf, writeTimeout, TimeUnit.MILLISECONDS) < 0) {
+			if (this.write(writeTimeout, TimeUnit.MILLISECONDS) < 0) {
 				throw new IOException(sm.getString("oob.failedwrite"));
 			}
 		}
@@ -290,7 +284,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 					// Update the offset of the leftover ByteChunck
 					leftover.setOffset(off + n);
 					while (bbuf.hasRemaining()) {
-						res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+						res = blockingWrite(writeTimeout, TimeUnit.MILLISECONDS);
 						if (res < 0) {
 							break;
 						}
@@ -312,10 +306,10 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			if (nonBlocking) {
 				// Perform non blocking writes until all data is written, or the
 				// result of the write is 0
-				nonBlockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+				nonBlockingWrite(writeTimeout, TimeUnit.MILLISECONDS);
 			} else {
 				while (bbuf.hasRemaining()) {
-					res = blockingWrite(bbuf, writeTimeout, TimeUnit.MILLISECONDS);
+					res = blockingWrite(writeTimeout, TimeUnit.MILLISECONDS);
 					if (res <= 0) {
 						break;
 					}

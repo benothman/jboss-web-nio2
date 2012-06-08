@@ -27,11 +27,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.ReadPendingException;
-import java.nio.channels.WritePendingException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult;
@@ -127,35 +124,15 @@ public class SecureNioChannel extends NioChannel {
 		// The handshake is completed
 		checkHandshake();
 
-		if (isReadPending()) {
-			throw new ReadPendingException();
-		}
-
-		disableReading();
-
 		if (this.netInBuffer.position() == 0) {
-			try {
-				this.reset(this.netInBuffer);
-				int x = this.channel.read(this.netInBuffer).get(timeout, unit);
-				if (x < 0) {
-					throw new ClosedChannelException();
-				}
-			} catch (Exception exp) {
-				enableReading();
-				if (exp instanceof ClosedChannelException) {
-					return OP_STATUS_CLOSED;
-				} else if (exp instanceof TimeoutException) {
-					return OP_STATUS_READ_TIMEOUT;
-				} else {
-					throw exp;
-				}
+			this.reset(this.netInBuffer);
+			int x = this.channel.read(this.netInBuffer).get(timeout, unit);
+			if (x < 0) {
+				throw new ClosedChannelException();
 			}
 		}
-		// Unwrap the data read
-		int read = this.unwrap(this.netInBuffer, dst);
-		enableReading();
-
-		return read;
+		// Unwrap the data read, and return the number of unwrapped bytes
+		return this.unwrap(this.netInBuffer, dst);
 	}
 
 	/*
@@ -183,14 +160,9 @@ public class SecureNioChannel extends NioChannel {
 
 		// The handshake is completed
 		checkHandshake();
-
-		if (isReadPending()) {
-			throw new ReadPendingException();
-		}
-
-		disableReading();
+		// Retrieve bytes in the internal buffer
 		this.reset(this.netInBuffer);
-
+		// perform read operation
 		this.channel.read(this.netInBuffer, timeout, unit, attachment,
 				new CompletionHandler<Integer, A>() {
 
@@ -206,7 +178,6 @@ public class SecureNioChannel extends NioChannel {
 							int read = unwrap(netInBuffer, dst);
 							// If everything is OK, so complete
 							handler.completed(read, attach);
-							enableReading();
 						} catch (Exception e) {
 							// The operation must fails
 							handler.failed(e, attach);
@@ -216,7 +187,6 @@ public class SecureNioChannel extends NioChannel {
 					@Override
 					public void failed(Throwable exc, A attach) {
 						handler.failed(exc, attach);
-						enableReading();
 					}
 				});
 	}
@@ -242,12 +212,6 @@ public class SecureNioChannel extends NioChannel {
 			throw new IndexOutOfBoundsException();
 		}
 
-		if (isReadPending()) {
-			throw new ReadPendingException();
-		}
-
-		// Disable read operations
-		disableReading();
 		final ByteBuffer netInBuffers[] = new ByteBuffer[length];
 		for (int i = 0; i < length; i++) {
 			netInBuffers[i] = ByteBuffer.allocateDirect(getSSLSession().getPacketBufferSize());
@@ -275,13 +239,11 @@ public class SecureNioChannel extends NioChannel {
 							}
 						}
 
-						enableReading();
 						handler.completed(read, attach);
 					}
 
 					@Override
 					public void failed(Throwable exc, A attach) {
-						enableReading();
 						handler.failed(exc, attach);
 					}
 				});
@@ -324,12 +286,6 @@ public class SecureNioChannel extends NioChannel {
 		// The handshake is completed
 		checkHandshake();
 
-		if (isWritePending()) {
-			throw new WritePendingException();
-		}
-
-		disableWriting();
-
 		// Clear the output buffer
 		this.netOutBuffer.compact();
 		// the number of bytes written
@@ -338,23 +294,11 @@ public class SecureNioChannel extends NioChannel {
 
 		// write bytes to the channel
 		while (this.netOutBuffer.hasRemaining()) {
-			try {
-				int x = this.channel.write(netOutBuffer).get(timeout, unit);
-				if (x < 0) {
-					throw new ClosedChannelException();
-				}
-			} catch (Exception exp) {
-				enableWriting();
-				if (exp instanceof ClosedChannelException) {
-					return OP_STATUS_CLOSED;
-				} else if (exp instanceof TimeoutException) {
-					return OP_STATUS_WRITE_TIMEOUT;
-				} else {
-					throw exp;
-				}
+			int x = this.channel.write(netOutBuffer).get(timeout, unit);
+			if (x < 0) {
+				throw new ClosedChannelException();
 			}
 		}
-		enableWriting();
 
 		return written;
 	}
@@ -385,12 +329,6 @@ public class SecureNioChannel extends NioChannel {
 		// The handshake is completed
 		checkHandshake();
 
-		if (isWritePending()) {
-			throw new WritePendingException();
-		}
-
-		disableWriting();
-
 		try {
 			// Prepare the output buffer
 			this.netOutBuffer.clear();
@@ -407,7 +345,6 @@ public class SecureNioChannel extends NioChannel {
 							if (nBytes < 0) {
 								handler.failed(new ClosedChannelException(), attach);
 							} else {
-								enableWriting();
 								// Call the handler completed method with the
 								// consumed bytes number
 								handler.completed(written, attach);
@@ -416,13 +353,11 @@ public class SecureNioChannel extends NioChannel {
 
 						@Override
 						public void failed(Throwable exc, A attach) {
-							enableWriting();
 							handler.failed(exc, attach);
 						}
 					});
 
 		} catch (Throwable exp) {
-			enableWriting();
 			handler.failed(exp, attachment);
 		}
 	}
@@ -448,12 +383,6 @@ public class SecureNioChannel extends NioChannel {
 			throw new IndexOutOfBoundsException();
 		}
 
-		if (isWritePending()) {
-			throw new WritePendingException();
-		}
-
-		disableWriting();
-
 		ByteBuffer[] netOutBuffers = new ByteBuffer[length];
 		int size = getSSLSession().getPacketBufferSize();
 		long written = 0;
@@ -465,7 +394,6 @@ public class SecureNioChannel extends NioChannel {
 				written += wrap(srcs[offset + i], netOutBuffers[i]);
 				netOutBuffers[i].flip();
 			} catch (Throwable exp) {
-				enableWriting();
 				handler.failed(exp, attachment);
 				return;
 			}
@@ -481,7 +409,6 @@ public class SecureNioChannel extends NioChannel {
 						if (nBytes < 0) {
 							handler.failed(new ClosedChannelException(), attach);
 						} else {
-							enableWriting();
 							// If everything is OK, so complete
 							handler.completed(res, attach);
 						}
@@ -489,7 +416,6 @@ public class SecureNioChannel extends NioChannel {
 
 					@Override
 					public void failed(Throwable exc, A attach) {
-						enableWriting();
 						handler.failed(exc, attach);
 					}
 				});
