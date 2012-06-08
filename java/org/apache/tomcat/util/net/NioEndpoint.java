@@ -1344,9 +1344,6 @@ public class NioEndpoint extends AbstractEndpoint {
 				if (!processChannel(ch, SocketStatus.OPEN_CALLBACK)) {
 					closeChannel(ch);
 				}
-			} else if (info.wakeup()) {
-				remove(info);
-				// TODO
 			} else if (info.read()) {
 				if (ch.isReadReady()) {
 					ch.awaitRead(ch, getCompletionHandler());
@@ -1356,12 +1353,17 @@ public class NioEndpoint extends AbstractEndpoint {
 				if (!processChannel(ch, SocketStatus.OPEN_WRITE)) {
 					closeChannel(ch);
 				}
+			} else if (info.wakeup()) {
+				remove(info);
+				// TODO
 			} else {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Unknown Event");
 				}
 				remove(info);
-				processChannel(ch, SocketStatus.ERROR);
+				if (!processChannel(ch, SocketStatus.ERROR)) {
+					closeChannel(ch);
+				}
 			}
 
 			// Wake up all waiting threads

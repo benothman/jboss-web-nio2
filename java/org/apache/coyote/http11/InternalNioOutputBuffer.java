@@ -104,16 +104,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			@Override
 			public void failed(Throwable exc, NioChannel attachment) {
 				endpoint.removeEventChannel(attachment);
-				if (exc instanceof InterruptedByTimeoutException) {
-					endpoint.processChannel(attachment, SocketStatus.TIMEOUT);
-					close(attachment);
-				} else if (exc instanceof ClosedChannelException) {
-					System.out.println(InternalNioOutputBuffer.class.getName() + " { " + attachment
-							+ " }, DISCONNECT");
-					endpoint.processChannel(attachment, SocketStatus.DISCONNECT);
-				} else {
-					endpoint.processChannel(attachment, SocketStatus.ERROR);
-				}
+				endpoint.processChannel(attachment, SocketStatus.ERROR);
 			}
 		};
 	}
@@ -174,7 +165,7 @@ public class InternalNioOutputBuffer extends AbstractInternalOutputBuffer {
 			// close(channel);
 			// }
 		} catch (Throwable t) {
-			log.warn("An error occurs when trying a blocking write", t);
+			log.warn("An error occurs when trying a blocking write -> " + this.channel, t);
 			if (log.isDebugEnabled()) {
 				log.debug(t.getMessage(), t);
 			}

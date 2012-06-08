@@ -229,9 +229,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		} catch (InterruptedIOException e) {
 			error = true;
 		} catch (Throwable t) {
-
-			System.out.println("**************** Here is the error ****************");
-
 			log.error(sm.getString("http11processor.request.process"), t);
 			// 500 - Internal Server Error
 			response.setStatus(500);
@@ -457,7 +454,6 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 			log.error(sm.getString("http11processor.response.finish"), t);
 			error = true;
 		}
-
 	}
 
 	/*
@@ -469,11 +465,7 @@ public class Http11NioProcessor extends Http11AbstractProcessor {
 		inputBuffer.recycle();
 		outputBuffer.recycle();
 		this.channel = null;
-		timeout = -1;
-		readNotifications = true;
-		writeNotification = false;
-		resumeNotification = false;
-		eventProcessing = true;
+		super.recycle();
 	}
 
 	/**

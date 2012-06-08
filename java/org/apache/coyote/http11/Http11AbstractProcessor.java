@@ -492,7 +492,13 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	/**
      * 
      */
-	public abstract void recycle();
+	public void recycle() {
+		timeout = -1;
+		readNotifications = true;
+		writeNotification = false;
+		resumeNotification = false;
+		eventProcessing = true;
+	}
 
 	/**
 	 * Check for compression
@@ -574,7 +580,7 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 	 *             error during an I/O operation
 	 */
 	public abstract SocketState event(SocketStatus status) throws IOException;
-	
+
 	/**
 	 * Reset flags of the Processor
 	 */
@@ -592,8 +598,7 @@ public abstract class Http11AbstractProcessor implements ActionHook {
 		event = false;
 		keepAlive = true;
 	}
-	
-	
+
 	/**
 	 * Determine if we must drop the connection because of the HTTP status code.
 	 * Use the same list of codes as Apache/httpd.

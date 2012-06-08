@@ -480,7 +480,9 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
-	 * Tells whether or not this channel is open. </p>
+	 * <p>
+	 * Tells whether or not this channel is open.
+	 * </p>
 	 * 
 	 * @return <tt>true</tt> if, and only if, this channel is open
 	 */
@@ -490,7 +492,9 @@ public class NioChannel implements AsynchronousByteChannel, NetworkChannel {
 	}
 
 	/**
-	 * Tells whether or not this channel is closed. </p>
+	 * <p>
+	 * Tells whether or not this channel is closed.
+	 * </p>
 	 * 
 	 * @return <tt>true</tt> if, and only if, this channel is closed
 	 */

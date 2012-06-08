@@ -815,8 +815,6 @@ public class Http11NioProtocol extends Http11AbstractProtocol {
 		@Override
 		public SocketState event(NioChannel channel, SocketStatus status) {
 
-			//System.out.println("***** " + channel + " --> " + status + " *****");
-
 			Http11NioProcessor processor = connections.get(channel.getId());
 			SocketState state = SocketState.CLOSED;
 

@@ -108,7 +108,7 @@ public class JSSEImplementation extends SSLImplementation {
 	 */
 	@Override
 	public NioJSSESocketChannelFactory getServerSocketChannelFactory() {
-		throw new RuntimeException("Not supported for class " + getClass().getName());
+		throw new RuntimeException("Not supported for class " + NioJSSESocketChannelFactory.class.getName());
 	}
 
 	/*
@@ -120,7 +120,7 @@ public class JSSEImplementation extends SSLImplementation {
 	 */
 	@Override
 	public SSLSupport getSSLSupport(NioChannel channel) {
-		throw new RuntimeException("Not supported for class " + getClass().getName());
+		throw new RuntimeException("Not supported for class " + NioChannel.class.getName());
 	}
 
 }
