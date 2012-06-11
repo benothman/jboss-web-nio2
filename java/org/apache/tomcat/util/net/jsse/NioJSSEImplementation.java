@@ -42,7 +42,7 @@ public class NioJSSEImplementation extends SSLImplementation {
 	static final String SSLClass = "javax.net.ssl.SSLEngine";
 
 	static org.jboss.logging.Logger logger = org.jboss.logging.Logger
-			.getLogger(JSSEImplementation.class);
+			.getLogger(NioJSSEImplementation.class);
 
 	private NioJSSEFactory factory = null;
 

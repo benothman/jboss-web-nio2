@@ -41,7 +41,7 @@ import org.apache.tomcat.util.net.SSLSupport;
 class NioJSSESupport implements SSLSupport {
 
 	private static org.jboss.logging.Logger log = org.jboss.logging.Logger
-			.getLogger(JSSESupport.class);
+			.getLogger(NioJSSESupport.class);
 
 	protected SecureNioChannel channel;
 	protected SSLSession session;

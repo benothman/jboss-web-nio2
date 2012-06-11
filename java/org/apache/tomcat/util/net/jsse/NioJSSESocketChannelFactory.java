@@ -528,7 +528,7 @@ public class NioJSSESocketChannelFactory extends DefaultNioServerSocketChannelFa
 
 		kms = kmf.getKeyManagers();
 		if (keyAlias != null) {
-			if (JSSESocketFactory.defaultKeystoreType.equals(keystoreType)) {
+			if (defaultKeystoreType.equals(keystoreType)) {
 				keyAlias = keyAlias.toLowerCase(Locale.ENGLISH);
 			}
 			for (int i = 0; i < kms.length; i++) {
